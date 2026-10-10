@@ -76,7 +76,7 @@ fun TabScreen(
                 drawLayer(page)
             },
         ) {
-            content(with(density) { headerHeight.toDp() }, with(density) { barHeight.intValue.toDp() })
+            content(with(density) { headerHeight.toDp() } + if (header == null) HeaderGap else 0.dp, with(density) { barHeight.intValue.toDp() })
         }
         floating(with(density) { barHeight.intValue.toDp() })
         Column(

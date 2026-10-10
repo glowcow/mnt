@@ -66,6 +66,9 @@ fun Modifier.frosted(page: GraphicsLayer, ground: Color, fade: Dp = 0.dp, fadeDo
     }
 }
 
+/** The room between a header and the first block of a grouped page, the gap between two blocks. */
+val HeaderGap = 12.dp
+
 /** The line under a frosted header: there only while the page has gone under the header, so a page at its top has none. */
 @Composable
 fun HeaderLine(shown: Boolean) {

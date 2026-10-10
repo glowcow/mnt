@@ -120,7 +120,8 @@ fun PillButton(label: String, enabled: Boolean = true, onClick: () -> Unit) {
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp,
             maxLines = 1,
-            modifier = Modifier.clip(CircleShape).background(if (enabled) c.text else c.chip).padding(horizontal = 16.dp, vertical = 9.dp),
+            // One that cannot be used takes the colour of a block: a chip is lost on the ground of a grouped page.
+            modifier = Modifier.clip(CircleShape).background(if (enabled) c.text else c.group).padding(horizontal = 16.dp, vertical = 9.dp),
         )
     }
 }

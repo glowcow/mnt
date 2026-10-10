@@ -133,7 +133,7 @@ fun DetailScreen(
     val scrolled by remember { derivedStateOf { scroll.value > 0 } }
     DetailPage(MntTheme.colors.groupBg, scrolled = scrolled, header = { DetailHeader(title, onBack, actions = actions) }, from = from) { top, bottom ->
         Column(
-            Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp).padding(top = top, bottom = bottom + 16.dp),
+            Modifier.fillMaxSize().verticalScroll(scroll).padding(horizontal = 16.dp).padding(top = top + HeaderGap, bottom = bottom + 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             content = content,
         )
