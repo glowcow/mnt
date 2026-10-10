@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brand palette of the launcher icon and the splash screen, light. -->
+<resources>
+    <color name="ic_launcher_bg">#F2F0EA</color>
+    <color name="ic_launcher_text">#14161A</color>
+    <color name="ic_launcher_accent">#F5A524</color>
+</resources>

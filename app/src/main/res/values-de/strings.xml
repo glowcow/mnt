@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_files">Dateien</string>
+    <string name="tab_search">Suche</string>
+    <string name="tab_settings">Einstellungen</string>
+    <string name="back">Zurück</string>
+
+    <string name="access_title">Zugriff auf alle Dateien ist nötig</string>
+    <string name="access_text">Ein Dateimanager liest und ändert Dateien überall auf dem Telefon und auf angeschlossenen Laufwerken; Android erlaubt das nur mit der Berechtigung für den Zugriff auf alle Dateien. Nichts verlässt das Telefon.</string>
+    <string name="access_allow">Zugriff auf alle Dateien erlauben</string>
+
+    <string name="volume_free">%1$s von %2$s frei</string>
+    <string name="device_settings">Auswerfen oder formatieren</string>
+    <string name="device_settings_hint">Das dürfen nur die Speichereinstellungen von Android; sie werden geöffnet</string>
+    <string name="device_card">Speicherkarte</string>
+    <string name="device_drive">USB-Laufwerk</string>
+    <plurals name="count_volumes">
+        <item quantity="one">%d Volume</item>
+        <item quantity="other">%d Volumes</item>
+    </plurals>
+    <string name="pinned">Angeheftet</string>
+    <string name="place_downloads">Downloads</string>
+    <string name="place_camera">Kamera</string>
+    <string name="place_pictures">Bilder</string>
+    <string name="place_music">Musik</string>
+    <string name="place_movies">Videos</string>
+    <string name="place_documents">Dokumente</string>
+
+    <string name="folder_empty">Dieser Ordner ist leer</string>
+    <string name="folder_holds_nothing">Leer</string>
+    <plurals name="count_files">
+        <item quantity="one">%d Datei</item>
+        <item quantity="other">%d Dateien</item>
+    </plurals>
+    <plurals name="count_folders">
+        <item quantity="one">%d Ordner</item>
+        <item quantity="other">%d Ordner</item>
+    </plurals>
+    <string name="folder_closed">Dieser Ordner lässt sich nicht öffnen</string>
+    <string name="folder_closed_text">Er ist nicht mehr da, oder Android hält ihn für Apps verschlossen</string>
+
+    <string name="action_new_folder">Neuer Ordner</string>
+    <string name="action_sort">Sortieren</string>
+    <string name="action_pin">An „Dateien“ anheften</string>
+    <string name="action_unpin">Lösen</string>
+    <string name="action_select_all">Alle auswählen</string>
+    <string name="action_copy">Kopieren</string>
+    <string name="action_move">Verschieben</string>
+    <string name="action_share">Teilen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_more">Mehr</string>
+    <string name="action_rename">Umbenennen</string>
+    <string name="action_details">Details</string>
+    <string name="action_stop">Stoppen</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_failed">Das ging hier nicht</string>
+    <string name="selected_count">%1$d ausgewählt</string>
+
+    <string name="sort_name">Name</string>
+    <string name="sort_date">Änderungsdatum</string>
+    <string name="sort_size">Größe</string>
+    <string name="sort_type">Typ</string>
+    <string name="sort_ascending">Aufsteigend</string>
+    <string name="sort_descending">Absteigend</string>
+
+    <string name="new_folder_create">Ordner anlegen</string>
+    <string name="name_label">Name</string>
+    <string name="name_taken">Diesen Namen gibt es hier schon</string>
+    <string name="delete_title">Auswahl löschen?</string>
+    <string name="delete_text">Es wird endgültig entfernt: Es gibt keinen Papierkorb, aus dem man es zurückholen könnte</string>
+
+    <string name="paste_copy">Hierher kopieren</string>
+    <string name="paste_move">Hierher verschieben</string>
+    <string name="paste_into_itself">Ein Ordner kann nicht in sich selbst gelegt werden</string>
+    <string name="conflict_title">Einige Namen gibt es hier schon</string>
+    <string name="conflict_text">Elemente mit einem Namen, den es in diesem Ordner schon gibt: %1$d</string>
+    <string name="conflict_replace">Ersetzen</string>
+    <string name="conflict_keep">Beide behalten</string>
+    <string name="conflict_skip">Diese überspringen</string>
+
+    <string name="transfer_copying">Kopieren</string>
+    <string name="transfer_moving">Verschieben</string>
+    <string name="transfer_deleting">Löschen</string>
+    <string name="transfer_rate">%1$s/s</string>
+    <string name="transfer_channel">Dateivorgänge</string>
+    <string name="transfer_busy">Ein anderer Vorgang läuft noch</string>
+    <string name="transfer_stopped">Gestoppt</string>
+    <string name="transfer_failed">Nicht erledigt: %1$d</string>
+    <string name="transfer_copied">Kopiert</string>
+    <string name="transfer_moved">Verschoben</string>
+    <string name="transfer_deleted">Gelöscht</string>
+    <string name="open_none">Keine App öffnet diese Datei</string>
+
+    <string name="details_location">Ort</string>
+    <string name="details_items">Elemente</string>
+    <string name="details_modified">Geändert</string>
+    <string name="details_counting">Wird gezählt…</string>
+
+    <string name="search_hint">Nach Namen suchen</string>
+    <string name="search_start">Überall suchen</string>
+    <string name="search_start_text">Mindestens zwei Buchstaben eines Namens eingeben, um ihn auf dem Telefon und auf allen Laufwerken zu suchen</string>
+    <string name="search_empty">Nichts gefunden</string>
+    <string name="search_running">Suche läuft…</string>
+    <string name="search_capped">Nur die ersten %1$d werden gezeigt</string>
+
+    <string name="settings_theme">Design</string>
+    <string name="theme_system">Systemstandard</string>
+    <string name="theme_light">Hell</string>
+    <string name="theme_dark">Dunkel</string>
+    <string name="settings_palette">Farbschema</string>
+    <string name="palette_warm">Warm</string>
+    <string name="palette_classic">Klassisch</string>
+    <string name="settings_language">Sprache</string>
+    <string name="language_system">Systemstandard</string>
+    <string name="settings_places">Ordner im Tab „Dateien“</string>
+    <string name="settings_places_hint">Welche der eigenen Ordner des Telefons dort stehen</string>
+    <string name="settings_hidden">Versteckte Dateien</string>
+    <string name="settings_hidden_hint">Dateien und Ordner zeigen, deren Name mit einem Punkt beginnt</string>
+
+    <string name="settings_search_clear">Suchverlauf löschen</string>
+    <string name="settings_search_clear_hint">Was gesucht wurde, bleibt auf dem Telefon und wird im Tab „Suche“ wieder angeboten</string>
+    <string name="settings_backup_save">Sicherung speichern</string>
+    <string name="settings_backup_restore">Aus Sicherung wiederherstellen</string>
+    <string name="backup_password">Passwort</string>
+    <string name="backup_save_pick">Speicherort wählen</string>
+    <string name="backup_saved">Sicherung gespeichert</string>
+    <string name="backup_save_failed">Die Sicherung konnte nicht gespeichert werden</string>
+    <string name="backup_encrypted">Diese Sicherung ist verschlüsselt</string>
+    <string name="backup_restore">Wiederherstellen</string>
+    <string name="backup_overwrite">Vorhandenes ersetzen</string>
+    <string name="backup_wrong_password">Falsches Passwort</string>
+    <string name="settings_backup_save_hint">Einstellungen, angeheftete Ordner und Suchverlauf in einer Datei</string>
+    <string name="settings_backup_restore_hint">Fügt angeheftete Ordner und Suchen aus der Datei zu den hiesigen hinzu</string>
+    <string name="backup_password_note">Mit einem Passwort wird die Datei verschlüsselt. Ohne Passwort sieht jeder, der die Datei bekommt, die Namen Ihrer Ordner und wonach Sie gesucht haben.</string>
+    <string name="backup_overwrite_hint">Einstellungen, angeheftete Ordner und Suchverlauf</string>
+    <string name="backup_restored">Sicherung wiederhergestellt</string>
+    <string name="backup_invalid">Das ist keine Mnt-Sicherung</string>
+
+    <string name="settings_version">Version</string>
+    <string name="settings_app_update">Nach App-Updates suchen</string>
+    <string name="settings_app_update_hint">Einmal pro Woche, in den Releases auf GitHub</string>
+    <string name="app_update_channel">App-Updates</string>
+    <string name="app_update_available">Version %1$s ist verfügbar</string>
+    <string name="app_update_tap">Tippen, um die Neuerungen zu sehen und zu installieren</string>
+    <string name="app_update_check">Tippen, um nach einer neuen Version zu suchen</string>
+    <string name="app_update_checking">Wird geprüft…</string>
+    <string name="app_update_latest">Dies ist die neueste Version</string>
+    <string name="app_update_failed">Die Suche nach Updates ist fehlgeschlagen</string>
+    <string name="app_update_downloading">Wird heruntergeladen… %1$d%%</string>
+    <string name="app_update_install">Herunterladen und installieren</string>
+    <string name="app_update_dev">Entwicklungsversion, wird nicht aktualisiert</string>
+    <string name="settings_licence">Lizenz</string>
+    <string name="settings_icons">Symbole</string>
+    <string name="settings_title_font">Schrift der Überschriften</string>
+    <string name="settings_font">Schrift</string>
+</resources>

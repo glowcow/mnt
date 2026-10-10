@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_files">קבצים</string>
+    <string name="tab_search">חיפוש</string>
+    <string name="tab_settings">הגדרות</string>
+    <string name="back">חזרה</string>
+
+    <string name="access_title">נדרשת גישה לכל הקבצים</string>
+    <string name="access_text">מנהל קבצים קורא ומשנה קבצים בכל מקום בטלפון ובכוננים המחוברים אליו, ו‑Android מתיר זאת רק עם ההרשאה לגישה לכל הקבצים. דבר אינו יוצא מהטלפון.</string>
+    <string name="access_allow">התרת גישה לכל הקבצים</string>
+
+    <string name="volume_free">%1$s פנויים מתוך %2$s</string>
+    <string name="device_settings">הוצאה או אתחול</string>
+    <string name="device_settings_hint">רק הגדרות האחסון של Android רשאיות לעשות זאת; הן ייפתחו</string>
+    <string name="device_card">כרטיס זיכרון</string>
+    <string name="device_drive">כונן USB</string>
+    <plurals name="count_volumes">
+        <item quantity="one">כרך %d</item>
+        <item quantity="two">%d כרכים</item>
+        <item quantity="other">%d כרכים</item>
+    </plurals>
+    <string name="pinned">מוצמדת</string>
+    <string name="place_downloads">הורדות</string>
+    <string name="place_camera">מצלמה</string>
+    <string name="place_pictures">תמונות</string>
+    <string name="place_music">מוזיקה</string>
+    <string name="place_movies">סרטונים</string>
+    <string name="place_documents">מסמכים</string>
+
+    <string name="folder_empty">התיקייה ריקה</string>
+    <string name="folder_holds_nothing">ריקה</string>
+    <plurals name="count_files">
+        <item quantity="one">קובץ %d</item>
+        <item quantity="two">%d קבצים</item>
+        <item quantity="other">%d קבצים</item>
+    </plurals>
+    <plurals name="count_folders">
+        <item quantity="one">תיקייה %d</item>
+        <item quantity="two">%d תיקיות</item>
+        <item quantity="other">%d תיקיות</item>
+    </plurals>
+    <string name="folder_closed">לא ניתן לפתוח את התיקייה</string>
+    <string name="folder_closed_text">היא כבר לא קיימת, או ש‑Android חוסם אותה בפני יישומים</string>
+
+    <string name="action_new_folder">תיקייה חדשה</string>
+    <string name="action_sort">מיון</string>
+    <string name="action_pin">הצמדה ל„קבצים”</string>
+    <string name="action_unpin">ביטול הצמדה</string>
+    <string name="action_select_all">בחירת הכול</string>
+    <string name="action_copy">העתקה</string>
+    <string name="action_move">העברה</string>
+    <string name="action_share">שיתוף</string>
+    <string name="action_delete">מחיקה</string>
+    <string name="action_more">עוד</string>
+    <string name="action_rename">שינוי שם</string>
+    <string name="action_details">פרטים</string>
+    <string name="action_stop">עצירה</string>
+    <string name="action_cancel">ביטול</string>
+    <string name="action_failed">לא ניתן היה לעשות זאת כאן</string>
+    <string name="selected_count">נבחרו: %1$d</string>
+
+    <string name="sort_name">שם</string>
+    <string name="sort_date">תאריך שינוי</string>
+    <string name="sort_size">גודל</string>
+    <string name="sort_type">סוג</string>
+    <string name="sort_ascending">סדר עולה</string>
+    <string name="sort_descending">סדר יורד</string>
+
+    <string name="new_folder_create">יצירת תיקייה</string>
+    <string name="name_label">שם</string>
+    <string name="name_taken">השם הזה כבר תפוס כאן</string>
+    <string name="delete_title">למחוק את הנבחר?</string>
+    <string name="delete_text">המחיקה סופית: אין סל שממנו אפשר לשחזר</string>
+
+    <string name="paste_copy">העתקה לכאן</string>
+    <string name="paste_move">העברה לכאן</string>
+    <string name="paste_into_itself">תיקייה אינה יכולה להיכנס לתוך עצמה</string>
+    <string name="conflict_title">חלק מהשמות כבר תפוסים כאן</string>
+    <string name="conflict_text">פריטים ששמם כבר קיים בתיקייה הזאת: %1$d</string>
+    <string name="conflict_replace">החלפה</string>
+    <string name="conflict_keep">שמירת שניהם</string>
+    <string name="conflict_skip">דילוג עליהם</string>
+
+    <string name="transfer_copying">מעתיק</string>
+    <string name="transfer_moving">מעביר</string>
+    <string name="transfer_deleting">מוחק</string>
+    <string name="transfer_rate">%1$s לשנייה</string>
+    <string name="transfer_channel">פעולות בקבצים</string>
+    <string name="transfer_busy">פעולה אחרת עדיין רצה</string>
+    <string name="transfer_stopped">נעצר</string>
+    <string name="transfer_failed">לא בוצע: %1$d</string>
+    <string name="transfer_copied">הועתק</string>
+    <string name="transfer_moved">הועבר</string>
+    <string name="transfer_deleted">נמחק</string>
+    <string name="open_none">אין יישום שפותח את הקובץ הזה</string>
+
+    <string name="details_location">מיקום</string>
+    <string name="details_items">פריטים</string>
+    <string name="details_modified">שונה</string>
+    <string name="details_counting">סופר…</string>
+
+    <string name="search_hint">חיפוש לפי שם</string>
+    <string name="search_start">חיפוש בכל מקום</string>
+    <string name="search_start_text">יש להקליד לפחות שתי אותיות של שם כדי לחפש אותו בטלפון ובכל הכוננים</string>
+    <string name="search_empty">לא נמצא דבר</string>
+    <string name="search_running">מחפש…</string>
+    <string name="search_capped">מוצגים רק %1$d הראשונים</string>
+
+    <string name="settings_theme">ערכת נושא</string>
+    <string name="theme_system">ברירת המחדל של המערכת</string>
+    <string name="theme_light">בהירה</string>
+    <string name="theme_dark">כהה</string>
+    <string name="settings_palette">ערכת צבעים</string>
+    <string name="palette_warm">חמה</string>
+    <string name="palette_classic">קלאסית</string>
+    <string name="settings_language">שפה</string>
+    <string name="language_system">ברירת המחדל של המערכת</string>
+    <string name="settings_places">תיקיות בלשונית „קבצים”</string>
+    <string name="settings_places_hint">אילו מתיקיות הטלפון מופיעות שם</string>
+    <string name="settings_hidden">קבצים מוסתרים</string>
+    <string name="settings_hidden_hint">הצגת קבצים ותיקיות ששמם מתחיל בנקודה</string>
+
+    <string name="settings_search_clear">ניקוי היסטוריית החיפוש</string>
+    <string name="settings_search_clear_hint">מה שחופש נשמר בטלפון ומוצע שוב בלשונית החיפוש</string>
+    <string name="settings_backup_save">שמירת גיבוי</string>
+    <string name="settings_backup_restore">שחזור מגיבוי</string>
+    <string name="backup_password">סיסמה</string>
+    <string name="backup_save_pick">בחירת מקום לשמירה</string>
+    <string name="backup_saved">הגיבוי נשמר</string>
+    <string name="backup_save_failed">לא ניתן היה לשמור את הגיבוי</string>
+    <string name="backup_encrypted">הגיבוי הזה מוצפן</string>
+    <string name="backup_restore">שחזור</string>
+    <string name="backup_overwrite">החלפת מה שכבר קיים</string>
+    <string name="backup_wrong_password">סיסמה שגויה</string>
+    <string name="settings_backup_save_hint">הגדרות, תיקיות מוצמדות והיסטוריית החיפוש בקובץ אחד</string>
+    <string name="settings_backup_restore_hint">מוסיף את התיקיות המוצמדות והחיפושים מהקובץ לאלה שכאן</string>
+    <string name="backup_password_note">עם סיסמה הקובץ מוצפן. בלי סיסמה, כל מי שיקבל את הקובץ יראה את שמות התיקיות שלך ואת מה שחיפשת.</string>
+    <string name="backup_overwrite_hint">ההגדרות, התיקיות המוצמדות והיסטוריית החיפוש</string>
+    <string name="backup_restored">הגיבוי שוחזר</string>
+    <string name="backup_invalid">זה אינו גיבוי של Mnt</string>
+
+    <string name="settings_version">גרסה</string>
+    <string name="settings_app_update">בדיקת עדכונים לאפליקציה</string>
+    <string name="settings_app_update_hint">פעם בשבוע, בגרסאות שפורסמו ב-GitHub</string>
+    <string name="app_update_channel">עדכוני האפליקציה</string>
+    <string name="app_update_available">גרסה %1$s זמינה</string>
+    <string name="app_update_tap">יש להקיש כדי לראות מה חדש ולהתקין</string>
+    <string name="app_update_check">יש להקיש כדי לבדוק אם יש גרסה חדשה</string>
+    <string name="app_update_checking">בבדיקה…</string>
+    <string name="app_update_latest">זו הגרסה העדכנית ביותר</string>
+    <string name="app_update_failed">לא ניתן היה לבדוק עדכונים</string>
+    <string name="app_update_downloading">בהורדה… %1$d%%</string>
+    <string name="app_update_install">הורדה והתקנה</string>
+    <string name="app_update_dev">גרסת פיתוח, לא מתעדכנת</string>
+    <string name="settings_licence">רישיון</string>
+    <string name="settings_icons">סמלים</string>
+    <string name="settings_title_font">גופן הכותרות</string>
+    <string name="settings_font">גופן</string>
+</resources>

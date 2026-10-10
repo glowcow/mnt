@@ -1,0 +1,37 @@
+package dev.glowcow.mnt.files
+
+/** A file or a folder as a listing shows it. */
+data class Node(
+    val path: String,
+    val name: String,
+    val directory: Boolean,
+    /** Bytes; 0 for a folder. */
+    val size: Long,
+    /** Milliseconds since the epoch. */
+    val modified: Long,
+) {
+    val hidden: Boolean get() = name.startsWith('.')
+    val kind: Kind get() = if (directory) Kind.FOLDER else Kind.of(name)
+}
+
+/** How many files and how many folders a folder holds directly. */
+data class Holds(val files: Int, val folders: Int)
+
+/** What a file is, told by the end of its name. */
+enum class Kind {
+    FOLDER, IMAGE, VIDEO, AUDIO, TEXT, ARCHIVE, PACKAGE, OTHER;
+
+    companion object {
+        private val byExtension: Map<String, Kind> = buildMap {
+            fun put(kind: Kind, vararg extensions: String) = extensions.forEach { put(it, kind) }
+            put(IMAGE, "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "avif", "bmp", "svg", "tif", "tiff", "dng", "raw", "ico")
+            put(VIDEO, "mp4", "mkv", "webm", "mov", "avi", "m4v", "3gp", "ts", "mpg", "mpeg", "wmv", "flv")
+            put(AUDIO, "mp3", "flac", "ogg", "opus", "m4a", "aac", "wav", "wma", "aiff", "ape", "mid", "amr")
+            put(TEXT, "txt", "md", "pdf", "doc", "docx", "odt", "rtf", "xls", "xlsx", "ods", "csv", "ppt", "pptx", "odp", "epub", "fb2", "json", "xml", "html", "htm", "log", "ini", "yaml", "yml")
+            put(ARCHIVE, "zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "xz", "zst", "iso", "jar")
+            put(PACKAGE, "apk", "apks", "xapk", "apkm")
+        }
+
+        fun of(name: String): Kind = byExtension[Paths.extension(name)] ?: OTHER
+    }
+}

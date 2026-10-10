@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_files">Датотеке</string>
+    <string name="tab_search">Претрага</string>
+    <string name="tab_settings">Подешавања</string>
+    <string name="back">Назад</string>
+
+    <string name="access_title">Потребан је приступ свим датотекама</string>
+    <string name="access_text">Менаџер датотека чита и мења датотеке било где на телефону и на дисковима прикљученим на њега, а Android то дозвољава само уз дозволу за приступ свим датотекама. Ништа не напушта телефон.</string>
+    <string name="access_allow">Дозволи приступ свим датотекама</string>
+
+    <string name="volume_free">Слободно %1$s од %2$s</string>
+    <string name="device_settings">Избаци или форматирај</string>
+    <string name="device_settings_hint">То могу само системска подешавања складишта; отвориће се</string>
+    <string name="device_card">Меморијска картица</string>
+    <string name="device_drive">USB диск</string>
+    <plurals name="count_volumes">
+        <item quantity="one">%d волумен</item>
+        <item quantity="few">%d волумена</item>
+        <item quantity="other">%d волумена</item>
+    </plurals>
+    <string name="pinned">Закачено</string>
+    <string name="place_downloads">Преузимања</string>
+    <string name="place_camera">Камера</string>
+    <string name="place_pictures">Слике</string>
+    <string name="place_music">Музика</string>
+    <string name="place_movies">Видео</string>
+    <string name="place_documents">Документи</string>
+
+    <string name="folder_empty">Ова фасцикла је празна</string>
+    <string name="folder_holds_nothing">Празна</string>
+    <plurals name="count_files">
+        <item quantity="one">%d датотека</item>
+        <item quantity="few">%d датотеке</item>
+        <item quantity="other">%d датотека</item>
+    </plurals>
+    <plurals name="count_folders">
+        <item quantity="one">%d фасцикла</item>
+        <item quantity="few">%d фасцикле</item>
+        <item quantity="other">%d фасцикли</item>
+    </plurals>
+    <string name="folder_closed">Ова фасцикла се не може отворити</string>
+    <string name="folder_closed_text">Више је нема, или је Android држи затвореном за апликације</string>
+
+    <string name="action_new_folder">Нова фасцикла</string>
+    <string name="action_sort">Сортирање</string>
+    <string name="action_pin">Закачи у Датотеке</string>
+    <string name="action_unpin">Откачи</string>
+    <string name="action_select_all">Изабери све</string>
+    <string name="action_copy">Копирај</string>
+    <string name="action_move">Премести</string>
+    <string name="action_share">Подели</string>
+    <string name="action_delete">Избриши</string>
+    <string name="action_more">Још</string>
+    <string name="action_rename">Преименуј</string>
+    <string name="action_details">Детаљи</string>
+    <string name="action_stop">Заустави</string>
+    <string name="action_cancel">Откажи</string>
+    <string name="action_failed">Овде то није успело</string>
+    <string name="selected_count">Изабрано: %1$d</string>
+
+    <string name="sort_name">Назив</string>
+    <string name="sort_date">Датум измене</string>
+    <string name="sort_size">Величина</string>
+    <string name="sort_type">Тип</string>
+    <string name="sort_ascending">Растуће</string>
+    <string name="sort_descending">Опадајуће</string>
+
+    <string name="new_folder_create">Направи фасциклу</string>
+    <string name="name_label">Назив</string>
+    <string name="name_taken">Овај назив је овде већ заузет</string>
+    <string name="delete_title">Избрисати изабрано?</string>
+    <string name="delete_text">Брише се заувек: нема корпе из које се може вратити</string>
+
+    <string name="paste_copy">Копирај овде</string>
+    <string name="paste_move">Премести овде</string>
+    <string name="paste_into_itself">Фасцикла не може ући у саму себе</string>
+    <string name="conflict_title">Неки називи су овде заузети</string>
+    <string name="conflict_text">Ставке са називом који већ постоји у овој фасцикли: %1$d</string>
+    <string name="conflict_replace">Замени</string>
+    <string name="conflict_keep">Задржи оба</string>
+    <string name="conflict_skip">Прескочи их</string>
+
+    <string name="transfer_copying">Копирање</string>
+    <string name="transfer_moving">Премештање</string>
+    <string name="transfer_deleting">Брисање</string>
+    <string name="transfer_rate">%1$s/с</string>
+    <string name="transfer_channel">Радње са датотекама</string>
+    <string name="transfer_busy">Друга радња је још у току</string>
+    <string name="transfer_stopped">Заустављено</string>
+    <string name="transfer_failed">Није успело: %1$d</string>
+    <string name="transfer_copied">Копирано</string>
+    <string name="transfer_moved">Премештено</string>
+    <string name="transfer_deleted">Избрисано</string>
+    <string name="open_none">Ниједна апликација не отвара ову датотеку</string>
+
+    <string name="details_location">Локација</string>
+    <string name="details_items">Ставке</string>
+    <string name="details_modified">Измењено</string>
+    <string name="details_counting">Бројање…</string>
+
+    <string name="search_hint">Претрага по називу</string>
+    <string name="search_start">Претрага свуда</string>
+    <string name="search_start_text">Унесите бар два слова назива да бисте га тражили на телефону и на свим дисковима</string>
+    <string name="search_empty">Ништа није пронађено</string>
+    <string name="search_running">Претрага…</string>
+    <string name="search_capped">Приказано је само првих %1$d</string>
+
+    <string name="settings_theme">Тема</string>
+    <string name="theme_system">Подразумевано у систему</string>
+    <string name="theme_light">Светла</string>
+    <string name="theme_dark">Тамна</string>
+    <string name="settings_palette">Шема боја</string>
+    <string name="palette_warm">Топла</string>
+    <string name="palette_classic">Класична</string>
+    <string name="settings_language">Језик</string>
+    <string name="language_system">Подразумевано у систему</string>
+    <string name="settings_places">Фасцикле на картици Датотеке</string>
+    <string name="settings_places_hint">Које од фасцикли телефона се тамо приказују</string>
+    <string name="settings_hidden">Скривене датотеке</string>
+    <string name="settings_hidden_hint">Прикажи датотеке и фасцикле чији назив почиње тачком</string>
+
+    <string name="settings_search_clear">Обриши историју претраге</string>
+    <string name="settings_search_clear_hint">Оно што је тражено чува се на телефону и поново нуди на картици Претрага</string>
+    <string name="settings_backup_save">Сачувај копију</string>
+    <string name="settings_backup_restore">Врати из копије</string>
+    <string name="backup_password">Лозинка</string>
+    <string name="backup_save_pick">Изабери где да се сачува</string>
+    <string name="backup_saved">Копија је сачувана</string>
+    <string name="backup_save_failed">Чување копије није успело</string>
+    <string name="backup_encrypted">Ова копија је шифрована</string>
+    <string name="backup_restore">Врати</string>
+    <string name="backup_overwrite">Замени оно што већ постоји</string>
+    <string name="backup_wrong_password">Погрешна лозинка</string>
+    <string name="settings_backup_save_hint">Подешавања, закачене фасцикле и историја претраге у једној датотеци</string>
+    <string name="settings_backup_restore_hint">Додаје закачене фасцикле и претраге из датотеке онима које су овде</string>
+    <string name="backup_password_note">Са лозинком датотека се шифрује. Без ње свако ко добије датотеку види називе ваших фасцикли и оно што сте тражили.</string>
+    <string name="backup_overwrite_hint">Подешавања, закачене фасцикле и историја претраге</string>
+    <string name="backup_restored">Резервна копија је враћена</string>
+    <string name="backup_invalid">Ово није резервна копија Mnt-а</string>
+
+    <string name="settings_version">Верзија</string>
+    <string name="settings_app_update">Проверавај ажурирања апликације</string>
+    <string name="settings_app_update_hint">Једном недељно, у издањима на GitHub-у</string>
+    <string name="app_update_channel">Ажурирања апликације</string>
+    <string name="app_update_available">Доступна је верзија %1$s</string>
+    <string name="app_update_tap">Додирните да видите шта је ново и инсталирате</string>
+    <string name="app_update_check">Додирните да проверите нову верзију</string>
+    <string name="app_update_checking">Провера…</string>
+    <string name="app_update_latest">Ово је најновија верзија</string>
+    <string name="app_update_failed">Провера ажурирања није успела</string>
+    <string name="app_update_downloading">Преузимање… %1$d%%</string>
+    <string name="app_update_install">Преузми и инсталирај</string>
+    <string name="app_update_dev">Развојна верзија, не ажурира се</string>
+    <string name="settings_licence">Лиценца</string>
+    <string name="settings_icons">Иконе</string>
+    <string name="settings_title_font">Фонт наслова</string>
+    <string name="settings_font">Фонт</string>
+</resources>

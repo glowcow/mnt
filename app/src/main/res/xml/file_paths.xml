@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="update" path="update/" />
+    <!-- Any file the user opens in or shares with another app. -->
+    <root-path name="files" path="/" />
+</paths>

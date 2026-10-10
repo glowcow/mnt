@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_files">Файлы</string>
+    <string name="tab_search">Пошук</string>
+    <string name="tab_settings">Налады</string>
+    <string name="back">Назад</string>
+
+    <string name="access_title">Патрэбны доступ да ўсіх файлаў</string>
+    <string name="access_text">Файлавы менеджар чытае і змяняе файлы ў любым месцы тэлефона і на падключаных да яго назапашвальніках, а Android дазваляе гэта толькі з дазволам на доступ да ўсіх файлаў. Нічога не пакідае тэлефон.</string>
+    <string name="access_allow">Дазволіць доступ да ўсіх файлаў</string>
+
+    <string name="volume_free">Вольна %1$s з %2$s</string>
+    <string name="device_settings">Выняць або адфарматаваць</string>
+    <string name="device_settings_hint">Гэта можа толькі сістэмная старонка сховішча; яна адкрыецца</string>
+    <string name="device_card">Карта памяці</string>
+    <string name="device_drive">USB-назапашвальнік</string>
+    <plurals name="count_volumes">
+        <item quantity="one">%d том</item>
+        <item quantity="few">%d тамы</item>
+        <item quantity="many">%d тамоў</item>
+        <item quantity="other">%d тома</item>
+    </plurals>
+    <string name="pinned">Замацавана</string>
+    <string name="place_downloads">Спампоўкі</string>
+    <string name="place_camera">Камера</string>
+    <string name="place_pictures">Выявы</string>
+    <string name="place_music">Музыка</string>
+    <string name="place_movies">Відэа</string>
+    <string name="place_documents">Дакументы</string>
+
+    <string name="folder_empty">Гэтая папка пустая</string>
+    <string name="folder_holds_nothing">Пуста</string>
+    <plurals name="count_files">
+        <item quantity="one">%d файл</item>
+        <item quantity="few">%d файлы</item>
+        <item quantity="many">%d файлаў</item>
+        <item quantity="other">%d файла</item>
+    </plurals>
+    <plurals name="count_folders">
+        <item quantity="one">%d папка</item>
+        <item quantity="few">%d папкі</item>
+        <item quantity="many">%d папак</item>
+        <item quantity="other">%d папкі</item>
+    </plurals>
+    <string name="folder_closed">Гэтую папку нельга адкрыць</string>
+    <string name="folder_closed_text">Яе ўжо няма, або Android трымае яе закрытай для праграм</string>
+
+    <string name="action_new_folder">Новая папка</string>
+    <string name="action_sort">Сартаванне</string>
+    <string name="action_pin">Замацаваць у «Файлах»</string>
+    <string name="action_unpin">Адмацаваць</string>
+    <string name="action_select_all">Выбраць усё</string>
+    <string name="action_copy">Капіяваць</string>
+    <string name="action_move">Перамясціць</string>
+    <string name="action_share">Абагуліць</string>
+    <string name="action_delete">Выдаліць</string>
+    <string name="action_more">Яшчэ</string>
+    <string name="action_rename">Перайменаваць</string>
+    <string name="action_details">Звесткі</string>
+    <string name="action_stop">Спыніць</string>
+    <string name="action_cancel">Скасаваць</string>
+    <string name="action_failed">Тут гэта зрабіць не ўдалося</string>
+    <string name="selected_count">Выбрана: %1$d</string>
+
+    <string name="sort_name">Назва</string>
+    <string name="sort_date">Дата змянення</string>
+    <string name="sort_size">Памер</string>
+    <string name="sort_type">Тып</string>
+    <string name="sort_ascending">Па ўзрастанні</string>
+    <string name="sort_descending">Па ўбыванні</string>
+
+    <string name="new_folder_create">Стварыць папку</string>
+    <string name="name_label">Назва</string>
+    <string name="name_taken">Гэтая назва тут ужо занятая</string>
+    <string name="delete_title">Выдаліць выбранае?</string>
+    <string name="delete_text">Яно выдаляецца назаўсёды: кошыка, адкуль яго можна вярнуць, няма</string>
+
+    <string name="paste_copy">Скапіяваць сюды</string>
+    <string name="paste_move">Перамясціць сюды</string>
+    <string name="paste_into_itself">Папку нельга змясціць у саму сябе</string>
+    <string name="conflict_title">Некаторыя назвы тут занятыя</string>
+    <string name="conflict_text">Элементаў з назвай, якая ўжо ёсць у гэтай папцы: %1$d</string>
+    <string name="conflict_replace">Замяніць</string>
+    <string name="conflict_keep">Пакінуць абодва</string>
+    <string name="conflict_skip">Прапусціць іх</string>
+
+    <string name="transfer_copying">Капіяванне</string>
+    <string name="transfer_moving">Перамяшчэнне</string>
+    <string name="transfer_deleting">Выдаленне</string>
+    <string name="transfer_rate">%1$s/с</string>
+    <string name="transfer_channel">Аперацыі з файламі</string>
+    <string name="transfer_busy">Іншая аперацыя яшчэ выконваецца</string>
+    <string name="transfer_stopped">Спынена</string>
+    <string name="transfer_failed">Не ўдалося выканаць: %1$d</string>
+    <string name="transfer_copied">Скапіявана</string>
+    <string name="transfer_moved">Перамешчана</string>
+    <string name="transfer_deleted">Выдалена</string>
+    <string name="open_none">Няма праграмы, якая адкрывае гэты файл</string>
+
+    <string name="details_location">Размяшчэнне</string>
+    <string name="details_items">Элементы</string>
+    <string name="details_modified">Зменена</string>
+    <string name="details_counting">Падлік…</string>
+
+    <string name="search_hint">Пошук па назве</string>
+    <string name="search_start">Пошук усюды</string>
+    <string name="search_start_text">Увядзіце не менш за дзве літары назвы, каб шукаць яе на тэлефоне і на ўсіх назапашвальніках</string>
+    <string name="search_empty">Нічога не знойдзена</string>
+    <string name="search_running">Пошук…</string>
+    <string name="search_capped">Паказаны толькі першыя %1$d</string>
+
+    <string name="settings_theme">Тэма</string>
+    <string name="theme_system">Як у сістэме</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Цёмная</string>
+    <string name="settings_palette">Каляровая схема</string>
+    <string name="palette_warm">Цёплая</string>
+    <string name="palette_classic">Класічная</string>
+    <string name="settings_language">Мова</string>
+    <string name="language_system">Як у сістэме</string>
+    <string name="settings_places">Папкі на ўкладцы «Файлы»</string>
+    <string name="settings_places_hint">Якія з уласных папак тэлефона там паказваюцца</string>
+    <string name="settings_hidden">Схаваныя файлы</string>
+    <string name="settings_hidden_hint">Паказваць файлы і папкі, назва якіх пачынаецца з кропкі</string>
+
+    <string name="settings_search_clear">Ачысціць гісторыю пошуку</string>
+    <string name="settings_search_clear_hint">Тое, што шукалася, захоўваецца на тэлефоне і прапануецца зноў на ўкладцы «Пошук»</string>
+    <string name="settings_backup_save">Захаваць копію</string>
+    <string name="settings_backup_restore">Аднавіць з копіі</string>
+    <string name="backup_password">Пароль</string>
+    <string name="backup_save_pick">Выбраць, куды захаваць</string>
+    <string name="backup_saved">Копія захавана</string>
+    <string name="backup_save_failed">Не атрымалася захаваць копію</string>
+    <string name="backup_encrypted">Гэтая копія зашыфравана</string>
+    <string name="backup_restore">Аднавіць</string>
+    <string name="backup_overwrite">Замяняць тое, што ўжо ёсць</string>
+    <string name="backup_wrong_password">Няправільны пароль</string>
+    <string name="settings_backup_save_hint">Налады, замацаваныя папкі і гісторыя пошуку ў адным файле</string>
+    <string name="settings_backup_restore_hint">Дадае замацаваныя папкі і пошукі з файла да тых, што ёсць тут</string>
+    <string name="backup_password_note">З паролем файл шыфруецца. Без пароля кожны, хто атрымае файл, убачыць назвы вашых папак і тое, што вы шукалі.</string>
+    <string name="backup_overwrite_hint">Налады, замацаваныя папкі і гісторыя пошуку</string>
+    <string name="backup_restored">Копія адноўлена</string>
+    <string name="backup_invalid">Гэта не рэзервовая копія Mnt</string>
+
+    <string name="settings_version">Версія</string>
+    <string name="settings_app_update">Правяраць абнаўленні праграмы</string>
+    <string name="settings_app_update_hint">Раз на тыдзень, у рэлізах на GitHub</string>
+    <string name="app_update_channel">Абнаўленні праграмы</string>
+    <string name="app_update_available">Даступная версія %1$s</string>
+    <string name="app_update_tap">Націсніце, каб паглядзець, што новага, і ўсталяваць</string>
+    <string name="app_update_check">Націсніце, каб праверыць новую версію</string>
+    <string name="app_update_checking">Правяраем…</string>
+    <string name="app_update_latest">Гэта апошняя версія</string>
+    <string name="app_update_failed">Не атрымалася праверыць абнаўленні</string>
+    <string name="app_update_downloading">Спампоўванне… %1$d%%</string>
+    <string name="app_update_install">Спампаваць і ўсталяваць</string>
+    <string name="app_update_dev">Зборка для распрацоўкі, не абнаўляецца</string>
+    <string name="settings_licence">Ліцэнзія</string>
+    <string name="settings_icons">Значкі</string>
+    <string name="settings_title_font">Шрыфт загалоўкаў</string>
+    <string name="settings_font">Шрыфт</string>
+</resources>
