@@ -47,6 +47,8 @@
     <string name="action_pin">Fijar en Archivos</string>
     <string name="action_unpin">Desfijar</string>
     <string name="action_select_all">Seleccionar todo</string>
+    <string name="action_deselect_all">Deseleccionar todo</string>
+    <string name="action_restore">Restaurar</string>
     <string name="action_copy">Copiar</string>
     <string name="action_move">Mover</string>
     <string name="action_share">Compartir</string>
@@ -70,7 +72,23 @@
     <string name="name_label">Nombre</string>
     <string name="name_taken">Este nombre ya existe aquí</string>
     <string name="delete_title">¿Eliminar lo seleccionado?</string>
-    <string name="delete_text">Se elimina para siempre: no hay papelera de la que recuperarlo</string>
+    <string name="delete_text">En la papelera se guarda %1$d días y se puede recuperar desde allí</string>
+    <string name="delete_to_bin">Mover a la papelera</string>
+    <string name="delete_for_good">Eliminar para siempre</string>
+    <string name="delete_for_good_title">¿Eliminar para siempre?</string>
+    <string name="delete_for_good_text">No se podrá recuperar</string>
+
+    <string name="bin">Papelera</string>
+    <string name="bin_text">Lo eliminado se guarda aquí %1$d días y luego se borra para siempre</string>
+    <string name="bin_empty">La papelera está vacía</string>
+    <string name="bin_clear">Vaciar la papelera</string>
+    <string name="bin_clear_title">¿Vaciar la papelera?</string>
+    <string name="bin_restored">Restaurado</string>
+    <plurals name="days_left">
+        <item quantity="one">Queda %d día</item>
+        <item quantity="many">Quedan %d días</item>
+        <item quantity="other">Quedan %d días</item>
+    </plurals>
 
     <string name="paste_copy">Copiar aquí</string>
     <string name="paste_move">Mover aquí</string>
@@ -119,6 +137,8 @@
     <string name="settings_places_hint">Cuáles de las carpetas propias del teléfono aparecen allí</string>
     <string name="settings_hidden">Archivos ocultos</string>
     <string name="settings_hidden_hint">Mostrar los archivos y carpetas cuyo nombre empieza por un punto</string>
+    <string name="settings_bin_external">Papelera en tarjetas y unidades</string>
+    <string name="settings_bin_external_hint">Mientras está desactivada, lo eliminado en una tarjeta de memoria o una unidad se borra para siempre al instante</string>
 
     <string name="settings_search_clear">Borrar el historial de búsqueda</string>
     <string name="settings_search_clear_hint">Lo que se buscó se guarda en el teléfono y se ofrece de nuevo en la pestaña Buscar</string>

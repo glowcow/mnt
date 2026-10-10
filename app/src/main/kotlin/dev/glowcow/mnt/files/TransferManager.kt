@@ -21,7 +21,7 @@ data class TransferResult(val kind: TransferKind, val failed: Int, val stopped: 
 data class Clip(val paths: List<String>, val move: Boolean)
 
 /** Runs one transfer at a time, outside any screen, and tells what it is doing. */
-class TransferManager(private val scope: CoroutineScope, private val files: FileStore) {
+class TransferManager(private val scope: CoroutineScope, private val files: FileStore, private val trash: Trash) {
     private val _progress = MutableStateFlow<TransferProgress?>(null)
     val progress: StateFlow<TransferProgress?> = _progress
 
@@ -41,6 +41,9 @@ class TransferManager(private val scope: CoroutineScope, private val files: File
         begin(if (move) TransferKind.MOVE else TransferKind.COPY) { copy(sources, dest, move, conflict) }
 
     fun delete(paths: List<String>): Boolean = begin(TransferKind.DELETE) { delete(paths) }
+
+    /** Deletes into the bin. */
+    fun discard(paths: List<String>): Boolean = begin(TransferKind.DELETE) { discard(paths, trash) }
 
     fun stop() {
         job?.cancel()

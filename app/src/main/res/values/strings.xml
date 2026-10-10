@@ -46,6 +46,8 @@
     <string name="action_pin">Pin to Files</string>
     <string name="action_unpin">Unpin</string>
     <string name="action_select_all">Select all</string>
+    <string name="action_deselect_all">Deselect all</string>
+    <string name="action_restore">Restore</string>
     <string name="action_copy">Copy</string>
     <string name="action_move">Move</string>
     <string name="action_share">Share</string>
@@ -69,7 +71,22 @@
     <string name="name_label">Name</string>
     <string name="name_taken">This name is already taken here</string>
     <string name="delete_title">Delete what is selected?</string>
-    <string name="delete_text">It is removed for good: there is no bin to take it back from</string>
+    <string name="delete_text" tools:ignore="PluralsCandidate">In the bin it is kept for %1$d days and can be put back from there</string>
+    <string name="delete_to_bin">Move to the bin</string>
+    <string name="delete_for_good">Delete for good</string>
+    <string name="delete_for_good_title">Delete for good?</string>
+    <string name="delete_for_good_text">It cannot be taken back</string>
+
+    <string name="bin">Bin</string>
+    <string name="bin_text" tools:ignore="PluralsCandidate">What is deleted is kept here for %1$d days, then removed for good</string>
+    <string name="bin_empty">The bin is empty</string>
+    <string name="bin_clear">Empty the bin</string>
+    <string name="bin_clear_title">Empty the bin?</string>
+    <string name="bin_restored">Restored</string>
+    <plurals name="days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
 
     <string name="paste_copy">Copy here</string>
     <string name="paste_move">Move here</string>
@@ -119,6 +136,8 @@
     <string name="settings_places_hint">Which of the phone’s own folders are listed there</string>
     <string name="settings_hidden">Hidden files</string>
     <string name="settings_hidden_hint">Show files and folders whose name starts with a dot</string>
+    <string name="settings_bin_external">Bin on cards and drives</string>
+    <string name="settings_bin_external_hint">While off, what is deleted on a memory card or a drive is removed for good at once</string>
 
     <string name="settings_search_clear">Clear search history</string>
     <string name="settings_search_clear_hint">What was searched for is kept on the phone and offered again on the Search tab</string>

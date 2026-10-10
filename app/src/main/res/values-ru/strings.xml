@@ -50,6 +50,8 @@
     <string name="action_pin">Закрепить в «Файлах»</string>
     <string name="action_unpin">Открепить</string>
     <string name="action_select_all">Выбрать всё</string>
+    <string name="action_deselect_all">Снять выделение</string>
+    <string name="action_restore">Восстановить</string>
     <string name="action_copy">Копировать</string>
     <string name="action_move">Переместить</string>
     <string name="action_share">Поделиться</string>
@@ -73,7 +75,24 @@
     <string name="name_label">Имя</string>
     <string name="name_taken">Это имя здесь уже занято</string>
     <string name="delete_title">Удалить выбранное?</string>
-    <string name="delete_text">Оно удаляется насовсем: корзины, откуда его можно вернуть, нет</string>
+    <string name="delete_text">В корзине оно хранится %1$d дней, оттуда его можно вернуть</string>
+    <string name="delete_to_bin">В корзину</string>
+    <string name="delete_for_good">Удалить насовсем</string>
+    <string name="delete_for_good_title">Удалить насовсем?</string>
+    <string name="delete_for_good_text">Вернуть это будет нельзя</string>
+
+    <string name="bin">Корзина</string>
+    <string name="bin_text">Удалённое хранится здесь %1$d дней, потом удаляется насовсем</string>
+    <string name="bin_empty">Корзина пуста</string>
+    <string name="bin_clear">Очистить корзину</string>
+    <string name="bin_clear_title">Очистить корзину?</string>
+    <string name="bin_restored">Восстановлено</string>
+    <plurals name="days_left">
+        <item quantity="one">Остался %d день</item>
+        <item quantity="few">Осталось %d дня</item>
+        <item quantity="many">Осталось %d дней</item>
+        <item quantity="other">Осталось %d дня</item>
+    </plurals>
 
     <string name="paste_copy">Скопировать сюда</string>
     <string name="paste_move">Переместить сюда</string>
@@ -122,6 +141,8 @@
     <string name="settings_places_hint">Какие из собственных папок телефона там показаны</string>
     <string name="settings_hidden">Скрытые файлы</string>
     <string name="settings_hidden_hint">Показывать файлы и папки, имя которых начинается с точки</string>
+    <string name="settings_bin_external">Корзина на картах и накопителях</string>
+    <string name="settings_bin_external_hint">Пока выключено, удалённое с карты памяти или накопителя стирается сразу и насовсем</string>
 
     <string name="settings_search_clear">Очистить историю поиска</string>
     <string name="settings_search_clear_hint">То, что искалось, хранится на телефоне и предлагается снова на вкладке «Поиск»</string>

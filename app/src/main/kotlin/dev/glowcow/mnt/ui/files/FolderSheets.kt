@@ -25,6 +25,7 @@ import dev.glowcow.mnt.files.Conflict
 import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.files.Paths
 import dev.glowcow.mnt.files.SortBy
+import dev.glowcow.mnt.files.Trash
 import dev.glowcow.mnt.ui.components.Group
 import dev.glowcow.mnt.ui.components.GroupDivider
 import dev.glowcow.mnt.ui.components.GroupField
@@ -82,10 +83,16 @@ fun FolderSheets(
             ) { name -> vm.rename(node, name) { if (!it) onFailed() } }
         }
 
-        // There is no bin to take things back from, so a delete asks first.
         FolderSheet.DELETE -> GroupSheet(stringResource(R.string.delete_title), close) { pick ->
-            Note(stringResource(R.string.delete_text))
-            Group { GroupRow(stringResource(R.string.action_delete), onClick = { pick { onStarted(vm.delete()) } }) }
+            val binned = remember { vm.binned() }
+            Note(if (binned) stringResource(R.string.delete_text, Trash.KEEP_DAYS) else stringResource(R.string.delete_for_good_text))
+            Group {
+                if (binned) {
+                    GroupRow(stringResource(R.string.delete_to_bin), onClick = { pick { onStarted(vm.delete(forGood = false)) } })
+                    GroupDivider()
+                }
+                GroupRow(stringResource(R.string.delete_for_good), onClick = { pick { onStarted(vm.delete(forGood = true)) } })
+            }
         }
 
         FolderSheet.MORE -> GroupSheet(stringResource(R.string.selected_count, vm.selected().size), close) { pick ->
@@ -126,7 +133,7 @@ private fun CheckRow(label: String, checked: Boolean, onClick: () -> Unit) {
 
 /** The explanation at the top of a sheet that asks. */
 @Composable
-private fun Note(text: String) {
+fun Note(text: String) {
     Text(text, color = MntTheme.colors.muted, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 14.dp))
 }
 

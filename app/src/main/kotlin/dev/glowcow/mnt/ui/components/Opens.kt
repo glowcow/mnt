@@ -104,6 +104,8 @@ fun folderKey(path: String) = "folder:$path"
 /** The key of the page of a device's volumes and of the row that opens it. */
 fun deviceKey(id: String) = "device:$id"
 
+const val BIN_KEY = "bin"
+
 /** How long a page takes to grow out of a row or to shrink back into it; no page moves for longer. */
 const val MOVE_MS = 300
 

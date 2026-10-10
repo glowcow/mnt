@@ -47,6 +47,8 @@
     <string name="action_pin">הצמדה ל„קבצים”</string>
     <string name="action_unpin">ביטול הצמדה</string>
     <string name="action_select_all">בחירת הכול</string>
+    <string name="action_deselect_all">ביטול הבחירה</string>
+    <string name="action_restore">שחזור</string>
     <string name="action_copy">העתקה</string>
     <string name="action_move">העברה</string>
     <string name="action_share">שיתוף</string>
@@ -70,7 +72,23 @@
     <string name="name_label">שם</string>
     <string name="name_taken">השם הזה כבר תפוס כאן</string>
     <string name="delete_title">למחוק את הנבחר?</string>
-    <string name="delete_text">המחיקה סופית: אין סל שממנו אפשר לשחזר</string>
+    <string name="delete_text">בסל זה נשמר %1$d ימים ואפשר לשחזר משם</string>
+    <string name="delete_to_bin">העברה לסל</string>
+    <string name="delete_for_good">מחיקה לצמיתות</string>
+    <string name="delete_for_good_title">למחוק לצמיתות?</string>
+    <string name="delete_for_good_text">לא יהיה אפשר לשחזר</string>
+
+    <string name="bin">סל המחזור</string>
+    <string name="bin_text">מה שנמחק נשמר כאן %1$d ימים ואז נמחק לצמיתות</string>
+    <string name="bin_empty">הסל ריק</string>
+    <string name="bin_clear">ריקון הסל</string>
+    <string name="bin_clear_title">לרוקן את הסל?</string>
+    <string name="bin_restored">שוחזר</string>
+    <plurals name="days_left">
+        <item quantity="one">נותר יום %d</item>
+        <item quantity="two">נותרו %d ימים</item>
+        <item quantity="other">נותרו %d ימים</item>
+    </plurals>
 
     <string name="paste_copy">העתקה לכאן</string>
     <string name="paste_move">העברה לכאן</string>
@@ -119,6 +137,8 @@
     <string name="settings_places_hint">אילו מתיקיות הטלפון מופיעות שם</string>
     <string name="settings_hidden">קבצים מוסתרים</string>
     <string name="settings_hidden_hint">הצגת קבצים ותיקיות ששמם מתחיל בנקודה</string>
+    <string name="settings_bin_external">סל בכרטיסים ובכוננים</string>
+    <string name="settings_bin_external_hint">כל עוד כבוי, מה שנמחק בכרטיס זיכרון או בכונן נמחק מיד לצמיתות</string>
 
     <string name="settings_search_clear">ניקוי היסטוריית החיפוש</string>
     <string name="settings_search_clear_hint">מה שחופש נשמר בטלפון ומוצע שוב בלשונית החיפוש</string>

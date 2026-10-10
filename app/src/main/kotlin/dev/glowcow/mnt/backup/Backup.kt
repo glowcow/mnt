@@ -32,7 +32,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                         app = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty(),
                         settings = BackupSettings(
                             s.theme.name, s.palette.name, s.appUpdate, s.showHidden, s.sortBy.name, s.sortDescending,
-                            s.pinned, s.hiddenPlaces.toList(), s.searches,
+                            s.pinned, s.hiddenPlaces.toList(), s.searches, s.binExternal,
                         ),
                     ),
                 )
@@ -84,6 +84,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                 palette = runCatching { Palette.valueOf(b.palette) }.getOrDefault(d.palette),
                 appUpdate = b.appUpdate,
                 showHidden = b.showHidden,
+                binExternal = b.binExternal,
                 sortBy = runCatching { SortBy.valueOf(b.sortBy) }.getOrDefault(d.sortBy),
                 sortDescending = b.sortDescending,
                 pinned = b.pinned.sane().filter { it.startsWith('/') },

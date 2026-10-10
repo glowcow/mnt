@@ -44,6 +44,8 @@
     <string name="action_pin">An „Dateien“ anheften</string>
     <string name="action_unpin">Lösen</string>
     <string name="action_select_all">Alle auswählen</string>
+    <string name="action_deselect_all">Auswahl aufheben</string>
+    <string name="action_restore">Wiederherstellen</string>
     <string name="action_copy">Kopieren</string>
     <string name="action_move">Verschieben</string>
     <string name="action_share">Teilen</string>
@@ -67,7 +69,22 @@
     <string name="name_label">Name</string>
     <string name="name_taken">Diesen Namen gibt es hier schon</string>
     <string name="delete_title">Auswahl löschen?</string>
-    <string name="delete_text">Es wird endgültig entfernt: Es gibt keinen Papierkorb, aus dem man es zurückholen könnte</string>
+    <string name="delete_text">Im Papierkorb bleibt es %1$d Tage und lässt sich von dort zurückholen</string>
+    <string name="delete_to_bin">In den Papierkorb</string>
+    <string name="delete_for_good">Endgültig löschen</string>
+    <string name="delete_for_good_title">Endgültig löschen?</string>
+    <string name="delete_for_good_text">Es lässt sich nicht zurückholen</string>
+
+    <string name="bin">Papierkorb</string>
+    <string name="bin_text">Gelöschtes bleibt %1$d Tage hier und wird dann endgültig entfernt</string>
+    <string name="bin_empty">Der Papierkorb ist leer</string>
+    <string name="bin_clear">Papierkorb leeren</string>
+    <string name="bin_clear_title">Papierkorb leeren?</string>
+    <string name="bin_restored">Wiederhergestellt</string>
+    <plurals name="days_left">
+        <item quantity="one">Noch %d Tag</item>
+        <item quantity="other">Noch %d Tage</item>
+    </plurals>
 
     <string name="paste_copy">Hierher kopieren</string>
     <string name="paste_move">Hierher verschieben</string>
@@ -116,6 +133,8 @@
     <string name="settings_places_hint">Welche der eigenen Ordner des Telefons dort stehen</string>
     <string name="settings_hidden">Versteckte Dateien</string>
     <string name="settings_hidden_hint">Dateien und Ordner zeigen, deren Name mit einem Punkt beginnt</string>
+    <string name="settings_bin_external">Papierkorb auf Karten und Laufwerken</string>
+    <string name="settings_bin_external_hint">Solange aus, wird auf einer Speicherkarte oder einem Laufwerk Gelöschtes sofort endgültig entfernt</string>
 
     <string name="settings_search_clear">Suchverlauf löschen</string>
     <string name="settings_search_clear_hint">Was gesucht wurde, bleibt auf dem Telefon und wird im Tab „Suche“ wieder angeboten</string>

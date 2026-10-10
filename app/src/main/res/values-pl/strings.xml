@@ -50,6 +50,8 @@
     <string name="action_pin">Przypnij do Plików</string>
     <string name="action_unpin">Odepnij</string>
     <string name="action_select_all">Zaznacz wszystko</string>
+    <string name="action_deselect_all">Odznacz wszystko</string>
+    <string name="action_restore">Przywróć</string>
     <string name="action_copy">Kopiuj</string>
     <string name="action_move">Przenieś</string>
     <string name="action_share">Udostępnij</string>
@@ -73,7 +75,24 @@
     <string name="name_label">Nazwa</string>
     <string name="name_taken">Ta nazwa jest tu już zajęta</string>
     <string name="delete_title">Usunąć zaznaczone?</string>
-    <string name="delete_text">Znika na dobre: nie ma kosza, z którego można to przywrócić</string>
+    <string name="delete_text">W koszu zostaje przez %1$d dni i można to stamtąd przywrócić</string>
+    <string name="delete_to_bin">Przenieś do kosza</string>
+    <string name="delete_for_good">Usuń na dobre</string>
+    <string name="delete_for_good_title">Usunąć na dobre?</string>
+    <string name="delete_for_good_text">Nie da się tego przywrócić</string>
+
+    <string name="bin">Kosz</string>
+    <string name="bin_text">Usunięte rzeczy zostają tu przez %1$d dni, potem znikają na dobre</string>
+    <string name="bin_empty">Kosz jest pusty</string>
+    <string name="bin_clear">Opróżnij kosz</string>
+    <string name="bin_clear_title">Opróżnić kosz?</string>
+    <string name="bin_restored">Przywrócono</string>
+    <plurals name="days_left">
+        <item quantity="one">Został %d dzień</item>
+        <item quantity="few">Zostały %d dni</item>
+        <item quantity="many">Zostało %d dni</item>
+        <item quantity="other">Zostało %d dnia</item>
+    </plurals>
 
     <string name="paste_copy">Kopiuj tutaj</string>
     <string name="paste_move">Przenieś tutaj</string>
@@ -122,6 +141,8 @@
     <string name="settings_places_hint">Które z własnych folderów telefonu są tam widoczne</string>
     <string name="settings_hidden">Ukryte pliki</string>
     <string name="settings_hidden_hint">Pokazuj pliki i foldery, których nazwa zaczyna się od kropki</string>
+    <string name="settings_bin_external">Kosz na kartach i dyskach</string>
+    <string name="settings_bin_external_hint">Gdy wyłączone, to, co usunięto z karty pamięci lub dysku, znika od razu na dobre</string>
 
     <string name="settings_search_clear">Wyczyść historię wyszukiwania</string>
     <string name="settings_search_clear_hint">To, czego szukano, zostaje w telefonie i jest proponowane ponownie na karcie Szukaj</string>

@@ -22,6 +22,8 @@ data class AppSettings(
     val appUpdate: Boolean = false,
     /** Show files and folders whose name starts with a dot. */
     val showHidden: Boolean = false,
+    /** Keep a bin on memory cards and drives too; without it a delete there is for good. */
+    val binExternal: Boolean = false,
     val sortBy: SortBy = SortBy.NAME,
     val sortDescending: Boolean = false,
     /** Folders pinned to the Files tab, in the order they were pinned. */
@@ -39,6 +41,7 @@ class SettingsStore(private val context: Context) {
     private val paletteKey = stringPreferencesKey("palette")
     private val appUpdateKey = booleanPreferencesKey("app_update")
     private val showHiddenKey = booleanPreferencesKey("show_hidden")
+    private val binExternalKey = booleanPreferencesKey("bin_external")
     private val sortByKey = stringPreferencesKey("sort_by")
     private val sortDescendingKey = booleanPreferencesKey("sort_descending")
     private val pinnedKey = stringPreferencesKey("pinned")
@@ -51,6 +54,7 @@ class SettingsStore(private val context: Context) {
             palette = p[paletteKey]?.let { runCatching { Palette.valueOf(it) }.getOrNull() } ?: Palette.CLASSIC,
             appUpdate = p[appUpdateKey] ?: false,
             showHidden = p[showHiddenKey] ?: false,
+            binExternal = p[binExternalKey] ?: false,
             sortBy = p[sortByKey]?.let { runCatching { SortBy.valueOf(it) }.getOrNull() } ?: SortBy.NAME,
             sortDescending = p[sortDescendingKey] ?: false,
             pinned = p[pinnedKey].list(),
@@ -65,6 +69,7 @@ class SettingsStore(private val context: Context) {
         it[paletteKey] = s.palette.name
         it[appUpdateKey] = s.appUpdate
         it[showHiddenKey] = s.showHidden
+        it[binExternalKey] = s.binExternal
         it[sortByKey] = s.sortBy.name
         it[sortDescendingKey] = s.sortDescending
         it[pinnedKey] = Json.encodeToString(s.pinned)
@@ -85,6 +90,8 @@ class SettingsStore(private val context: Context) {
     suspend fun setAppUpdate(on: Boolean) = context.dataStore.edit { it[appUpdateKey] = on }
 
     suspend fun setShowHidden(on: Boolean) = context.dataStore.edit { it[showHiddenKey] = on }
+
+    suspend fun setBinExternal(on: Boolean) = context.dataStore.edit { it[binExternalKey] = on }
 
     suspend fun setSort(by: SortBy, descending: Boolean) = context.dataStore.edit {
         it[sortByKey] = by.name

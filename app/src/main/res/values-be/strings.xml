@@ -50,6 +50,8 @@
     <string name="action_pin">Замацаваць у «Файлах»</string>
     <string name="action_unpin">Адмацаваць</string>
     <string name="action_select_all">Выбраць усё</string>
+    <string name="action_deselect_all">Зняць вылучэнне</string>
+    <string name="action_restore">Аднавіць</string>
     <string name="action_copy">Капіяваць</string>
     <string name="action_move">Перамясціць</string>
     <string name="action_share">Абагуліць</string>
@@ -73,7 +75,24 @@
     <string name="name_label">Назва</string>
     <string name="name_taken">Гэтая назва тут ужо занятая</string>
     <string name="delete_title">Выдаліць выбранае?</string>
-    <string name="delete_text">Яно выдаляецца назаўсёды: кошыка, адкуль яго можна вярнуць, няма</string>
+    <string name="delete_text">У кошыку яно захоўваецца %1$d дзён, адтуль яго можна вярнуць</string>
+    <string name="delete_to_bin">У кошык</string>
+    <string name="delete_for_good">Выдаліць назаўсёды</string>
+    <string name="delete_for_good_title">Выдаліць назаўсёды?</string>
+    <string name="delete_for_good_text">Вярнуць гэта будзе нельга</string>
+
+    <string name="bin">Кошык</string>
+    <string name="bin_text">Выдаленае захоўваецца тут %1$d дзён, потым выдаляецца назаўсёды</string>
+    <string name="bin_empty">Кошык пусты</string>
+    <string name="bin_clear">Ачысціць кошык</string>
+    <string name="bin_clear_title">Ачысціць кошык?</string>
+    <string name="bin_restored">Адноўлена</string>
+    <plurals name="days_left">
+        <item quantity="one">Застаўся %d дзень</item>
+        <item quantity="few">Засталося %d дні</item>
+        <item quantity="many">Засталося %d дзён</item>
+        <item quantity="other">Засталося %d дня</item>
+    </plurals>
 
     <string name="paste_copy">Скапіяваць сюды</string>
     <string name="paste_move">Перамясціць сюды</string>
@@ -122,6 +141,8 @@
     <string name="settings_places_hint">Якія з уласных папак тэлефона там паказваюцца</string>
     <string name="settings_hidden">Схаваныя файлы</string>
     <string name="settings_hidden_hint">Паказваць файлы і папкі, назва якіх пачынаецца з кропкі</string>
+    <string name="settings_bin_external">Кошык на картах і назапашвальніках</string>
+    <string name="settings_bin_external_hint">Пакуль выключана, выдаленае з карты памяці або назапашвальніка сціраецца адразу і назаўсёды</string>
 
     <string name="settings_search_clear">Ачысціць гісторыю пошуку</string>
     <string name="settings_search_clear_hint">Тое, што шукалася, захоўваецца на тэлефоне і прапануецца зноў на ўкладцы «Пошук»</string>

@@ -28,6 +28,7 @@ import dev.glowcow.mnt.files.TransferKind
 import dev.glowcow.mnt.ui.components.LocalDirection
 import dev.glowcow.mnt.ui.components.MOVE_MS
 import dev.glowcow.mnt.ui.components.TopTab
+import dev.glowcow.mnt.ui.files.BinScreen
 import dev.glowcow.mnt.ui.files.DeviceScreen
 import dev.glowcow.mnt.ui.files.FilesScreen
 import dev.glowcow.mnt.ui.files.FolderScreen
@@ -42,6 +43,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object SettingsRoute : NavKey
 @Serializable data class FolderRoute(val path: String) : NavKey
 @Serializable data class DeviceRoute(val id: String) : NavKey
+@Serializable data object BinRoute : NavKey
 
 private fun TopTab.route(): NavKey = when (this) {
     TopTab.FILES -> FilesRoute
@@ -91,7 +93,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
     val c = MntTheme.colors
     val lightIcons = !c.isDark
     // Lists lie on the plain ground, the pages of blocks on the grouped one.
-    val ground = if (backStack.lastOrNull().let { it is FolderRoute || it == SearchRoute }) c.bg else c.groupBg
+    val ground = if (backStack.lastOrNull().let { it is FolderRoute || it == SearchRoute || it == BinRoute }) c.bg else c.groupBg
     val view = LocalView.current
     SideEffect {
         val window = (view.context as? Activity)?.window ?: return@SideEffect
@@ -128,7 +130,8 @@ fun MntRoot(openTab: Flow<TopTab>) {
             stayBelow
         },
         entryProvider = entryProvider {
-            entry<FilesRoute> { FilesScreen(onTab = ::selectTab, onOpen = ::openFolder, onDevice = { backStack.add(DeviceRoute(it)) }) }
+            entry<FilesRoute> { FilesScreen(onTab = ::selectTab, onOpen = ::openFolder, onDevice = { backStack.add(DeviceRoute(it)) }, onBin = { backStack.add(BinRoute) }) }
+            entry<BinRoute> { BinScreen(onBack = { backStack.remove(BinRoute) }) }
             entry<DeviceRoute> { route -> DeviceScreen(route.id, onBack = { backStack.remove(route) }, onOpen = ::openFolder) }
             entry<FolderRoute> { route -> FolderScreen(route.path, onBack = { backStack.removeLastOrNull() }, onOpen = ::openFolder) }
             entry<SearchRoute> { SearchScreen(onTab = ::selectTab, onOpen = ::openFolder) }

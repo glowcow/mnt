@@ -45,6 +45,11 @@
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <service
+            android:name=".files.TrashService"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service
             android:name=".files.TransferService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />

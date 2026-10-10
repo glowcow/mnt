@@ -21,6 +21,7 @@ data class BackupSettings(
     val pinned: List<String> = emptyList(),
     val hiddenPlaces: List<String> = emptyList(),
     val searches: List<String> = emptyList(),
+    val binExternal: Boolean = false,
 )
 
 /** `backup.json` of an archive. */

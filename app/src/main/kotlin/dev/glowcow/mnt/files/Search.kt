@@ -13,7 +13,7 @@ class Search(private val files: FileStore) {
         while (folders.isNotEmpty()) {
             currentCoroutineContext().ensureActive()
             for (node in files.list(folders.removeFirst()).orEmpty()) {
-                if (node.hidden && !hidden) continue
+                if (node.hidden && !hidden || node.name == Trash.FOLDER) continue
                 if (node.name.contains(query, ignoreCase = true)) emit(node)
                 if (node.directory) folders.add(node.path)
             }

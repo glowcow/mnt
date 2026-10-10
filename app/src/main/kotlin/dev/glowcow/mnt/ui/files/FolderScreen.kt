@@ -149,7 +149,7 @@ fun FolderScreen(
                     leave = MntIcons.Close,
                     leaveLabel = stringResource(R.string.action_cancel),
                 ) {
-                    IconButton48(MntIcons.SelectAll, stringResource(R.string.action_select_all), onClick = vm::selectAll)
+                    SelectAllButton(all = (content as? FolderContent.Listed)?.nodes.orEmpty().all { it.path in selection }, onClick = vm::selectAll)
                 }
             } else {
                 val pinned = path in settings.pinned
@@ -191,6 +191,17 @@ fun FolderScreen(
         onSheet = { sheet = it },
         onStarted = ::started,
         onFailed = { toast(R.string.action_failed) },
+    )
+}
+
+/** Ticks every row of a list; filled and in the accent while they all are, when a tap takes that back. */
+@Composable
+fun SelectAllButton(all: Boolean, onClick: () -> Unit) {
+    IconButton48(
+        if (all) MntIcons.SelectAllFilled else MntIcons.SelectAll,
+        stringResource(if (all) R.string.action_deselect_all else R.string.action_select_all),
+        tint = if (all) MntTheme.colors.accent else MntTheme.colors.text,
+        onClick = onClick,
     )
 }
 
@@ -247,7 +258,7 @@ private fun ClipBar(clip: Clip, onPaste: () -> Unit, onCancel: () -> Unit) {
 
 /** A running transfer: what it does, how far and how fast, and the way to stop it. */
 @Composable
-private fun ProgressBar(progress: TransferProgress, onStop: () -> Unit) {
+fun ProgressBar(progress: TransferProgress, onStop: () -> Unit) {
     val c = MntTheme.colors
     Row(
         Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),

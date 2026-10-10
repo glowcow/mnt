@@ -47,6 +47,8 @@
     <string name="action_pin">Fissa in File</string>
     <string name="action_unpin">Rimuovi</string>
     <string name="action_select_all">Seleziona tutto</string>
+    <string name="action_deselect_all">Deseleziona tutto</string>
+    <string name="action_restore">Ripristina</string>
     <string name="action_copy">Copia</string>
     <string name="action_move">Sposta</string>
     <string name="action_share">Condividi</string>
@@ -70,7 +72,23 @@
     <string name="name_label">Nome</string>
     <string name="name_taken">Questo nome esiste già qui</string>
     <string name="delete_title">Eliminare la selezione?</string>
-    <string name="delete_text">Viene rimosso per sempre: non c’è un cestino da cui riprenderlo</string>
+    <string name="delete_text">Resta nel cestino per %1$d giorni e da lì si può riprendere</string>
+    <string name="delete_to_bin">Sposta nel cestino</string>
+    <string name="delete_for_good">Elimina per sempre</string>
+    <string name="delete_for_good_title">Eliminare per sempre?</string>
+    <string name="delete_for_good_text">Non si potrà recuperare</string>
+
+    <string name="bin">Cestino</string>
+    <string name="bin_text">Ciò che viene eliminato resta qui per %1$d giorni, poi è rimosso per sempre</string>
+    <string name="bin_empty">Il cestino è vuoto</string>
+    <string name="bin_clear">Svuota il cestino</string>
+    <string name="bin_clear_title">Svuotare il cestino?</string>
+    <string name="bin_restored">Ripristinato</string>
+    <plurals name="days_left">
+        <item quantity="one">Resta %d giorno</item>
+        <item quantity="many">Restano %d giorni</item>
+        <item quantity="other">Restano %d giorni</item>
+    </plurals>
 
     <string name="paste_copy">Copia qui</string>
     <string name="paste_move">Sposta qui</string>
@@ -119,6 +137,8 @@
     <string name="settings_places_hint">Quali cartelle del telefono vi compaiono</string>
     <string name="settings_hidden">File nascosti</string>
     <string name="settings_hidden_hint">Mostra i file e le cartelle il cui nome inizia con un punto</string>
+    <string name="settings_bin_external">Cestino su schede e unità</string>
+    <string name="settings_bin_external_hint">Finché è disattivato, ciò che viene eliminato su una scheda di memoria o un’unità è rimosso subito per sempre</string>
 
     <string name="settings_search_clear">Cancella la cronologia delle ricerche</string>
     <string name="settings_search_clear_hint">Ciò che è stato cercato resta sul telefono e viene riproposto nella scheda Cerca</string>

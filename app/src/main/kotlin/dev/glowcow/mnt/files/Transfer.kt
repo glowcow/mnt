@@ -33,6 +33,17 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
         for (path in paths) erase(path)
     }
 
+    /** Puts [paths] into [trash], from where they can be taken back. */
+    suspend fun discard(paths: List<String>, trash: Trash) {
+        total = paths.size.toLong()
+        for (path in paths) {
+            currentCoroutineContext().ensureActive()
+            if (!trash.put(path, bytes(path))) failed++
+            done++
+            onProgress(Paths.name(path), done, total)
+        }
+    }
+
     /** Bytes of the files in the tree at [path]. */
     suspend fun bytes(path: String): Long {
         currentCoroutineContext().ensureActive()

@@ -30,13 +30,18 @@ The files on the screenshots are made up.
 ## Features
 
 - **Files** — the phone, the memory card and each drive plugged in with how
-  full it is, the phone's folders you choose to see, and the ones you pinned.
+  full it is, the phone's folders you choose to see, the ones you pinned,
+  and the bin with what it holds.
 - **Drives with several volumes** — a drive shows as one device under its own
   name; a tap lists its volumes, or opens it at once when it has just one.
 - **Folders** — a list sorted the way you choose, each kind of file with a
   picture of its own, folders with a count of what they hold.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename or delete them, or read how much they hold.
+- **Bin** — what you delete on the phone is kept for 30 days and can be put
+  back where it was; after that, or when you say so, it is removed for
+  good. Deleting for good at once is there too. On memory cards and drives
+  a delete is for good unless you turn their bin on in the settings.
 - **Copy and move** — pick in one folder, paste in another; a name that is
   taken can be replaced, kept beside the old one or skipped.
 - **In the background** — a long copy goes on with the app closed, shows how
@@ -71,12 +76,13 @@ app/src/main/kotlin/dev/glowcow/mnt/
                 search;
                 copy, move and delete with the manager that runs one at a
                 time and the foreground service that keeps it going;
+                the bin and the daily job that empties it of old things;
                 handing a file to another app
   backup/       the backup file, its password encryption, save and restore
   update/       check for a new release, download, the weekly job
   data/         settings
   ui/files/     the Files tab, a device's volumes, a folder's page and its
-                sheets
+                sheets, the bin
   ui/search/    the Search tab
   ui/settings/  the Settings tab
   ui/           theme + icons, shared components (tab page and detail page

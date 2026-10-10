@@ -93,6 +93,8 @@ class SettingsViewModel(private val store: SettingsStore, val updater: AppUpdate
     fun setTheme(mode: ThemeMode) = viewModelScope.launch { store.setTheme(mode) }
     fun setPalette(palette: Palette) = viewModelScope.launch { store.setPalette(palette) }
     fun setShowHidden(on: Boolean) = viewModelScope.launch { store.setShowHidden(on) }
+
+    fun setBinExternal(on: Boolean) = viewModelScope.launch { store.setBinExternal(on) }
     fun setAppUpdate(on: Boolean) = viewModelScope.launch { store.setAppUpdate(on) }
     fun clearSearches() = viewModelScope.launch { store.clearSearches() }
     fun setPlaceShown(place: Place, shown: Boolean) = viewModelScope.launch { store.setPlaceShown(place.name, shown) }
@@ -191,6 +193,8 @@ fun SettingsScreen(
                 )
                 GroupDivider()
                 SwitchRow(stringResource(R.string.settings_hidden), stringResource(R.string.settings_hidden_hint), settings.showHidden, vm::setShowHidden)
+                GroupDivider()
+                SwitchRow(stringResource(R.string.settings_bin_external), stringResource(R.string.settings_bin_external_hint), settings.binExternal, vm::setBinExternal)
                 GroupDivider()
                 // The value is how many searches are kept; with none there is nothing to tap for.
                 GroupRow(

@@ -124,4 +124,16 @@ object MntFlat {
         "film",
         Part("M45 9H3v30h42zM22 37v-4h4v4zm8 0v-4h4v4zm8 0v-4h4v4zm-24 0v-4h4v4zm-8 0v-4h4v4zm16-22v-4h4v4zm8 0v-4h4v4zm8 0v-4h4v4zm-24 0v-4h4v4zm-8 0v-4h4v4z", fill = 0xFF7B87C9),
     )
+    val Bin = icon(
+        "empty-trash",
+        Part("M30.6 44H17.4c-2 0-3.7-1.4-4-3.4L9 11h30l-4.5 29.6c-.3 2-2 3.4-3.9 3.4", fill = 0xFFCBBDE3),
+        Part("M38 13H10c-1.1 0-2-.9-2-2s.9-2 2-2h28c1.1 0 2 .9 2 2s-.9 2-2 2", fill = 0xFFA68FCF),
+    )
+    val BinFull = icon(
+        "full-trash",
+        Part("M24 21.3L12.7 10L26 1.7L38.3 10z", fill = 0xFFF7B19B),
+        Part("M24 21.3L12.7 10L17 4.7L38.3 10z", fill = 0xFFFAC7B7),
+        Part("M30.6 44H17.4c-2 0-3.7-1.4-4-3.4L9 11h30l-4.5 29.6c-.3 2-2 3.4-3.9 3.4", fill = 0xFFCBBDE3),
+        Part("M38 13H10c-1.1 0-2-.9-2-2s.9-2 2-2h28c1.1 0 2 .9 2 2s-.9 2-2 2", fill = 0xFFA68FCF),
+    )
 }

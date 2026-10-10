@@ -55,6 +55,7 @@ import dev.glowcow.mnt.ui.components.ProgressLine
 import dev.glowcow.mnt.ui.components.StorageGate
 import dev.glowcow.mnt.ui.components.TabScreen
 import dev.glowcow.mnt.ui.components.TopTab
+import dev.glowcow.mnt.ui.components.BIN_KEY
 import dev.glowcow.mnt.ui.components.deviceKey
 import dev.glowcow.mnt.ui.components.folderKey
 import dev.glowcow.mnt.ui.components.origin
@@ -67,6 +68,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+
+class Bin(val folders: Int, val files: Int, val bytes: Long)
 
 class FilesViewModel(private val c: AppContainer) : ViewModel() {
     val devices: StateFlow<List<Device>> = c.volumes.devices
@@ -84,8 +87,16 @@ class FilesViewModel(private val c: AppContainer) : ViewModel() {
     val pinned: StateFlow<List<String>> = c.settings.settings.map { it.pinned }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** What the bin holds: its items by kind and the bytes of all of them; null until read. */
+    val bin: StateFlow<Bin?> = combine(c.volumes.devices, c.transfers.changes, looks) { _, _, _ ->
+        val items = c.trash.entries()
+        val folders = items.count { it.node.directory }
+        Bin(folders, items.size - folders, items.sumOf { it.bytes })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun refresh() {
         c.volumes.refresh()
+        c.purge()
         looks.value++
     }
 
@@ -99,12 +110,14 @@ fun FilesScreen(
     onTab: (TopTab) -> Unit,
     onOpen: (String) -> Unit,
     onDevice: (String) -> Unit,
+    onBin: () -> Unit,
     vm: FilesViewModel = viewModel { FilesViewModel((this[APPLICATION_KEY] as MntApp).container) },
 ) {
     val devices by vm.devices.collectAsStateWithLifecycle()
     val places by vm.places.collectAsStateWithLifecycle()
     val pinned by vm.pinned.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
+    val bin by vm.bin.collectAsStateWithLifecycle()
     val origins = LocalOrigins.current
     var about by rememberSaveable { mutableStateOf<String?>(null) }
     // A folder opened from this tab grows out of the row that was tapped.
@@ -183,6 +196,21 @@ fun FilesScreen(
                         }
                     }
                 }
+                Group {
+                    val held = bin
+                    GroupRow(
+                        stringResource(R.string.bin),
+                        Modifier.origin(BIN_KEY),
+                        subtitle = held?.let { binText(it) } ?: " ",
+                        icon = if (held == null || held.folders + held.files == 0) MntFlat.Bin else MntFlat.BinFull,
+                        iconTint = Color.Unspecified,
+                        iconSize = PLACE_ICON,
+                        onClick = {
+                            origins.mark(BIN_KEY)
+                            onBin()
+                        },
+                    )
+                }
             }
         }
     }
@@ -235,6 +263,17 @@ fun transferTitle(progress: TransferProgress): String {
     val percent = stringResource(R.string.transfer_progress, stringResource(progress.kind.label), (progress.fraction * 100).toInt())
     val rate = progress.speed?.let { stringResource(R.string.transfer_rate, Formatter.formatShortFileSize(context, it)) }
     return listOfNotNull(percent, rate).joinToString(" · ")
+}
+
+/** `2 folders, 5 files | 1.3 GB`, or that there is nothing. */
+@Composable
+private fun binText(bin: Bin): String {
+    if (bin.folders + bin.files == 0) return stringResource(R.string.folder_holds_nothing)
+    val counts = listOfNotNull(
+        bin.folders.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.count_folders, it, it) },
+        bin.files.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.count_files, it, it) },
+    ).joinToString(", ")
+    return "$counts | ${Formatter.formatShortFileSize(LocalContext.current, bin.bytes)}"
 }
 
 /** `58 GB free of 63 GB` */

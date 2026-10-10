@@ -47,6 +47,8 @@
     <string name="action_pin">Закачи у Датотеке</string>
     <string name="action_unpin">Откачи</string>
     <string name="action_select_all">Изабери све</string>
+    <string name="action_deselect_all">Поништи избор</string>
+    <string name="action_restore">Врати</string>
     <string name="action_copy">Копирај</string>
     <string name="action_move">Премести</string>
     <string name="action_share">Подели</string>
@@ -70,7 +72,23 @@
     <string name="name_label">Назив</string>
     <string name="name_taken">Овај назив је овде већ заузет</string>
     <string name="delete_title">Избрисати изабрано?</string>
-    <string name="delete_text">Брише се заувек: нема корпе из које се може вратити</string>
+    <string name="delete_text">У корпи остаје %1$d дана и одатле се може вратити</string>
+    <string name="delete_to_bin">Премести у корпу</string>
+    <string name="delete_for_good">Избриши заувек</string>
+    <string name="delete_for_good_title">Избрисати заувек?</string>
+    <string name="delete_for_good_text">Неће се моћи вратити</string>
+
+    <string name="bin">Корпа</string>
+    <string name="bin_text">Избрисано остаје овде %1$d дана, затим се брише заувек</string>
+    <string name="bin_empty">Корпа је празна</string>
+    <string name="bin_clear">Испразни корпу</string>
+    <string name="bin_clear_title">Испразнити корпу?</string>
+    <string name="bin_restored">Враћено</string>
+    <plurals name="days_left">
+        <item quantity="one">Још %d дан</item>
+        <item quantity="few">Још %d дана</item>
+        <item quantity="other">Још %d дана</item>
+    </plurals>
 
     <string name="paste_copy">Копирај овде</string>
     <string name="paste_move">Премести овде</string>
@@ -119,6 +137,8 @@
     <string name="settings_places_hint">Које од фасцикли телефона се тамо приказују</string>
     <string name="settings_hidden">Скривене датотеке</string>
     <string name="settings_hidden_hint">Прикажи датотеке и фасцикле чији назив почиње тачком</string>
+    <string name="settings_bin_external">Корпа на картицама и дисковима</string>
+    <string name="settings_bin_external_hint">Док је искључено, оно што се избрише са меморијске картице или диска брише се одмах и заувек</string>
 
     <string name="settings_search_clear">Обриши историју претраге</string>
     <string name="settings_search_clear_hint">Оно што је тражено чува се на телефону и поново нуди на картици Претрага</string>

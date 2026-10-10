@@ -47,6 +47,8 @@
     <string name="action_pin">Épingler dans Fichiers</string>
     <string name="action_unpin">Désépingler</string>
     <string name="action_select_all">Tout sélectionner</string>
+    <string name="action_deselect_all">Tout désélectionner</string>
+    <string name="action_restore">Restaurer</string>
     <string name="action_copy">Copier</string>
     <string name="action_move">Déplacer</string>
     <string name="action_share">Partager</string>
@@ -70,7 +72,23 @@
     <string name="name_label">Nom</string>
     <string name="name_taken">Ce nom est déjà pris ici</string>
     <string name="delete_title">Supprimer la sélection ?</string>
-    <string name="delete_text">La suppression est définitive : il n’y a pas de corbeille où la reprendre</string>
+    <string name="delete_text">La corbeille le garde %1$d jours, on peut l’y reprendre</string>
+    <string name="delete_to_bin">Mettre à la corbeille</string>
+    <string name="delete_for_good">Supprimer définitivement</string>
+    <string name="delete_for_good_title">Supprimer définitivement ?</string>
+    <string name="delete_for_good_text">Impossible de le récupérer ensuite</string>
+
+    <string name="bin">Corbeille</string>
+    <string name="bin_text">Ce qui est supprimé reste ici %1$d jours, puis disparaît définitivement</string>
+    <string name="bin_empty">La corbeille est vide</string>
+    <string name="bin_clear">Vider la corbeille</string>
+    <string name="bin_clear_title">Vider la corbeille ?</string>
+    <string name="bin_restored">Restauré</string>
+    <plurals name="days_left">
+        <item quantity="one">%d jour restant</item>
+        <item quantity="many">%d jours restants</item>
+        <item quantity="other">%d jours restants</item>
+    </plurals>
 
     <string name="paste_copy">Copier ici</string>
     <string name="paste_move">Déplacer ici</string>
@@ -119,6 +137,8 @@
     <string name="settings_places_hint">Lesquels des dossiers du téléphone y figurent</string>
     <string name="settings_hidden">Fichiers cachés</string>
     <string name="settings_hidden_hint">Afficher les fichiers et dossiers dont le nom commence par un point</string>
+    <string name="settings_bin_external">Corbeille sur les cartes et les clés</string>
+    <string name="settings_bin_external_hint">Tant que c’est désactivé, ce qui est supprimé sur une carte mémoire ou une clé disparaît aussitôt définitivement</string>
 
     <string name="settings_search_clear">Effacer l’historique de recherche</string>
     <string name="settings_search_clear_hint">Ce qui a été recherché reste sur le téléphone et est proposé de nouveau dans l’onglet Recherche</string>

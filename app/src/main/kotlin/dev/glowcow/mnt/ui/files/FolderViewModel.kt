@@ -63,6 +63,7 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
 
     /** Paths of the rows that are ticked. */
     val selection = MutableStateFlow<Set<String>>(emptySet())
+    private var before = emptySet<String>()
 
     val progress: StateFlow<TransferProgress?> = c.transfers.progress
     val clip: StateFlow<Clip?> = c.transfers.clip
@@ -126,8 +127,15 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
         selection.value = selection.value.let { if (path in it) it - path else it + path }
     }
 
+    /** Ticks every row; with every row ticked, goes back to what was ticked before. */
     fun selectAll() {
-        selection.value = (content.value as? FolderContent.Listed)?.nodes.orEmpty().mapTo(HashSet()) { it.path }
+        val all = (content.value as? FolderContent.Listed)?.nodes.orEmpty().mapTo(HashSet()) { it.path }
+        if (selection.value == all) {
+            selection.value = before.intersect(all)
+        } else {
+            before = selection.value
+            selection.value = all
+        }
     }
 
     fun clearSelection() {
@@ -161,8 +169,13 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
         return true
     }
 
-    fun delete(): Boolean {
-        if (!c.transfers.delete(selected().map { it.path })) return false
+    /** Whether what is deleted here can go to a bin: on the phone's own storage always, elsewhere when the setting says so. */
+    fun binned(): Boolean = c.volumes.of(path)?.primary == true || settings.value.binExternal
+
+    /** Into the bin, or [forGood] — also where there is no bin. */
+    fun delete(forGood: Boolean): Boolean {
+        val paths = selected().map { it.path }
+        if (!(if (forGood || !binned()) c.transfers.delete(paths) else c.transfers.discard(paths))) return false
         clearSelection()
         return true
     }

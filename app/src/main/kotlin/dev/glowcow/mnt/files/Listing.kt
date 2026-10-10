@@ -2,7 +2,7 @@ package dev.glowcow.mnt.files
 
 enum class SortBy { NAME, DATE, SIZE, TYPE }
 
-/** The order of a folder's rows: folders first, then by the chosen column, names breaking a tie. */
+/** The order of a folder's rows: folders first, then by the chosen column, names breaking a tie. The bin is never among them. */
 object Listing {
     fun arrange(nodes: List<Node>, by: SortBy, descending: Boolean, hidden: Boolean): List<Node> {
         val column: Comparator<Node> = when (by) {
@@ -12,7 +12,7 @@ object Listing {
             SortBy.TYPE -> compareBy { Paths.extension(it.name) }
         }
         val ordered = if (descending) column.reversed() else column
-        return nodes.filter { hidden || !it.hidden }.sortedWith(compareByDescending<Node> { it.directory }.then(ordered).then(NAMES))
+        return nodes.filter { (hidden || !it.hidden) && it.name != Trash.FOLDER }.sortedWith(compareByDescending<Node> { it.directory }.then(ordered).then(NAMES))
     }
 
     /** Names as a person reads them: case aside, and `file2` before `file10`. */
