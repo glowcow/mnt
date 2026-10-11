@@ -85,6 +85,10 @@
     <string name="bin_clear">Svuota il cestino</string>
     <string name="bin_clear_title">Svuotare il cestino?</string>
     <string name="bin_restored">Ripristinato</string>
+    <string name="bin_from">Eliminato da</string>
+    <string name="bin_deleted">Eliminato</string>
+    <string name="bin_until">Conservato fino al</string>
+    <string name="bin_kept">Conservato in</string>
     <plurals name="days_left">
         <item quantity="one">Resta %d giorno</item>
         <item quantity="many">Restano %d giorni</item>

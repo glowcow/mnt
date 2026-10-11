@@ -23,11 +23,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -125,10 +129,20 @@ fun SearchScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     val recent by vm.recent.collectAsStateWithLifecycle()
     val none = stringResource(R.string.open_none)
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
 
     TabScreen(
         TopTab.SEARCH,
-        onTab,
+        // A tap on the tab that is already open goes straight to typing.
+        onTab = {
+            if (it == TopTab.SEARCH) {
+                focus.requestFocus()
+                keyboard?.show()
+            } else {
+                onTab(it)
+            }
+        },
         ground = c.bg,
         header = {
             Row(
@@ -153,7 +167,7 @@ fun SearchScreen(
                         cursorBrush = SolidColor(c.accent),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = { vm.remember() }),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().focusRequester(focus),
                     )
                 }
             }

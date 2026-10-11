@@ -7,9 +7,9 @@ ten languages. Network shares and a built-in viewer are planned and not there
 yet.
 
 <p>
-  <img src="docs/screenshots/files.png" width="200" alt="Files: the phone with how full it is, its folders and a pinned one">
+  <img src="docs/screenshots/files.png" width="200" alt="Files: the phone with how full it is, its folders and the bin">
   <img src="docs/screenshots/folder.png" width="200" alt="A folder: every kind of file with a picture of its own, folders with a count of what they hold">
-  <img src="docs/screenshots/select.png" width="200" alt="Three files ticked, with copy, move, share, delete and more at the bottom">
+  <img src="docs/screenshots/select.png" width="200" alt="Three files ticked, with copy, move, details, delete and more on the island at the bottom">
   <img src="docs/screenshots/dark.png" width="200" alt="A folder of photos in the dark theme">
 </p>
 
@@ -39,9 +39,9 @@ The files on the screenshots are made up.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold.
 - **Bin** — what you delete on the phone is kept for 30 days and can be put
-  back where it was; after that, or when you say so, it is removed for
-  good. Deleting for good at once is there too. On memory cards and drives
-  a delete is for good unless you turn their bin on in the settings.
+  back where it was; after that, or when you say so, it is removed
+  forever. Deleting forever at once is there too. On memory cards and
+  drives a delete is forever unless you turn their bin on in the settings.
 - **Copy and move** — pick in one folder, paste in another; a name that is
   taken can be replaced, kept beside the old one or skipped.
 - **In the background** — a long copy goes on with the app closed, shows how
@@ -158,8 +158,10 @@ scheme is neutral grey — light `#FAFAFA` / dark `#161616` backgrounds, accent
 `#1F6FEB`; the *warm* scheme has `#FAF9F5` / `#1A1A18` and accent `#D97757`.
 UI font: Arimo, with page titles in Cormorant Garamond. Files, folders and
 places are drawn with Flat Color Icons in their own colours, the controls
-with Phosphor. The header and the bars at the bottom are frosted glass: the list
-scrolls on under them, blurred. The launcher icon and the splash screen
+with Phosphor. The header is frosted glass and the bar at the bottom an
+island of it: the list scrolls on under them, blurred. The accent and the
+red of deleting forever are drawn in Display P3 where the screen shows it.
+The launcher icon and the splash screen
 use the brand palette — paper `#F2F0EA`, ink `#14161A`, amber `#F5A524` — and
 turn dark with the system.
 

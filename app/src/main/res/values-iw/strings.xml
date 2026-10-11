@@ -85,6 +85,10 @@
     <string name="bin_clear">ריקון הסל</string>
     <string name="bin_clear_title">לרוקן את הסל?</string>
     <string name="bin_restored">שוחזר</string>
+    <string name="bin_from">נמחק מתוך</string>
+    <string name="bin_deleted">נמחק</string>
+    <string name="bin_until">נשמר עד</string>
+    <string name="bin_kept">נשמר בתוך</string>
     <plurals name="days_left">
         <item quantity="one">נותר יום %d</item>
         <item quantity="two">נותרו %d ימים</item>

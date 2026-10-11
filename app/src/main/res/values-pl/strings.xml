@@ -78,16 +78,20 @@
     <string name="delete_title">Usunąć zaznaczone?</string>
     <string name="delete_text">W koszu zostaje przez %1$d dni i można to stamtąd przywrócić</string>
     <string name="delete_to_bin">Przenieś do kosza</string>
-    <string name="delete_for_good">Usuń na dobre</string>
-    <string name="delete_for_good_title">Usunąć na dobre?</string>
+    <string name="delete_for_good">Usuń na zawsze</string>
+    <string name="delete_for_good_title">Usunąć na zawsze?</string>
     <string name="delete_for_good_text">Nie da się tego przywrócić</string>
 
     <string name="bin">Kosz</string>
-    <string name="bin_text">Usunięte rzeczy zostają tu przez %1$d dni, potem znikają na dobre</string>
+    <string name="bin_text">Usunięte rzeczy zostają tu przez %1$d dni, potem znikają na zawsze</string>
     <string name="bin_empty">Kosz jest pusty</string>
     <string name="bin_clear">Opróżnij kosz</string>
     <string name="bin_clear_title">Opróżnić kosz?</string>
     <string name="bin_restored">Przywrócono</string>
+    <string name="bin_from">Usunięto z</string>
+    <string name="bin_deleted">Usunięto</string>
+    <string name="bin_until">Przechowywane do</string>
+    <string name="bin_kept">Przechowywane w</string>
     <plurals name="days_left">
         <item quantity="one">Został %d dzień</item>
         <item quantity="few">Zostały %d dni</item>
@@ -150,7 +154,7 @@
     <string name="settings_hidden">Ukryte pliki</string>
     <string name="settings_hidden_hint">Pokazuj pliki i foldery, których nazwa zaczyna się od kropki</string>
     <string name="settings_bin_external">Kosz na kartach i dyskach</string>
-    <string name="settings_bin_external_hint">Gdy wyłączone, to, co usunięto z karty pamięci lub dysku, znika od razu na dobre</string>
+    <string name="settings_bin_external_hint">Gdy wyłączone, to, co usunięto z karty pamięci lub dysku, znika od razu na zawsze</string>
 
     <string name="settings_search_clear">Wyczyść historię wyszukiwania</string>
     <string name="settings_search_clear_hint">To, czego szukano, zostaje w telefonie i jest proponowane ponownie na karcie Szukaj</string>

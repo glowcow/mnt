@@ -82,6 +82,10 @@
     <string name="bin_clear">Papierkorb leeren</string>
     <string name="bin_clear_title">Papierkorb leeren?</string>
     <string name="bin_restored">Wiederhergestellt</string>
+    <string name="bin_from">Gelöscht aus</string>
+    <string name="bin_deleted">Gelöscht</string>
+    <string name="bin_until">Aufbewahrt bis</string>
+    <string name="bin_kept">Aufbewahrt in</string>
     <plurals name="days_left">
         <item quantity="one">Noch %d Tag</item>
         <item quantity="other">Noch %d Tage</item>

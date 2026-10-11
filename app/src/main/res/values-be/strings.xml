@@ -88,6 +88,10 @@
     <string name="bin_clear">Ачысціць кошык</string>
     <string name="bin_clear_title">Ачысціць кошык?</string>
     <string name="bin_restored">Адноўлена</string>
+    <string name="bin_from">Выдалена з</string>
+    <string name="bin_deleted">Выдалена</string>
+    <string name="bin_until">Захоўваецца да</string>
+    <string name="bin_kept">Захоўваецца ў</string>
     <plurals name="days_left">
         <item quantity="one">Застаўся %d дзень</item>
         <item quantity="few">Засталося %d дні</item>

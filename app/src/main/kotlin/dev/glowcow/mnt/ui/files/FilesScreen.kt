@@ -295,11 +295,13 @@ fun Device.title(): String = name ?: volumes.singleOrNull()?.label ?: stringReso
 fun UsageBar(free: Long, total: Long) {
     val used = if (total > 0) 1f - free.toFloat() / total else 0f
     val c = MntTheme.colors
-    val color = when {
-        used < USAGE_TIGHT -> if (c.isDark) Color(0xFF5FCB72) else Color(0xFF2F9E44)
-        used < USAGE_FULL -> if (c.isDark) Color(0xFFF5C542) else Color(0xFFE0A100)
-        else -> if (c.isDark) Color(0xFFFF7B7E) else Color(0xFFDC3E42)
-    }
+    val color = c.bright(
+        when {
+            used < USAGE_TIGHT -> if (c.isDark) Color(0xFF5FCB72) else Color(0xFF2F9E44)
+            used < USAGE_FULL -> if (c.isDark) Color(0xFFF5C542) else Color(0xFFE0A100)
+            else -> if (c.isDark) Color(0xFFFF7B7E) else Color(0xFFDC3E42)
+        },
+    )
     Box(Modifier.padding(top = 6.dp).fillMaxWidth().height(4.dp).clip(CircleShape).background(c.chip)) {
         Box(Modifier.fillMaxHeight().fillMaxWidth(used.coerceIn(0f, 1f)).clip(CircleShape).background(color))
     }

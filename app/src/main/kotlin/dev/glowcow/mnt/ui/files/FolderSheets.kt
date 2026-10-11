@@ -1,5 +1,6 @@
 package dev.glowcow.mnt.ui.files
 
+import android.content.Context
 import android.text.format.DateUtils
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Spacer
@@ -35,6 +36,7 @@ import dev.glowcow.mnt.ui.components.GroupRow
 import dev.glowcow.mnt.ui.components.GroupSheet
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
+import dev.glowcow.mnt.ui.theme.inked
 
 /** The sheets of a folder's page. [onStarted] hears whether a transfer could begin, [onFailed] that a quick change could not be made; [onShare] sends the ticked files. */
 @Composable
@@ -94,7 +96,7 @@ fun FolderSheets(
                     GroupRow(stringResource(R.string.delete_to_bin), onClick = { pick { onStarted(vm.delete(forGood = false)) } })
                     GroupDivider()
                 }
-                GroupRow(stringResource(R.string.delete_for_good), onClick = { pick { onStarted(vm.delete(forGood = true)) } })
+                GroupRow(stringResource(R.string.delete_for_good), titleColor = MntTheme.colors.danger, onClick = { pick { onStarted(vm.delete(forGood = true)) } })
             }
         }
 
@@ -149,7 +151,7 @@ fun FolderSheets(
 private fun CheckRow(label: String, checked: Boolean, onClick: () -> Unit) {
     val accent = MntTheme.colors.accent
     GroupRow(label, onClick = onClick, trailing = {
-        if (checked) Icon(MntIcons.Check, null, tint = accent, modifier = Modifier.size(20.dp))
+        if (checked) Icon(MntIcons.Check, null, tint = accent, modifier = Modifier.size(20.dp).inked(accent))
     })
 }
 
@@ -200,11 +202,7 @@ private fun DetailsSheet(nodes: List<Node>, vm: FolderViewModel, onDismiss: () -
     val details by produceState<Details?>(null, nodes) { value = vm.details(nodes) }
     val single = nodes.singleOrNull()
     val facts by produceState<Facts?>(null, single) { value = single?.let { vm.facts(it) } }
-    fun time(millis: Long) = DateUtils.formatDateTime(
-        context,
-        millis,
-        DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_SHOW_TIME,
-    )
+    fun time(millis: Long) = dateTime(context, millis)
     GroupSheet(stringResource(R.string.action_details), onDismiss) {
         Group {
             if (single != null) {
@@ -254,6 +252,13 @@ private fun DetailsSheet(nodes: List<Node>, vm: FolderViewModel, onDismiss: () -
         }
     }
 }
+
+/** A day and a time of it, as a sheet of details tells them. */
+fun dateTime(context: Context, millis: Long): String = DateUtils.formatDateTime(
+    context,
+    millis,
+    DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_SHOW_TIME,
+)
 
 /** `rwxr-x---` for the nine permission bits. */
 private fun permissions(mode: Int): String = "rwxrwxrwx".mapIndexed { i, letter -> if (mode and (0x100 shr i) != 0) letter else '-' }.joinToString("")

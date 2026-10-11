@@ -99,9 +99,12 @@ class Trash(private val files: FileStore, private val roots: () -> List<String>,
         /** What deleting [item] for good has to remove. */
         fun paths(item: Trashed): List<String> = listOf(item.id, item.id + NOTE)
 
+        /** When what went into the bin at [deleted] is removed for good. */
+        fun until(deleted: Long): Long = deleted + KEEP_DAYS * DAY_MS
+
         /** Whole days until what went into the bin at [deleted] is removed, the last one counted from its start; 0 when it is due. */
         fun daysLeft(deleted: Long, now: Long): Int {
-            val left = deleted + KEEP_DAYS * DAY_MS - now
+            val left = until(deleted) - now
             return if (left <= 0) 0 else ((left + DAY_MS - 1) / DAY_MS).toInt()
         }
     }

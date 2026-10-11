@@ -75,15 +75,6 @@ fun HeaderLine(shown: Boolean) {
     Box(Modifier.fillMaxWidth().height(1.dp).background(if (shown) MntTheme.colors.line else Color.Transparent))
 }
 
-/**
- * The 1 dp edge of a glass bar. It is the text colour, thin: a solid line turns into a dark stripe
- * where something light shows through the glass of a dark theme.
- */
-@Composable
-fun GlassLine() {
-    Box(Modifier.fillMaxWidth().height(1.dp).background(MntTheme.colors.text.copy(alpha = GLASS_LINE)))
-}
-
 /** Keeps touches from reaching the page that shows through the glass. */
 fun Modifier.solid() = pointerInput(Unit) {}
 
@@ -92,4 +83,5 @@ private val FROST_BLUR = 20.dp
 // One strength of glass for every bar and panel of the app.
 private const val FROST_TINT = 0.5f
 
-private const val GLASS_LINE = 0.12f
+// The edge of glass is the text colour, thin: a solid line is a dark stripe where something light shows through.
+const val GLASS_LINE = 0.12f

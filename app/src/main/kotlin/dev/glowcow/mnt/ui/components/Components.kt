@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +36,7 @@ import dev.glowcow.mnt.ui.theme.AppFont
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.ui.theme.TitleFont
+import dev.glowcow.mnt.ui.theme.inked
 
 enum class TopTab(val icon: ImageVector, val label: Int) {
     FILES(MntIcons.Files, R.string.tab_files),
@@ -47,14 +47,9 @@ enum class TopTab(val icon: ImageVector, val label: Int) {
 @Composable
 fun BottomBar(current: TopTab, onSelect: (TopTab) -> Unit) {
     val c = MntTheme.colors
-    Column(Modifier.navigationBarsPadding()) {
-        GlassLine()
-        Row(Modifier.fillMaxWidth().height(64.dp), verticalAlignment = Alignment.CenterVertically) {
-            for (tab in TopTab.entries) {
-                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    IconButton48(tab.icon, stringResource(tab.label), tint = if (tab == current) c.text else c.muted, size = 26.dp) { onSelect(tab) }
-                }
-            }
+    IslandIcons {
+        for (tab in TopTab.entries) {
+            IconButton48(tab.icon, stringResource(tab.label), tint = if (tab == current) c.text else c.muted, size = 24.dp) { onSelect(tab) }
         }
     }
 }
@@ -102,7 +97,8 @@ fun IconButton48(
         Modifier.size(48.dp).clip(CircleShape).clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, description, tint = if (enabled) tint else MntTheme.colors.muted.copy(alpha = 0.4f), modifier = Modifier.size(size))
+        val shown = if (enabled) tint else MntTheme.colors.muted.copy(alpha = 0.4f)
+        Icon(icon, description, tint = shown, modifier = Modifier.size(size).inked(shown))
     }
 }
 

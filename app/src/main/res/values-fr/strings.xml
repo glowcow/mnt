@@ -85,6 +85,10 @@
     <string name="bin_clear">Vider la corbeille</string>
     <string name="bin_clear_title">Vider la corbeille ?</string>
     <string name="bin_restored">Restauré</string>
+    <string name="bin_from">Supprimé de</string>
+    <string name="bin_deleted">Supprimé</string>
+    <string name="bin_until">Conservé jusqu’au</string>
+    <string name="bin_kept">Conservé dans</string>
     <plurals name="days_left">
         <item quantity="one">%d jour restant</item>
         <item quantity="many">%d jours restants</item>

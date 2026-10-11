@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -24,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.glowcow.mnt.R
@@ -60,14 +61,13 @@ fun DetailPage(
     bar: (@Composable () -> Unit)? = null,
     content: @Composable (top: Dp, bottom: Dp) -> Unit,
 ) {
-    val c = MntTheme.colors
     val density = LocalDensity.current
     val page = rememberGraphicsLayer()
     var headerHeight by remember { mutableIntStateOf(0) }
-    val pageHeight = remember { mutableIntStateOf(0) }
+    var pageSize by remember { mutableStateOf(IntSize.Zero) }
     val barHeight = remember { mutableIntStateOf(0) }
     val inset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    Box(Modifier.fillMaxSize().pageMotion(from).background(ground).imePadding().onSizeChanged { pageHeight.intValue = it.height }) {
+    Box(Modifier.fillMaxSize().pageMotion(from).background(ground).imePadding().onSizeChanged { pageSize = it }) {
         Box(
             Modifier.fillMaxSize().drawWithContent {
                 page.record { this@drawWithContent.drawContent() }
@@ -87,20 +87,7 @@ fun DetailPage(
             header()
             HeaderLine(shown = scrolled)
         }
-        if (bar != null) {
-            Column(
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .onSizeChanged { barHeight.intValue = it.height }
-                    .frosted(page, c.bg) { Offset(0f, (pageHeight.intValue - barHeight.intValue).toFloat()) }
-                    .solid()
-                    .navigationBarsPadding(),
-            ) {
-                GlassLine()
-                bar()
-            }
-        }
+        if (bar != null) Island(page, ground, { pageSize }, { barHeight.intValue = it }, bar)
     }
 }
 

@@ -57,6 +57,7 @@ import dev.glowcow.mnt.ui.components.DetailHeader
 import dev.glowcow.mnt.ui.components.DetailPage
 import dev.glowcow.mnt.ui.components.EmptyState
 import dev.glowcow.mnt.ui.components.IconButton48
+import dev.glowcow.mnt.ui.components.IslandIcons
 import dev.glowcow.mnt.ui.components.LocalOrigins
 import dev.glowcow.mnt.ui.components.NodeRow
 import dev.glowcow.mnt.ui.components.PillButton
@@ -230,7 +231,7 @@ private fun Centered(top: Dp, bottom: Dp, content: @Composable () -> Unit) {
 /** What can be done with the ticked rows. */
 @Composable
 private fun SelectionBar(onCopy: () -> Unit, onMove: () -> Unit, onDetails: () -> Unit, onDelete: () -> Unit, onMore: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(64.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+    IslandIcons {
         IconButton48(MntIcons.Copy, stringResource(R.string.action_copy), onClick = onCopy)
         IconButton48(MntIcons.Move, stringResource(R.string.action_move), onClick = onMove)
         IconButton48(MntIcons.Info, stringResource(R.string.action_details), onClick = onDetails)
@@ -242,7 +243,7 @@ private fun SelectionBar(onCopy: () -> Unit, onMove: () -> Unit, onDetails: () -
 /** The files taken in another folder, waiting to be put into this one or packed into an archive here. */
 @Composable
 private fun ClipBar(clip: Clip, onPaste: () -> Unit, onCancel: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(64.dp).padding(start = 4.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().height(56.dp).padding(start = 4.dp, end = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton48(MntIcons.Close, stringResource(R.string.action_cancel), onClick = onCancel)
         Text(
             clip.zip ?: stringResource(R.string.selected_count, clip.paths.size),
@@ -266,7 +267,7 @@ private fun ClipBar(clip: Clip, onPaste: () -> Unit, onCancel: () -> Unit) {
 fun ProgressBar(progress: TransferProgress, onStop: () -> Unit) {
     val c = MntTheme.colors
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

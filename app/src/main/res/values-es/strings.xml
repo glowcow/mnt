@@ -85,6 +85,10 @@
     <string name="bin_clear">Vaciar la papelera</string>
     <string name="bin_clear_title">¿Vaciar la papelera?</string>
     <string name="bin_restored">Restaurado</string>
+    <string name="bin_from">Eliminado de</string>
+    <string name="bin_deleted">Eliminado</string>
+    <string name="bin_until">Se guarda hasta</string>
+    <string name="bin_kept">Guardado en</string>
     <plurals name="days_left">
         <item quantity="one">Queda %d día</item>
         <item quantity="many">Quedan %d días</item>

@@ -78,16 +78,20 @@
     <string name="delete_title">Удалить выбранное?</string>
     <string name="delete_text">В корзине оно хранится %1$d дней, оттуда его можно вернуть</string>
     <string name="delete_to_bin">В корзину</string>
-    <string name="delete_for_good">Удалить насовсем</string>
-    <string name="delete_for_good_title">Удалить насовсем?</string>
+    <string name="delete_for_good">Удалить навсегда</string>
+    <string name="delete_for_good_title">Удалить навсегда?</string>
     <string name="delete_for_good_text">Вернуть это будет нельзя</string>
 
     <string name="bin">Корзина</string>
-    <string name="bin_text">Удалённое хранится здесь %1$d дней, потом удаляется насовсем</string>
+    <string name="bin_text">Удалённое хранится здесь %1$d дней, потом удаляется навсегда</string>
     <string name="bin_empty">Корзина пуста</string>
     <string name="bin_clear">Очистить корзину</string>
     <string name="bin_clear_title">Очистить корзину?</string>
     <string name="bin_restored">Восстановлено</string>
+    <string name="bin_from">Удалено из</string>
+    <string name="bin_deleted">Удалено</string>
+    <string name="bin_until">Хранится до</string>
+    <string name="bin_kept">Хранится в</string>
     <plurals name="days_left">
         <item quantity="one">Остался %d день</item>
         <item quantity="few">Осталось %d дня</item>
@@ -150,7 +154,7 @@
     <string name="settings_hidden">Скрытые файлы</string>
     <string name="settings_hidden_hint">Показывать файлы и папки, имя которых начинается с точки</string>
     <string name="settings_bin_external">Корзина на картах и накопителях</string>
-    <string name="settings_bin_external_hint">Пока выключено, удалённое с карты памяти или накопителя стирается сразу и насовсем</string>
+    <string name="settings_bin_external_hint">Пока выключено, удалённое с карты памяти или накопителя стирается сразу и навсегда</string>
 
     <string name="settings_search_clear">Очистить историю поиска</string>
     <string name="settings_search_clear_hint">То, что искалось, хранится на телефоне и предлагается снова на вкладке «Поиск»</string>

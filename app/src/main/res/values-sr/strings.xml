@@ -85,6 +85,10 @@
     <string name="bin_clear">Испразни корпу</string>
     <string name="bin_clear_title">Испразнити корпу?</string>
     <string name="bin_restored">Враћено</string>
+    <string name="bin_from">Избрисано из</string>
+    <string name="bin_deleted">Избрисано</string>
+    <string name="bin_until">Чува се до</string>
+    <string name="bin_kept">Чува се у</string>
     <plurals name="days_left">
         <item quantity="one">Још %d дан</item>
         <item quantity="few">Још %d дана</item>
