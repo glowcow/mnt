@@ -120,7 +120,6 @@
     <string name="details_items">Elementos</string>
     <string name="details_created">Creado</string>
     <string name="details_modified">Modificado</string>
-    <string name="details_accessed">Abierto</string>
     <string name="details_permissions">Permisos</string>
     <string name="details_owner">Propietario</string>
     <string name="details_group">Grupo</string>

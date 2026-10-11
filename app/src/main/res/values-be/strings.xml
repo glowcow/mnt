@@ -124,7 +124,6 @@
     <string name="details_items">Элементы</string>
     <string name="details_created">Створана</string>
     <string name="details_modified">Зменена</string>
-    <string name="details_accessed">Адкрыта</string>
     <string name="details_permissions">Правы</string>
     <string name="details_owner">Уладальнік</string>
     <string name="details_group">Група</string>

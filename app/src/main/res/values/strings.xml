@@ -119,7 +119,6 @@
     <string name="details_items">Items</string>
     <string name="details_created">Created</string>
     <string name="details_modified">Modified</string>
-    <string name="details_accessed">Opened</string>
     <string name="details_permissions">Permissions</string>
     <string name="details_owner">Owner</string>
     <string name="details_group">Group</string>

@@ -57,7 +57,6 @@ class LocalStore(private val born: (String) -> Long? = { null }) : FileStore {
         Facts(
             // A file system with no time of birth answers with the last change instead.
             created = born(path) ?: known.creationTime().toMillis().takeIf { it != modified },
-            accessed = known.lastAccessTime().toMillis(),
             mode = posix?.permissions()?.fold(0) { bits, permission -> bits or (OWNER_READ shr permission.ordinal) },
             owner = posix?.owner()?.name,
             group = posix?.group()?.name,

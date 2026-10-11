@@ -124,7 +124,6 @@
     <string name="details_items">Elementy</string>
     <string name="details_created">Utworzono</string>
     <string name="details_modified">Zmodyfikowano</string>
-    <string name="details_accessed">Otwarto</string>
     <string name="details_permissions">Uprawnienia</string>
     <string name="details_owner">Właściciel</string>
     <string name="details_group">Grupa</string>

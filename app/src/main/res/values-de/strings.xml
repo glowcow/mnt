@@ -116,7 +116,6 @@
     <string name="details_items">Elemente</string>
     <string name="details_created">Erstellt</string>
     <string name="details_modified">Geändert</string>
-    <string name="details_accessed">Geöffnet</string>
     <string name="details_permissions">Rechte</string>
     <string name="details_owner">Besitzer</string>
     <string name="details_group">Gruppe</string>

@@ -124,7 +124,6 @@
     <string name="details_items">Элементы</string>
     <string name="details_created">Создано</string>
     <string name="details_modified">Изменено</string>
-    <string name="details_accessed">Открыто</string>
     <string name="details_permissions">Права</string>
     <string name="details_owner">Владелец</string>
     <string name="details_group">Группа</string>

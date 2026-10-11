@@ -120,7 +120,6 @@
     <string name="details_items">פריטים</string>
     <string name="details_created">נוצר</string>
     <string name="details_modified">שונה</string>
-    <string name="details_accessed">נפתח</string>
     <string name="details_permissions">הרשאות</string>
     <string name="details_owner">בעלים</string>
     <string name="details_group">קבוצה</string>

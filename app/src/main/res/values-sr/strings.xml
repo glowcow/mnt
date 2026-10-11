@@ -120,7 +120,6 @@
     <string name="details_items">Ставке</string>
     <string name="details_created">Направљено</string>
     <string name="details_modified">Измењено</string>
-    <string name="details_accessed">Отворено</string>
     <string name="details_permissions">Дозволе</string>
     <string name="details_owner">Власник</string>
     <string name="details_group">Група</string>

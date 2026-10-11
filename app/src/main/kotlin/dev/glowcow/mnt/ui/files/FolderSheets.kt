@@ -238,10 +238,6 @@ private fun DetailsSheet(nodes: List<Node>, vm: FolderViewModel, onDismiss: () -
                 GroupDivider()
             }
             GroupRow(stringResource(R.string.details_modified), value = time(single.modified))
-            facts?.accessed?.let {
-                GroupDivider()
-                GroupRow(stringResource(R.string.details_accessed), value = time(it))
-            }
         }
         val rows = listOfNotNull(
             facts?.mode?.let { R.string.details_permissions to "${permissions(it)} | ${it.toString(8)}" },

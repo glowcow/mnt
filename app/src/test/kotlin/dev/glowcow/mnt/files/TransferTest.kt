@@ -238,7 +238,6 @@ class TransferTest {
 
         assertEquals("640", facts.mode!!.toString(8))
         assertEquals(Files.getOwner(file.toPath()).name, facts.owner)
-        assertTrue(facts.accessed!! > 0)
         assertEquals(5L, LocalStore { 5L }.facts(file.path)!!.created)
         assertEquals(null, store.facts(File(temp.root, "none").path))
     }
