@@ -56,6 +56,7 @@
     <string name="action_more">עוד</string>
     <string name="action_rename">שינוי שם</string>
     <string name="action_details">פרטים</string>
+    <string name="action_zip">דחיסה ל‑ZIP</string>
     <string name="action_stop">עצירה</string>
     <string name="action_cancel">ביטול</string>
     <string name="action_failed">לא ניתן היה לעשות זאת כאן</string>
@@ -92,6 +93,7 @@
 
     <string name="paste_copy">העתקה לכאן</string>
     <string name="paste_move">העברה לכאן</string>
+    <string name="paste_zip">שמירה כאן</string>
     <string name="paste_into_itself">תיקייה אינה יכולה להיכנס לתוך עצמה</string>
     <string name="conflict_title">חלק מהשמות כבר תפוסים כאן</string>
     <string name="conflict_text">פריטים ששמם כבר קיים בתיקייה הזאת: %1$d</string>
@@ -102,6 +104,7 @@
     <string name="transfer_copying">מעתיק</string>
     <string name="transfer_moving">מעביר</string>
     <string name="transfer_deleting">מוחק</string>
+    <string name="transfer_zipping">דוחס</string>
     <string name="transfer_rate">%1$s לשנייה</string>
     <string name="transfer_channel">פעולות בקבצים</string>
     <string name="transfer_busy">פעולה אחרת עדיין רצה</string>
@@ -110,11 +113,17 @@
     <string name="transfer_copied">הועתק</string>
     <string name="transfer_moved">הועבר</string>
     <string name="transfer_deleted">נמחק</string>
+    <string name="transfer_zipped">הארכיון נשמר</string>
     <string name="open_none">אין יישום שפותח את הקובץ הזה</string>
 
     <string name="details_location">מיקום</string>
     <string name="details_items">פריטים</string>
+    <string name="details_created">נוצר</string>
     <string name="details_modified">שונה</string>
+    <string name="details_accessed">נפתח</string>
+    <string name="details_permissions">הרשאות</string>
+    <string name="details_owner">בעלים</string>
+    <string name="details_group">קבוצה</string>
     <string name="details_counting">סופר…</string>
 
     <string name="search_hint">חיפוש לפי שם</string>

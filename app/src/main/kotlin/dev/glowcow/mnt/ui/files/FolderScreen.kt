@@ -67,7 +67,7 @@ import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 
 /** The sheet a folder's page has open. */
-enum class FolderSheet { SORT, NEW_FOLDER, RENAME, DELETE, MORE, DETAILS, CONFLICT }
+enum class FolderSheet { SORT, NEW_FOLDER, RENAME, DELETE, MORE, DETAILS, ZIP, CONFLICT }
 
 @Composable
 fun FolderScreen(
@@ -119,12 +119,10 @@ fun FolderScreen(
 
     val bar: (@Composable () -> Unit)? = when {
         selection.isNotEmpty() -> ({
-            val chosen = vm.selected()
             SelectionBar(
-                canShare = chosen.none { it.directory },
                 onCopy = { vm.pick(move = false) },
                 onMove = { vm.pick(move = true) },
-                onShare = { if (!Opener.share(context, chosen.map { it.path })) toast(R.string.open_none) },
+                onDetails = { sheet = FolderSheet.DETAILS },
                 onDelete = { sheet = FolderSheet.DELETE },
                 onMore = { sheet = FolderSheet.MORE },
             )
@@ -190,6 +188,7 @@ fun FolderScreen(
         conflicts = conflicts,
         onSheet = { sheet = it },
         onStarted = ::started,
+        onShare = { if (!Opener.share(context, vm.selected().map { it.path })) toast(R.string.open_none) },
         onFailed = { toast(R.string.action_failed) },
     )
 }
@@ -230,29 +229,35 @@ private fun Centered(top: Dp, bottom: Dp, content: @Composable () -> Unit) {
 
 /** What can be done with the ticked rows. */
 @Composable
-private fun SelectionBar(canShare: Boolean, onCopy: () -> Unit, onMove: () -> Unit, onShare: () -> Unit, onDelete: () -> Unit, onMore: () -> Unit) {
+private fun SelectionBar(onCopy: () -> Unit, onMove: () -> Unit, onDetails: () -> Unit, onDelete: () -> Unit, onMore: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(64.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
         IconButton48(MntIcons.Copy, stringResource(R.string.action_copy), onClick = onCopy)
         IconButton48(MntIcons.Move, stringResource(R.string.action_move), onClick = onMove)
-        IconButton48(MntIcons.Share, stringResource(R.string.action_share), enabled = canShare, onClick = onShare)
+        IconButton48(MntIcons.Info, stringResource(R.string.action_details), onClick = onDetails)
         IconButton48(MntIcons.Delete, stringResource(R.string.action_delete), onClick = onDelete)
         IconButton48(MntIcons.More, stringResource(R.string.action_more), onClick = onMore)
     }
 }
 
-/** The files taken in another folder, waiting to be put into this one. */
+/** The files taken in another folder, waiting to be put into this one or packed into an archive here. */
 @Composable
 private fun ClipBar(clip: Clip, onPaste: () -> Unit, onCancel: () -> Unit) {
     Row(Modifier.fillMaxWidth().height(64.dp).padding(start = 4.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton48(MntIcons.Close, stringResource(R.string.action_cancel), onClick = onCancel)
         Text(
-            stringResource(R.string.selected_count, clip.paths.size),
+            clip.zip ?: stringResource(R.string.selected_count, clip.paths.size),
             color = MntTheme.colors.text,
             fontSize = 15.sp,
             maxLines = 1,
+            overflow = TextOverflow.MiddleEllipsis,
             modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
         )
-        PillButton(stringResource(if (clip.move) R.string.paste_move else R.string.paste_copy), onClick = onPaste)
+        val paste = when {
+            clip.zip != null -> R.string.paste_zip
+            clip.move -> R.string.paste_move
+            else -> R.string.paste_copy
+        }
+        PillButton(stringResource(paste), onClick = onPaste)
     }
 }
 

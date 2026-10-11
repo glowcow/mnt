@@ -9,16 +9,16 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-enum class TransferKind { COPY, MOVE, DELETE }
+enum class TransferKind { COPY, MOVE, DELETE, ZIP }
 
-/** A copy, a move or a delete that is running: what it works on now, how far it has got, 0–1, and for bytes how fast, a second. */
+/** A copy, a move, a delete or an archive in the making that is running: what it works on now, how far it has got, 0–1, and for bytes how fast, a second. */
 data class TransferProgress(val kind: TransferKind, val name: String, val fraction: Float, val speed: Long? = null)
 
 /** How a transfer ended: how many items it could not do, and whether it was stopped. */
 data class TransferResult(val kind: TransferKind, val failed: Int, val stopped: Boolean)
 
-/** Files picked in one folder to be put into another. */
-data class Clip(val paths: List<String>, val move: Boolean)
+/** Files picked in one folder to be put into another, or packed there into an archive called [zip]. */
+data class Clip(val paths: List<String>, val move: Boolean, val zip: String? = null)
 
 /** Runs one transfer at a time, outside any screen, and tells what it is doing. */
 class TransferManager(private val scope: CoroutineScope, private val files: FileStore, private val trash: Trash) {
@@ -44,6 +44,9 @@ class TransferManager(private val scope: CoroutineScope, private val files: File
 
     /** Deletes into the bin. */
     fun discard(paths: List<String>): Boolean = begin(TransferKind.DELETE) { discard(paths, trash) }
+
+    /** Packs [sources] into the archive [target]. */
+    fun zip(sources: List<String>, target: String): Boolean = begin(TransferKind.ZIP) { zip(sources, target) }
 
     fun stop() {
         job?.cancel()

@@ -14,6 +14,16 @@ data class Node(
     val kind: Kind get() = if (directory) Kind.FOLDER else Kind.of(name)
 }
 
+/** What a store tells of a file beyond its listing, each null when it does not know; times in milliseconds since the epoch. */
+data class Facts(
+    val created: Long? = null,
+    val accessed: Long? = null,
+    /** The nine permission bits, owner first. */
+    val mode: Int? = null,
+    val owner: String? = null,
+    val group: String? = null,
+)
+
 /** How many files and how many folders a folder holds directly. */
 data class Holds(val files: Int, val folders: Int)
 

@@ -6,13 +6,16 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 /** What happens to an item whose name is already taken where it goes. */
 enum class Conflict { REPLACE, KEEP_BOTH, SKIP }
 
 /**
- * Copies, moves and deletes trees of files in a [FileStore]. [onProgress] gets the name being
- * worked on and how much of the whole is done: bytes for a copy or a move, items for a delete.
+ * Copies, moves, deletes and packs trees of files in a [FileStore]. [onProgress] gets the name being
+ * worked on and how much of the whole is done: bytes for a copy, a move or an archive, items for a delete.
  */
 class Transfer(private val files: FileStore, private val onProgress: (name: String, done: Long, total: Long) -> Unit = { _, _, _ -> }) {
     /** Items that could not be copied, moved or deleted. */
@@ -41,6 +44,24 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
             if (!trash.put(path, bytes(path))) failed++
             done++
             onProgress(Paths.name(path), done, total)
+        }
+    }
+
+    /** Packs [sources] into a zip archive at [target], which it takes once whole. */
+    suspend fun zip(sources: List<String>, target: String) {
+        total = sources.sumOf { bytes(it) }
+        val part = Paths.child(Paths.parent(target), ".${Paths.name(target)}.part")
+        try {
+            withContext(Dispatchers.IO) {
+                ZipOutputStream(files.write(part).buffered(BUFFER)).use { zip -> for (source in sources) pack(source, "", zip) }
+            }
+            if (!files.rename(part, target)) {
+                files.remove(part)
+                fail()
+            }
+        } catch (e: Exception) {
+            withContext(NonCancellable) { files.remove(part) }
+            throw e
         }
     }
 
@@ -120,6 +141,39 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
         } catch (_: Exception) {
             files.remove(part)
             return false
+        }
+    }
+
+    /** Writes the tree at [path] into [zip] under [prefix]; a file that cannot be opened is left out. */
+    private suspend fun pack(path: String, prefix: String, zip: ZipOutputStream) {
+        currentCoroutineContext().ensureActive()
+        val node = files.stat(path) ?: return fail()
+        val name = prefix + node.name
+        if (node.directory) {
+            val children = files.list(path) ?: return fail()
+            // An entry of its own keeps a folder that holds nothing.
+            zip.putNextEntry(ZipEntry("$name/").apply { time = node.modified })
+            zip.closeEntry()
+            for (child in children) pack(child.path, "$name/", zip)
+            return
+        }
+        val input = try {
+            files.read(path)
+        } catch (_: IOException) {
+            return fail()
+        }
+        input.use {
+            zip.putNextEntry(ZipEntry(name).apply { time = node.modified })
+            val buffer = ByteArray(BUFFER)
+            while (true) {
+                currentCoroutineContext().ensureActive()
+                val n = it.read(buffer)
+                if (n < 0) break
+                zip.write(buffer, 0, n)
+                done += n
+                onProgress(node.name, done, total)
+            }
+            zip.closeEntry()
         }
     }
 

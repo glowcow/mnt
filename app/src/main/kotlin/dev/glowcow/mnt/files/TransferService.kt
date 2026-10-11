@@ -104,4 +104,5 @@ val TransferKind.label: Int
         TransferKind.COPY -> R.string.transfer_copying
         TransferKind.MOVE -> R.string.transfer_moving
         TransferKind.DELETE -> R.string.transfer_deleting
+        TransferKind.ZIP -> R.string.transfer_zipping
     }

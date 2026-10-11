@@ -59,6 +59,7 @@
     <string name="action_more">Więcej</string>
     <string name="action_rename">Zmień nazwę</string>
     <string name="action_details">Szczegóły</string>
+    <string name="action_zip">Spakuj do ZIP</string>
     <string name="action_stop">Zatrzymaj</string>
     <string name="action_cancel">Anuluj</string>
     <string name="action_failed">Tutaj się to nie udało</string>
@@ -96,6 +97,7 @@
 
     <string name="paste_copy">Kopiuj tutaj</string>
     <string name="paste_move">Przenieś tutaj</string>
+    <string name="paste_zip">Zapisz tutaj</string>
     <string name="paste_into_itself">Folderu nie można umieścić w nim samym</string>
     <string name="conflict_title">Niektóre nazwy są tu zajęte</string>
     <string name="conflict_text">Elementy o nazwie, która już jest w tym folderze: %1$d</string>
@@ -106,6 +108,7 @@
     <string name="transfer_copying">Kopiowanie</string>
     <string name="transfer_moving">Przenoszenie</string>
     <string name="transfer_deleting">Usuwanie</string>
+    <string name="transfer_zipping">Pakowanie</string>
     <string name="transfer_rate">%1$s/s</string>
     <string name="transfer_channel">Operacje na plikach</string>
     <string name="transfer_busy">Inna operacja jeszcze trwa</string>
@@ -114,11 +117,17 @@
     <string name="transfer_copied">Skopiowano</string>
     <string name="transfer_moved">Przeniesiono</string>
     <string name="transfer_deleted">Usunięto</string>
+    <string name="transfer_zipped">Zapisano archiwum</string>
     <string name="open_none">Żadna aplikacja nie otwiera tego pliku</string>
 
     <string name="details_location">Położenie</string>
     <string name="details_items">Elementy</string>
+    <string name="details_created">Utworzono</string>
     <string name="details_modified">Zmodyfikowano</string>
+    <string name="details_accessed">Otwarto</string>
+    <string name="details_permissions">Uprawnienia</string>
+    <string name="details_owner">Właściciel</string>
+    <string name="details_group">Grupa</string>
     <string name="details_counting">Liczenie…</string>
 
     <string name="search_hint">Szukaj po nazwie</string>

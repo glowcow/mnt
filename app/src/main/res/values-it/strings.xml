@@ -56,6 +56,7 @@
     <string name="action_more">Altro</string>
     <string name="action_rename">Rinomina</string>
     <string name="action_details">Dettagli</string>
+    <string name="action_zip">Comprimi in ZIP</string>
     <string name="action_stop">Ferma</string>
     <string name="action_cancel">Annulla</string>
     <string name="action_failed">Qui non è stato possibile</string>
@@ -92,6 +93,7 @@
 
     <string name="paste_copy">Copia qui</string>
     <string name="paste_move">Sposta qui</string>
+    <string name="paste_zip">Salva qui</string>
     <string name="paste_into_itself">Una cartella non può andare dentro sé stessa</string>
     <string name="conflict_title">Alcuni nomi esistono già qui</string>
     <string name="conflict_text">Elementi con un nome già presente in questa cartella: %1$d</string>
@@ -102,6 +104,7 @@
     <string name="transfer_copying">Copia in corso</string>
     <string name="transfer_moving">Spostamento in corso</string>
     <string name="transfer_deleting">Eliminazione in corso</string>
+    <string name="transfer_zipping">Compressione in corso</string>
     <string name="transfer_rate">%1$s/s</string>
     <string name="transfer_channel">Operazioni sui file</string>
     <string name="transfer_busy">Un’altra operazione è ancora in corso</string>
@@ -110,11 +113,17 @@
     <string name="transfer_copied">Copiato</string>
     <string name="transfer_moved">Spostato</string>
     <string name="transfer_deleted">Eliminato</string>
+    <string name="transfer_zipped">Archivio salvato</string>
     <string name="open_none">Nessuna app apre questo file</string>
 
     <string name="details_location">Posizione</string>
     <string name="details_items">Elementi</string>
+    <string name="details_created">Creato</string>
     <string name="details_modified">Modificato</string>
+    <string name="details_accessed">Aperto</string>
+    <string name="details_permissions">Permessi</string>
+    <string name="details_owner">Proprietario</string>
+    <string name="details_group">Gruppo</string>
     <string name="details_counting">Conteggio…</string>
 
     <string name="search_hint">Cerca per nome</string>

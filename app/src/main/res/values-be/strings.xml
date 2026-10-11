@@ -59,6 +59,7 @@
     <string name="action_more">Яшчэ</string>
     <string name="action_rename">Перайменаваць</string>
     <string name="action_details">Звесткі</string>
+    <string name="action_zip">Сціснуць у ZIP</string>
     <string name="action_stop">Спыніць</string>
     <string name="action_cancel">Скасаваць</string>
     <string name="action_failed">Тут гэта зрабіць не ўдалося</string>
@@ -96,6 +97,7 @@
 
     <string name="paste_copy">Скапіяваць сюды</string>
     <string name="paste_move">Перамясціць сюды</string>
+    <string name="paste_zip">Захаваць тут</string>
     <string name="paste_into_itself">Папку нельга змясціць у саму сябе</string>
     <string name="conflict_title">Некаторыя назвы тут занятыя</string>
     <string name="conflict_text">Элементаў з назвай, якая ўжо ёсць у гэтай папцы: %1$d</string>
@@ -106,6 +108,7 @@
     <string name="transfer_copying">Капіяванне</string>
     <string name="transfer_moving">Перамяшчэнне</string>
     <string name="transfer_deleting">Выдаленне</string>
+    <string name="transfer_zipping">Сцісканне</string>
     <string name="transfer_rate">%1$s/с</string>
     <string name="transfer_channel">Аперацыі з файламі</string>
     <string name="transfer_busy">Іншая аперацыя яшчэ выконваецца</string>
@@ -114,11 +117,17 @@
     <string name="transfer_copied">Скапіявана</string>
     <string name="transfer_moved">Перамешчана</string>
     <string name="transfer_deleted">Выдалена</string>
+    <string name="transfer_zipped">Архіў захаваны</string>
     <string name="open_none">Няма праграмы, якая адкрывае гэты файл</string>
 
     <string name="details_location">Размяшчэнне</string>
     <string name="details_items">Элементы</string>
+    <string name="details_created">Створана</string>
     <string name="details_modified">Зменена</string>
+    <string name="details_accessed">Адкрыта</string>
+    <string name="details_permissions">Правы</string>
+    <string name="details_owner">Уладальнік</string>
+    <string name="details_group">Група</string>
     <string name="details_counting">Падлік…</string>
 
     <string name="search_hint">Пошук па назве</string>

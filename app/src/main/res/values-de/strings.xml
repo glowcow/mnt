@@ -53,6 +53,7 @@
     <string name="action_more">Mehr</string>
     <string name="action_rename">Umbenennen</string>
     <string name="action_details">Details</string>
+    <string name="action_zip">Als ZIP komprimieren</string>
     <string name="action_stop">Stoppen</string>
     <string name="action_cancel">Abbrechen</string>
     <string name="action_failed">Das ging hier nicht</string>
@@ -88,6 +89,7 @@
 
     <string name="paste_copy">Hierher kopieren</string>
     <string name="paste_move">Hierher verschieben</string>
+    <string name="paste_zip">Hier speichern</string>
     <string name="paste_into_itself">Ein Ordner kann nicht in sich selbst gelegt werden</string>
     <string name="conflict_title">Einige Namen gibt es hier schon</string>
     <string name="conflict_text">Elemente mit einem Namen, den es in diesem Ordner schon gibt: %1$d</string>
@@ -98,6 +100,7 @@
     <string name="transfer_copying">Kopieren</string>
     <string name="transfer_moving">Verschieben</string>
     <string name="transfer_deleting">Löschen</string>
+    <string name="transfer_zipping">Komprimieren</string>
     <string name="transfer_rate">%1$s/s</string>
     <string name="transfer_channel">Dateivorgänge</string>
     <string name="transfer_busy">Ein anderer Vorgang läuft noch</string>
@@ -106,11 +109,17 @@
     <string name="transfer_copied">Kopiert</string>
     <string name="transfer_moved">Verschoben</string>
     <string name="transfer_deleted">Gelöscht</string>
+    <string name="transfer_zipped">Archiv gespeichert</string>
     <string name="open_none">Keine App öffnet diese Datei</string>
 
     <string name="details_location">Ort</string>
     <string name="details_items">Elemente</string>
+    <string name="details_created">Erstellt</string>
     <string name="details_modified">Geändert</string>
+    <string name="details_accessed">Geöffnet</string>
+    <string name="details_permissions">Rechte</string>
+    <string name="details_owner">Besitzer</string>
+    <string name="details_group">Gruppe</string>
     <string name="details_counting">Wird gezählt…</string>
 
     <string name="search_hint">Nach Namen suchen</string>

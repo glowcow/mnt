@@ -37,7 +37,10 @@ object Opener {
 
     private fun uri(context: Context, path: String): Uri = FileProvider.getUriForFile(context, "${context.packageName}.files", File(path))
 
-    private fun type(path: String): String = MimeTypeMap.getSingleton().getMimeTypeFromExtension(Paths.extension(Paths.name(path))) ?: ANY
+    /** The type a file called [name] is taken for; null when its ending says nothing. */
+    fun mime(name: String): String? = MimeTypeMap.getSingleton().getMimeTypeFromExtension(Paths.extension(name))
+
+    private fun type(path: String): String = mime(Paths.name(path)) ?: ANY
 
     private const val ANY = "*/*"
 }

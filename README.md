@@ -37,7 +37,7 @@ The files on the screenshots are made up.
 - **Folders** — a list sorted the way you choose, each kind of file with a
   picture of its own, folders with a count of what they hold.
 - **Select and act** — tick any number of rows, then copy, move, share,
-  rename or delete them, or read how much they hold.
+  rename, delete or pack them into a ZIP, or read what they are and hold.
 - **Bin** — what you delete on the phone is kept for 30 days and can be put
   back where it was; after that, or when you say so, it is removed for
   good. Deleting for good at once is there too. On memory cards and drives
@@ -74,8 +74,9 @@ app/src/main/kotlin/dev/glowcow/mnt/
   files/        what a file is and where it lives: paths, the store behind
                 them, devices and their volumes, the order of a listing,
                 search;
-                copy, move and delete with the manager that runs one at a
-                time and the foreground service that keeps it going;
+                copy, move, delete and packing into a zip, with the manager
+                that runs one at a time and the foreground service that keeps
+                it going;
                 the bin and the daily job that empties it of old things;
                 handing a file to another app
   backup/       the backup file, its password encryption, save and restore

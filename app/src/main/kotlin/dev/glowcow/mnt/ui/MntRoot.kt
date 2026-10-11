@@ -83,6 +83,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
                         TransferKind.COPY -> R.string.transfer_copied
                         TransferKind.MOVE -> R.string.transfer_moved
                         TransferKind.DELETE -> R.string.transfer_deleted
+                        TransferKind.ZIP -> R.string.transfer_zipped
                     },
                 )
             }

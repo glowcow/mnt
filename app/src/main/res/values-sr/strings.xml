@@ -56,6 +56,7 @@
     <string name="action_more">Још</string>
     <string name="action_rename">Преименуј</string>
     <string name="action_details">Детаљи</string>
+    <string name="action_zip">Запакуј у ZIP</string>
     <string name="action_stop">Заустави</string>
     <string name="action_cancel">Откажи</string>
     <string name="action_failed">Овде то није успело</string>
@@ -92,6 +93,7 @@
 
     <string name="paste_copy">Копирај овде</string>
     <string name="paste_move">Премести овде</string>
+    <string name="paste_zip">Сачувај овде</string>
     <string name="paste_into_itself">Фасцикла не може ући у саму себе</string>
     <string name="conflict_title">Неки називи су овде заузети</string>
     <string name="conflict_text">Ставке са називом који већ постоји у овој фасцикли: %1$d</string>
@@ -102,6 +104,7 @@
     <string name="transfer_copying">Копирање</string>
     <string name="transfer_moving">Премештање</string>
     <string name="transfer_deleting">Брисање</string>
+    <string name="transfer_zipping">Паковање</string>
     <string name="transfer_rate">%1$s/с</string>
     <string name="transfer_channel">Радње са датотекама</string>
     <string name="transfer_busy">Друга радња је још у току</string>
@@ -110,11 +113,17 @@
     <string name="transfer_copied">Копирано</string>
     <string name="transfer_moved">Премештено</string>
     <string name="transfer_deleted">Избрисано</string>
+    <string name="transfer_zipped">Архива је сачувана</string>
     <string name="open_none">Ниједна апликација не отвара ову датотеку</string>
 
     <string name="details_location">Локација</string>
     <string name="details_items">Ставке</string>
+    <string name="details_created">Направљено</string>
     <string name="details_modified">Измењено</string>
+    <string name="details_accessed">Отворено</string>
+    <string name="details_permissions">Дозволе</string>
+    <string name="details_owner">Власник</string>
+    <string name="details_group">Група</string>
     <string name="details_counting">Бројање…</string>
 
     <string name="search_hint">Претрага по називу</string>

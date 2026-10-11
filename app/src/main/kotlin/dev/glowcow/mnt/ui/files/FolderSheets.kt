@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.glowcow.mnt.R
 import dev.glowcow.mnt.files.Conflict
+import dev.glowcow.mnt.files.Facts
 import dev.glowcow.mnt.files.Node
+import dev.glowcow.mnt.files.Opener
 import dev.glowcow.mnt.files.Paths
 import dev.glowcow.mnt.files.SortBy
 import dev.glowcow.mnt.files.Trash
@@ -34,7 +36,7 @@ import dev.glowcow.mnt.ui.components.GroupSheet
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 
-/** The sheets of a folder's page. [onStarted] hears whether a transfer could begin, [onFailed] that a quick change could not be made. */
+/** The sheets of a folder's page. [onStarted] hears whether a transfer could begin, [onFailed] that a quick change could not be made; [onShare] sends the ticked files. */
 @Composable
 fun FolderSheets(
     sheet: FolderSheet?,
@@ -44,6 +46,7 @@ fun FolderSheets(
     conflicts: Int,
     onSheet: (FolderSheet?) -> Unit,
     onStarted: (Boolean) -> Unit,
+    onShare: () -> Unit,
     onFailed: () -> Unit,
 ) {
     val close = { onSheet(null) }
@@ -96,13 +99,32 @@ fun FolderSheets(
         }
 
         FolderSheet.MORE -> GroupSheet(stringResource(R.string.selected_count, vm.selected().size), close) { pick ->
+            val chosen = remember { vm.selected() }
             Group {
-                if (vm.selected().size == 1) {
+                if (chosen.size == 1) {
                     GroupRow(stringResource(R.string.action_rename), onClick = { pick { onSheet(FolderSheet.RENAME) } })
                     GroupDivider()
                 }
-                GroupRow(stringResource(R.string.action_details), onClick = { pick { onSheet(FolderSheet.DETAILS) } })
+                // Only files can be handed to another app.
+                if (chosen.none { it.directory }) {
+                    GroupRow(stringResource(R.string.action_share), onClick = { pick(onShare) })
+                    GroupDivider()
+                }
+                GroupRow(stringResource(R.string.action_zip), onClick = { pick { onSheet(FolderSheet.ZIP) } })
             }
+        }
+
+        FolderSheet.ZIP -> remember { vm.zipName() }.let { name ->
+            NameSheet(
+                title = stringResource(R.string.action_zip),
+                initial = name,
+                confirm = stringResource(R.string.backup_save_pick),
+                taken = emptySet(),
+                onDismiss = close,
+                selected = name.length - Paths.extension(name).length - 1,
+                asIs = true,
+                onConfirm = vm::pickZip,
+            )
         }
 
         FolderSheet.DETAILS -> DetailsSheet(vm.selected(), vm, close)
@@ -137,7 +159,7 @@ fun Note(text: String) {
     Text(text, color = MntTheme.colors.muted, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 14.dp))
 }
 
-/** A sheet that takes a file name; it cannot be confirmed while the name is [taken] or no name at all. */
+/** A sheet that takes a file name; it cannot be confirmed while the name is [taken], no name at all or, unless [asIs], the one it opened with. */
 @Composable
 private fun NameSheet(
     title: String,
@@ -146,6 +168,7 @@ private fun NameSheet(
     taken: Set<String>,
     onDismiss: () -> Unit,
     selected: Int = 0,
+    asIs: Boolean = false,
     onConfirm: (String) -> Unit,
 ) =
     GroupSheet(title, onDismiss) { pick ->
@@ -163,16 +186,25 @@ private fun NameSheet(
         }
         Spacer(Modifier.height(12.dp))
         Group {
-            GroupRow(confirm, onClick = if (Paths.valid(typed) && typed != initial && !clash) ({ pick { onConfirm(typed) } }) else null)
+            GroupRow(confirm, onClick = if (Paths.valid(typed) && (asIs || typed != initial) && !clash) ({ pick { onConfirm(typed) } }) else null)
         }
     }
 
-/** What the chosen items are: where, how large, how many, when changed. Sizes of folders are counted as the sheet opens. */
+/**
+ * What the chosen items are: where, how large, how many; one alone also tells its type, its times,
+ * its permissions and whose it is. Sizes of folders are counted as the sheet opens.
+ */
 @Composable
 private fun DetailsSheet(nodes: List<Node>, vm: FolderViewModel, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val details by produceState<Details?>(null, nodes) { value = vm.details(nodes) }
     val single = nodes.singleOrNull()
+    val facts by produceState<Facts?>(null, single) { value = single?.let { vm.facts(it) } }
+    fun time(millis: Long) = DateUtils.formatDateTime(
+        context,
+        millis,
+        DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_SHOW_TIME,
+    )
     GroupSheet(stringResource(R.string.action_details), onDismiss) {
         Group {
             if (single != null) {
@@ -180,7 +212,14 @@ private fun DetailsSheet(nodes: List<Node>, vm: FolderViewModel, onDismiss: () -
                 GroupDivider()
             }
             GroupRow(stringResource(R.string.details_location), subtitle = vm.display(vm.path))
-            GroupDivider()
+        }
+        Spacer(Modifier.height(12.dp))
+        Group {
+            val type = single?.takeIf { !it.directory }?.let { Opener.mime(it.name) }
+            if (type != null) {
+                GroupRow(stringResource(R.string.sort_type), value = type)
+                GroupDivider()
+            }
             GroupRow(
                 stringResource(R.string.sort_size),
                 value = details?.let { Formatter.formatFileSize(context, it.bytes) } ?: stringResource(R.string.details_counting),
@@ -190,20 +229,38 @@ private fun DetailsSheet(nodes: List<Node>, vm: FolderViewModel, onDismiss: () -
                 // A folder alone is told by what it holds, without itself.
                 GroupRow(stringResource(R.string.details_items), value = details?.let { (it.items - if (single != null) 1 else 0).toString() } ?: "…")
             }
-            if (single != null) {
+        }
+        if (single == null) return@GroupSheet
+        Spacer(Modifier.height(12.dp))
+        Group {
+            facts?.created?.let {
+                GroupRow(stringResource(R.string.details_created), value = time(it))
                 GroupDivider()
-                GroupRow(
-                    stringResource(R.string.details_modified),
-                    value = DateUtils.formatDateTime(
-                        context,
-                        single.modified,
-                        DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_SHOW_TIME,
-                    ),
-                )
+            }
+            GroupRow(stringResource(R.string.details_modified), value = time(single.modified))
+            facts?.accessed?.let {
+                GroupDivider()
+                GroupRow(stringResource(R.string.details_accessed), value = time(it))
+            }
+        }
+        val rows = listOfNotNull(
+            facts?.mode?.let { R.string.details_permissions to "${permissions(it)} | ${it.toString(8)}" },
+            facts?.owner?.let { R.string.details_owner to it },
+            facts?.group?.let { R.string.details_group to it },
+        )
+        if (rows.isEmpty()) return@GroupSheet
+        Spacer(Modifier.height(12.dp))
+        Group {
+            rows.forEachIndexed { i, (label, value) ->
+                if (i > 0) GroupDivider()
+                GroupRow(stringResource(label), value = value)
             }
         }
     }
 }
+
+/** `rwxr-x---` for the nine permission bits. */
+private fun permissions(mode: Int): String = "rwxrwxrwx".mapIndexed { i, letter -> if (mode and (0x100 shr i) != 0) letter else '-' }.joinToString("")
 
 private val SORTS = listOf(
     SortBy.NAME to R.string.sort_name,

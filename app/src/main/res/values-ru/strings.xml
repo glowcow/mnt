@@ -59,6 +59,7 @@
     <string name="action_more">Ещё</string>
     <string name="action_rename">Переименовать</string>
     <string name="action_details">Сведения</string>
+    <string name="action_zip">Сжать в ZIP</string>
     <string name="action_stop">Остановить</string>
     <string name="action_cancel">Отмена</string>
     <string name="action_failed">Здесь это сделать не удалось</string>
@@ -96,6 +97,7 @@
 
     <string name="paste_copy">Скопировать сюда</string>
     <string name="paste_move">Переместить сюда</string>
+    <string name="paste_zip">Сохранить здесь</string>
     <string name="paste_into_itself">Папку нельзя поместить в саму себя</string>
     <string name="conflict_title">Некоторые имена здесь заняты</string>
     <string name="conflict_text">Элементов с именем, которое уже есть в этой папке: %1$d</string>
@@ -106,6 +108,7 @@
     <string name="transfer_copying">Копирование</string>
     <string name="transfer_moving">Перемещение</string>
     <string name="transfer_deleting">Удаление</string>
+    <string name="transfer_zipping">Сжатие</string>
     <string name="transfer_rate">%1$s/с</string>
     <string name="transfer_channel">Операции с файлами</string>
     <string name="transfer_busy">Другая операция ещё выполняется</string>
@@ -114,11 +117,17 @@
     <string name="transfer_copied">Скопировано</string>
     <string name="transfer_moved">Перемещено</string>
     <string name="transfer_deleted">Удалено</string>
+    <string name="transfer_zipped">Архив сохранён</string>
     <string name="open_none">Нет приложения, которое открывает этот файл</string>
 
     <string name="details_location">Расположение</string>
     <string name="details_items">Элементы</string>
+    <string name="details_created">Создано</string>
     <string name="details_modified">Изменено</string>
+    <string name="details_accessed">Открыто</string>
+    <string name="details_permissions">Права</string>
+    <string name="details_owner">Владелец</string>
+    <string name="details_group">Группа</string>
     <string name="details_counting">Подсчёт…</string>
 
     <string name="search_hint">Поиск по имени</string>

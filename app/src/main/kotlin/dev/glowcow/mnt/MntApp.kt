@@ -6,6 +6,7 @@ import dev.glowcow.mnt.backup.Backup
 import dev.glowcow.mnt.data.SettingsStore
 import dev.glowcow.mnt.files.FileStore
 import dev.glowcow.mnt.files.LocalStore
+import dev.glowcow.mnt.files.MediaIndex
 import dev.glowcow.mnt.files.Search
 import dev.glowcow.mnt.files.Trash
 import dev.glowcow.mnt.files.TrashScheduler
@@ -25,7 +26,7 @@ import kotlinx.coroutines.launch
 class AppContainer(context: Context) {
     val settings = SettingsStore(context)
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val files: FileStore = LocalStore()
+    val files: FileStore = LocalStore(MediaIndex(context)::added)
     val volumes = Volumes(context)
     val search = Search(files)
     val trash = Trash(files, { volumes.list.map { it.path } })

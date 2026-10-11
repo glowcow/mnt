@@ -9,6 +9,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.attribute.PosixFilePermissions
+import java.util.zip.ZipFile
 import kotlin.coroutines.cancellation.CancellationException
 
 class TransferTest {
@@ -182,5 +185,61 @@ class TransferTest {
         found.clear()
         Search(store).find(listOf(File(temp.root, "root").path), "report", hidden = true).collect { found += it.name }
         assertEquals(3, found.size)
+    }
+
+    /** Names in the archive with the text of each file, a folder's entry with none. */
+    private fun unzip(path: String): Map<String, String> = ZipFile(File(temp.root, path)).use { zip ->
+        zip.entries().asSequence().associate { it.name to zip.getInputStream(it).readBytes().decodeToString() }
+    }
+
+    @Test
+    fun packsFilesAndFoldersIntoAnArchive() = runBlocking {
+        val one = write("src/a/one.txt", "one")
+        write("src/a/deep/two.txt", "two")
+        dir("src/a/empty")
+        write("src/solo.txt", "solo")
+        one.setLastModified(1_600_000_000_000)
+        dir("dst")
+        val seen = ArrayList<Pair<Long, Long>>()
+        val transfer = Transfer(store) { _, done, total -> seen += done to total }
+
+        transfer.zip(listOf(File(temp.root, "src/a").path, File(temp.root, "src/solo.txt").path), File(temp.root, "dst/out.zip").path)
+
+        assertEquals(0, transfer.failed)
+        assertEquals(mapOf("a/" to "", "a/one.txt" to "one", "a/deep/" to "", "a/deep/two.txt" to "two", "a/empty/" to "", "solo.txt" to "solo"), unzip("dst/out.zip"))
+        assertEquals(listOf("out.zip"), File(temp.root, "dst").list()!!.toList())
+        assertEquals(10L to 10L, seen.last())
+        // A zip keeps times to two seconds.
+        ZipFile(File(temp.root, "dst/out.zip")).use { assertEquals(1_600_000_000_000, it.getEntry("a/one.txt").time) }
+    }
+
+    @Test
+    fun leavesNoArchiveBehindWhenStopped() {
+        write("src/big.bin", "x".repeat(1_000_000))
+        val dest = dir("dst")
+        var stopped = false
+        try {
+            runBlocking {
+                Transfer(store) { _, _, _ -> cancel() }.zip(listOf(File(temp.root, "src/big.bin").path), File(dest, "out.zip").path)
+            }
+        } catch (_: CancellationException) {
+            stopped = true
+        }
+        assertTrue(stopped)
+        assertEquals(emptyList<String>(), dest.list()!!.toList())
+    }
+
+    @Test
+    fun tellsPermissionsOwnerAndTimes() = runBlocking {
+        val file = write("facts.txt", "1")
+        Files.setPosixFilePermissions(file.toPath(), PosixFilePermissions.fromString("rw-r-----"))
+
+        val facts = store.facts(file.path)!!
+
+        assertEquals("640", facts.mode!!.toString(8))
+        assertEquals(Files.getOwner(file.toPath()).name, facts.owner)
+        assertTrue(facts.accessed!! > 0)
+        assertEquals(5L, LocalStore { 5L }.facts(file.path)!!.created)
+        assertEquals(null, store.facts(File(temp.root, "none").path))
     }
 }

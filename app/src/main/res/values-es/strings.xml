@@ -56,6 +56,7 @@
     <string name="action_more">Más</string>
     <string name="action_rename">Cambiar nombre</string>
     <string name="action_details">Detalles</string>
+    <string name="action_zip">Comprimir en ZIP</string>
     <string name="action_stop">Detener</string>
     <string name="action_cancel">Cancelar</string>
     <string name="action_failed">No se pudo hacer aquí</string>
@@ -92,6 +93,7 @@
 
     <string name="paste_copy">Copiar aquí</string>
     <string name="paste_move">Mover aquí</string>
+    <string name="paste_zip">Guardar aquí</string>
     <string name="paste_into_itself">Una carpeta no puede ir dentro de sí misma</string>
     <string name="conflict_title">Algunos nombres ya existen aquí</string>
     <string name="conflict_text">Elementos con un nombre que ya está en esta carpeta: %1$d</string>
@@ -102,6 +104,7 @@
     <string name="transfer_copying">Copiando</string>
     <string name="transfer_moving">Moviendo</string>
     <string name="transfer_deleting">Eliminando</string>
+    <string name="transfer_zipping">Comprimiendo</string>
     <string name="transfer_rate">%1$s/s</string>
     <string name="transfer_channel">Operaciones con archivos</string>
     <string name="transfer_busy">Otra operación sigue en curso</string>
@@ -110,11 +113,17 @@
     <string name="transfer_copied">Copiado</string>
     <string name="transfer_moved">Movido</string>
     <string name="transfer_deleted">Eliminado</string>
+    <string name="transfer_zipped">Archivo ZIP guardado</string>
     <string name="open_none">Ninguna aplicación abre este archivo</string>
 
     <string name="details_location">Ubicación</string>
     <string name="details_items">Elementos</string>
+    <string name="details_created">Creado</string>
     <string name="details_modified">Modificado</string>
+    <string name="details_accessed">Abierto</string>
+    <string name="details_permissions">Permisos</string>
+    <string name="details_owner">Propietario</string>
+    <string name="details_group">Grupo</string>
     <string name="details_counting">Contando…</string>
 
     <string name="search_hint">Buscar por nombre</string>

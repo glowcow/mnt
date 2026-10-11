@@ -6,6 +6,7 @@ import dev.glowcow.mnt.AppContainer
 import dev.glowcow.mnt.data.AppSettings
 import dev.glowcow.mnt.files.Clip
 import dev.glowcow.mnt.files.Conflict
+import dev.glowcow.mnt.files.Facts
 import dev.glowcow.mnt.files.Holds
 import dev.glowcow.mnt.files.Listing
 import dev.glowcow.mnt.files.Node
@@ -151,20 +152,42 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
         clearSelection()
     }
 
+    /** Takes the ticked rows to be packed elsewhere into an archive called [name]. */
+    fun pickZip(name: String) {
+        c.transfers.clip.value = Clip(selected().map { it.path }, move = false, zip = if (name.endsWith(ZIP, ignoreCase = true)) name else name + ZIP)
+        clearSelection()
+    }
+
+    /** The name offered for an archive of the ticked rows: that of the one, or of this folder for several. */
+    fun zipName(): String {
+        val one = selected().singleOrNull()
+        val stem = when {
+            one == null -> title
+            one.directory || Paths.extension(one.name).isEmpty() -> one.name
+            else -> one.name.substringBeforeLast('.')
+        }
+        return stem + ZIP
+    }
+
     fun dropClip() {
         c.transfers.clip.value = null
     }
 
     /** How many of the items to paste would land on a name that is taken here. */
     fun conflicts(clip: Clip): Int {
-        val here = read.value.orEmpty().mapTo(HashSet()) { it.name }
+        // An archive takes a spare name instead.
+        if (clip.zip != null) return 0
+        val here = names()
         return clip.paths.count { Paths.parent(it) != path && Paths.name(it) in here }
     }
 
     /** False when another transfer is running. */
     fun paste(conflict: Conflict): Boolean {
         val clip = clip.value ?: return true
-        if (!c.transfers.copy(clip.paths, path, clip.move, conflict)) return false
+        val taken = names()
+        val started = clip.zip?.let { c.transfers.zip(clip.paths, Paths.child(path, Paths.free(it) { name -> name in taken })) }
+            ?: c.transfers.copy(clip.paths, path, clip.move, conflict)
+        if (!started) return false
         dropClip()
         return true
     }
@@ -198,6 +221,8 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
         return Details(nodes.sumOf { transfer.bytes(it.path) }, nodes.sumOf { transfer.count(it.path) })
     }
 
+    suspend fun facts(node: Node): Facts? = c.files.facts(node.path)
+
     fun display(path: String): String = c.volumes.display(path)
 
     fun stop() = c.transfers.stop()
@@ -209,5 +234,6 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     private companion object {
         const val COUNT_WAIT_MS = 150L
         const val COUNT_AT_ONCE = 16
+        const val ZIP = ".zip"
     }
 }
