@@ -5,20 +5,33 @@ import com.hierynomus.msdtyp.FileTime
 import com.hierynomus.mserref.NtStatus
 import com.hierynomus.msfscc.FileAttributes
 import com.hierynomus.msfscc.fileinformation.FileBasicInformation
+import com.hierynomus.msfscc.fileinformation.FileStandardInformation
 import com.hierynomus.mssmb2.SMB2CreateDisposition
 import com.hierynomus.mssmb2.SMB2ShareAccess
 import com.hierynomus.mssmb2.SMBApiException
 import com.hierynomus.protocol.commons.EnumWithValue
+import com.hierynomus.security.AEADBlockCipher
+import com.hierynomus.security.Mac
+import com.hierynomus.security.SecurityException
+import com.hierynomus.security.SecurityProvider
+import com.hierynomus.security.bc.BCSecurityProvider
+import com.hierynomus.security.jce.JceSecurityProvider
 import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.SmbConfig
 import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.auth.NtlmAuthenticator
 import com.hierynomus.smbj.share.DiskShare
+import com.hierynomus.smbj.share.File
 import dev.glowcow.mnt.files.Node
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import kotlin.math.min
 
 /** A share of an SMB 2 or 3 server — Windows, Samba, a NAS. */
 class SmbStore(private val c: Connection) : RemoteStore() {
@@ -30,7 +43,14 @@ class SmbStore(private val c: Connection) : RemoteStore() {
         share?.takeIf { it.isConnected }?.let { return it }
         close()
         // NTLM alone: the Kerberos way in leans on classes Android does not have.
-        val config = SmbConfig.builder().withTimeout(TIMEOUT_S, TimeUnit.SECONDS).withSoTimeout(TIMEOUT_S, TimeUnit.SECONDS).withAuthenticators(NtlmAuthenticator.Factory()).build()
+        val config = SmbConfig.builder()
+            .withTimeout(TIMEOUT_S, TimeUnit.SECONDS)
+            .withSoTimeout(TIMEOUT_S, TimeUnit.SECONDS)
+            .withAuthenticators(NtlmAuthenticator.Factory())
+            .withSecurityProvider(Crypto())
+            // Says the phone can seal what it sends; a server that asks for that lets nobody else in.
+            .withEncryptData(true)
+            .build()
         val opened = SMBClient(config)
         client = opened
         // A name written as DOMAIN\user tells the domain too; no name at all comes in as a guest.
@@ -84,39 +104,163 @@ class SmbStore(private val c: Connection) : RemoteStore() {
 
     override fun input(path: String, offset: Long): InputStream {
         val file = share().openFile(inner(path), setOf(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null)
-        return object : InputStream() {
-            private var at = offset
-
-            override fun read(): Int = ByteArray(1).let { if (read(it, 0, 1) < 0) -1 else it[0].toInt() and 0xFF }
-
-            override fun read(b: ByteArray, off: Int, len: Int): Int = file.read(b, at, off, len).also { if (it > 0) at += it }
-
-            override fun close() = file.close()
-        }
+        return Ahead(file, offset, file.getFileInformation(FileStandardInformation::class.java).endOfFile)
     }
 
     override fun output(path: String, size: Long): OutputStream {
-        val file = share().openFile(inner(path), setOf(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OVERWRITE_IF, null)
-        val out = file.outputStream
-        return object : OutputStream() {
-            override fun write(b: Int) = out.write(b)
-
-            override fun write(b: ByteArray, off: Int, len: Int) = out.write(b, off, len)
-
-            override fun close() {
-                try {
-                    out.close()
-                } finally {
-                    file.close()
-                }
-            }
-        }
+        return Behind(share().openFile(inner(path), setOf(AccessMask.GENERIC_WRITE), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OVERWRITE_IF, null))
     }
 
     // The server names a path with backslashes and from the share's root, which is the empty one.
     private fun inner(path: String): String = path.trim('/').replace('/', '\\')
 
+    /** Reads a file by several pieces asked for at once: the wire is never idle while one of them is on its way. */
+    private class Ahead(private val file: File, private var next: Long, private val end: Long) : InputStream() {
+        private val asked = ArrayDeque<Future<Int>>()
+        private val pieces = ArrayDeque<ByteArray>()
+        private val spare = ArrayDeque<ByteArray>()
+        private var piece: ByteArray? = null
+        private var size = 0
+        private var at = 0
+        private var over = false
+
+        override fun read(): Int = ByteArray(1).let { if (read(it, 0, 1) < 0) -1 else it[0].toInt() and 0xFF }
+
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            if (len == 0) return 0
+            if (at == size && !turn()) return -1
+            val n = min(len, size - at)
+            System.arraycopy(piece!!, at, b, off, n)
+            at += n
+            return n
+        }
+
+        // Takes the next piece in the file's order and asks for those after it; false at the end of the file.
+        private fun turn(): Boolean {
+            piece?.let { spare += it }
+            piece = null
+            if (over) return false
+            while (asked.size < AHEAD && next < end) ask()
+            val first = asked.removeFirstOrNull() ?: return false
+            val bytes = pieces.removeFirst()
+            size = try {
+                first.get()
+            } catch (e: ExecutionException) {
+                throw IOException(e.cause?.message, e.cause)
+            }
+            // A piece that came short is where the file ends now, whatever was asked past it.
+            if (size < bytes.size || size == 0) over = true
+            piece = bytes
+            at = 0
+            return size > 0
+        }
+
+        private fun ask() {
+            val from = next
+            val want = min(PIECE.toLong(), end - from).toInt()
+            val bytes = spare.removeFirstOrNull()?.takeIf { it.size == want } ?: ByteArray(want)
+            next += want
+            pieces += bytes
+            asked += POOL.submit(
+                Callable {
+                    var got = 0
+                    // The server may answer with less than was asked when it is short of credits.
+                    while (got < want) {
+                        val n = file.read(bytes, from + got, got, want - got)
+                        if (n <= 0) break
+                        got += n
+                    }
+                    got
+                },
+            )
+        }
+
+        override fun close() {
+            asked.forEach { it.cancel(false) }
+            file.close()
+        }
+    }
+
+    /** Writes a file by pieces sent one after another, without waiting for the answer to each. */
+    private class Behind(private val file: File) : OutputStream() {
+        private val sent = ArrayDeque<Pair<Future<Long>, Int>>()
+        private val bytes = ByteArray(PIECE)
+        private var held = 0
+        private var at = 0L
+
+        override fun write(b: Int) = write(byteArrayOf(b.toByte()), 0, 1)
+
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            var from = off
+            while (from < off + len) {
+                val n = min(off + len - from, PIECE - held)
+                System.arraycopy(b, from, bytes, held, n)
+                held += n
+                from += n
+                if (held == PIECE) send()
+            }
+        }
+
+        // The piece is on the wire once this returns, so the buffer is free for the next one.
+        private fun send() {
+            if (held == 0) return
+            if (sent.size >= AHEAD) settle()
+            sent += file.writeAsync(bytes, at, 0, held) to held
+            at += held
+            held = 0
+        }
+
+        private fun settle() {
+            val (answer, size) = sent.removeFirst()
+            val written = try {
+                answer.get()
+            } catch (e: ExecutionException) {
+                throw IOException(e.cause?.message, e.cause)
+            }
+            if (written != size.toLong()) throw IOException("The server took $written bytes of $size")
+        }
+
+        override fun close() {
+            try {
+                send()
+                while (sent.isNotEmpty()) settle()
+            } finally {
+                file.close()
+            }
+        }
+    }
+
+    /** What every packet is signed and sealed with comes from the system, which the processor speeds up; the rest is BouncyCastle's. */
+    private class Crypto : SecurityProvider {
+        private val system = JceSecurityProvider()
+        private val own = BCSecurityProvider()
+
+        override fun getDigest(name: String) = own.getDigest(name)
+
+        override fun getMac(name: String): Mac = try {
+            system.getMac(name)
+        } catch (_: SecurityException) {
+            own.getMac(name)
+        }
+
+        override fun getCipher(name: String) = own.getCipher(name)
+
+        override fun getAEADBlockCipher(name: String): AEADBlockCipher = try {
+            system.getAEADBlockCipher(name)
+        } catch (_: SecurityException) {
+            own.getAEADBlockCipher(name)
+        }
+
+        override fun getDerivationFunction(name: String) = own.getDerivationFunction(name)
+    }
+
     private companion object {
         const val TIMEOUT_S = 20L
+
+        // How much one question asks for, and how many are on their way at once.
+        const val PIECE = 1024 * 1024
+        const val AHEAD = 4
+
+        val POOL = Executors.newCachedThreadPool { Thread(it, "smb").apply { isDaemon = true } }
     }
 }

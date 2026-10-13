@@ -3,10 +3,14 @@ package dev.glowcow.mnt.files
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -120,11 +124,7 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
             withContext(Dispatchers.IO) {
                 files.read(node.path).use { input ->
                     files.write(part, node.size).use { output ->
-                        val buffer = ByteArray(BUFFER)
-                        while (true) {
-                            ensureActive()
-                            val n = input.read(buffer)
-                            if (n < 0) break
+                        pump(input) { buffer, n ->
                             output.write(buffer, 0, n)
                             done += n
                             onProgress(node.name, done, total)
@@ -142,6 +142,34 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
         } catch (_: Exception) {
             files.remove(part)
             return false
+        }
+    }
+
+    /** Reads [input] to its end on one thread and hands what it read to [take] on another, so that neither waits for the other. */
+    private suspend fun pump(input: InputStream, take: (ByteArray, Int) -> Unit) = coroutineScope {
+        val filled = Channel<Pair<ByteArray, Int>>(QUEUE)
+        val spare = Channel<ByteArray>(Channel.UNLIMITED)
+        launch {
+            try {
+                while (true) {
+                    ensureActive()
+                    val buffer = spare.tryReceive().getOrNull() ?: ByteArray(BUFFER)
+                    var n = 0
+                    while (n < buffer.size) {
+                        val got = input.read(buffer, n, buffer.size - n)
+                        if (got < 0) break
+                        n += got
+                    }
+                    if (n > 0) filled.send(buffer to n)
+                    if (n < buffer.size) break
+                }
+            } finally {
+                filled.close()
+            }
+        }
+        for ((buffer, n) in filled) {
+            take(buffer, n)
+            spare.trySend(buffer)
         }
     }
 
@@ -210,6 +238,9 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
     }
 
     private companion object {
-        const val BUFFER = 256 * 1024
+        const val BUFFER = 1024 * 1024
+
+        // Buffers read and not yet written.
+        const val QUEUE = 4
     }
 }
