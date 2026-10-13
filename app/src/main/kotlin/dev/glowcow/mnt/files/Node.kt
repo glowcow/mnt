@@ -33,7 +33,7 @@ enum class Kind {
     companion object {
         private val byExtension: Map<String, Kind> = buildMap {
             fun put(kind: Kind, vararg extensions: String) = extensions.forEach { put(it, kind) }
-            put(IMAGE, "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "avif", "bmp", "svg", "tif", "tiff", "dng", "raw", "ico")
+            put(IMAGE, "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "avif", "bmp", "svg", "tif", "tiff", "dng", "raw", "ico", "arw", "cr2", "cr3", "nef", "raf", "orf", "rw2", "pef", "srw")
             put(VIDEO, "mp4", "mkv", "webm", "mov", "avi", "m4v", "3gp", "ts", "mpg", "mpeg", "wmv", "flv")
             put(AUDIO, "mp3", "flac", "ogg", "opus", "m4a", "aac", "wav", "wma", "aiff", "ape", "mid", "amr")
             put(TEXT, "txt", "md", "pdf", "doc", "docx", "odt", "rtf", "xls", "xlsx", "ods", "csv", "ppt", "pptx", "odp", "epub", "fb2", "json", "xml", "html", "htm", "log", "ini", "yaml", "yml")

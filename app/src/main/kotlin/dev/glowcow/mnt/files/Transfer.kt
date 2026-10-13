@@ -50,12 +50,12 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
     /** Packs [sources] into a zip archive at [target], which it takes once whole. */
     suspend fun zip(sources: List<String>, target: String) {
         total = sources.sumOf { bytes(it) }
-        val part = Paths.child(Paths.parent(target), ".${Paths.name(target)}.part")
+        val part = if (files.renames(target)) Paths.child(Paths.parent(target), ".${Paths.name(target)}.part") else target
         try {
             withContext(Dispatchers.IO) {
                 ZipOutputStream(files.write(part).buffered(BUFFER)).use { zip -> for (source in sources) pack(source, "", zip) }
             }
-            if (!files.rename(part, target)) {
+            if (part != target && !files.rename(part, target)) {
                 files.remove(part)
                 fail()
             }
@@ -114,11 +114,12 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
 
     /** Copies one file under a temporary name next to [target], which it takes once whole. */
     private suspend fun duplicate(node: Node, target: String): Boolean {
-        val part = Paths.child(Paths.parent(target), ".${Paths.name(target)}.part")
+        // Where nothing can be renamed the file is written under its own name, over what was there.
+        val part = if (files.renames(target)) Paths.child(Paths.parent(target), ".${Paths.name(target)}.part") else target
         try {
             withContext(Dispatchers.IO) {
                 files.read(node.path).use { input ->
-                    files.write(part).use { output ->
+                    files.write(part, node.size).use { output ->
                         val buffer = ByteArray(BUFFER)
                         while (true) {
                             ensureActive()
@@ -132,7 +133,7 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
                 }
             }
             files.setModified(part, node.modified)
-            if (files.rename(part, target)) return true
+            if (part == target || files.rename(part, target)) return true
             files.remove(part)
             return false
         } catch (e: CancellationException) {

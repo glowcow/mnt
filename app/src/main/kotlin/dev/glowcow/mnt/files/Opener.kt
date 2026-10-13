@@ -35,7 +35,8 @@ object Opener {
         false
     }
 
-    private fun uri(context: Context, path: String): Uri = FileProvider.getUriForFile(context, "${context.packageName}.files", File(path))
+    private fun uri(context: Context, path: String): Uri =
+        if (Remote.id(path) != null) RemoteProvider.uri(context, path) else FileProvider.getUriForFile(context, "${context.packageName}.files", File(path))
 
     /** The type a file called [name] is taken for; null when its ending says nothing. */
     fun mime(name: String): String? = MimeTypeMap.getSingleton().getMimeTypeFromExtension(Paths.extension(name))

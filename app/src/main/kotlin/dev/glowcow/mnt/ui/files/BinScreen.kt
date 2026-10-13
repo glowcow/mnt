@@ -97,7 +97,7 @@ class BinViewModel(private val c: AppContainer) : ViewModel() {
         selection.value = emptySet()
     }
 
-    fun display(path: String): String = c.volumes.display(path)
+    fun display(path: String): String = c.roots.display(path)
 
     fun selected(): List<Trashed> = items.value.orEmpty().filter { it.id in selection.value }
 

@@ -6,7 +6,7 @@
     <uses-feature android:name="android.hardware.usb.host" android:required="false" />
     <!-- A file manager works on any file of the shared storage and of the drives plugged in. -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
-    <!-- The check for a new version; nothing else uses the network. -->
+    <!-- The check for a new version, and the servers the user adds; nothing else uses the network. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -26,6 +26,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Mnt">
 
         <activity
@@ -64,5 +65,12 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- A file on a server or on an MTP device, handed to the app that shows it. -->
+        <provider
+            android:name=".files.RemoteProvider"
+            android:authorities="${applicationId}.remote"
+            android:exported="false"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>

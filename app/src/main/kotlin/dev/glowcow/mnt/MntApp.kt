@@ -7,12 +7,17 @@ import dev.glowcow.mnt.data.SettingsStore
 import dev.glowcow.mnt.files.FileStore
 import dev.glowcow.mnt.files.LocalStore
 import dev.glowcow.mnt.files.MediaIndex
+import dev.glowcow.mnt.files.Roots
 import dev.glowcow.mnt.files.Search
+import dev.glowcow.mnt.files.Stores
 import dev.glowcow.mnt.files.Trash
 import dev.glowcow.mnt.files.TrashScheduler
 import dev.glowcow.mnt.files.TransferManager
 import dev.glowcow.mnt.files.TransferService
 import dev.glowcow.mnt.files.Volumes
+import dev.glowcow.mnt.net.Connections
+import dev.glowcow.mnt.net.MtpDevices
+import dev.glowcow.mnt.net.Remotes
 import dev.glowcow.mnt.update.AppUpdateScheduler
 import dev.glowcow.mnt.update.AppUpdater
 import kotlinx.coroutines.CoroutineScope
@@ -26,8 +31,12 @@ import kotlinx.coroutines.launch
 class AppContainer(context: Context) {
     val settings = SettingsStore(context)
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    val files: FileStore = LocalStore(MediaIndex(context)::added)
     val volumes = Volumes(context)
+    val connections = Connections(context)
+    val mtp = MtpDevices(context)
+    val remotes = Remotes(connections, mtp)
+    val files: FileStore = Stores(LocalStore(MediaIndex(context)::added), remotes::store)
+    val roots = Roots(volumes, remotes)
     val search = Search(files)
     val trash = Trash(files, { volumes.list.map { it.path } })
     val transfers = TransferManager(scope, files, trash)

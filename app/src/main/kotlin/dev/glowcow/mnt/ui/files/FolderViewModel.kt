@@ -11,6 +11,7 @@ import dev.glowcow.mnt.files.Holds
 import dev.glowcow.mnt.files.Listing
 import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.files.Paths
+import dev.glowcow.mnt.files.Remote
 import dev.glowcow.mnt.files.SortBy
 import dev.glowcow.mnt.files.Transfer
 import dev.glowcow.mnt.files.TransferProgress
@@ -69,15 +70,18 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     val progress: StateFlow<TransferProgress?> = c.transfers.progress
     val clip: StateFlow<Clip?> = c.transfers.clip
 
+    // The place outside the phone's file system this folder lies in; null on the phone and its drives.
+    private val remote = Remote.id(path)
+
     /** The volume by its name, or the folder's own name below it. */
     val title: String
     val crumbs: List<Crumb>
 
     init {
-        val volume = c.volumes.of(path)
-        val steps = path.removePrefix(volume?.path.orEmpty()).split('/').filter { it.isNotEmpty() }
-        var at = volume?.path.orEmpty()
-        crumbs = listOfNotNull(volume?.let { Crumb(it.label, it.path) }) + steps.map { step ->
+        val root = c.roots.of(path)
+        val steps = path.removePrefix(root?.path.orEmpty()).split('/').filter { it.isNotEmpty() }
+        var at = root?.path.orEmpty()
+        crumbs = listOfNotNull(root?.let { Crumb(it.label, it.path) }) + steps.map { step ->
             at = Paths.child(at.ifEmpty { "/" }, step)
             Crumb(step, at)
         }
@@ -91,7 +95,8 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
         counting = viewModelScope.launch {
             val nodes = c.files.list(path)
             val hidden = c.settings.settings.first().showHidden
-            val folders = nodes.orEmpty().filter { it.directory }
+            // Looking into every folder of a place on the network would take as many trips there.
+            val folders = if (remote == null) nodes.orEmpty().filter { it.directory } else emptyList()
             // The list waits a moment for its folders to be counted, so it shows up whole instead of
             // changing line by line; what takes longer comes after it, all at once.
             val counted = HashMap<String, Holds>()
@@ -193,7 +198,13 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     }
 
     /** Whether what is deleted here can go to a bin: on the phone's own storage always, elsewhere when the setting says so. */
-    fun binned(): Boolean = c.volumes.of(path)?.primary == true || settings.value.binExternal
+    fun binned(): Boolean = remote == null && (c.volumes.of(path)?.primary == true || settings.value.binExternal)
+
+    /** Whether what lies here can be given another name. */
+    fun renames(): Boolean = c.files.renames(path)
+
+    /** Why this folder of a place on the network could not be read, in that place's own words. */
+    fun reason(): String? = remote?.let { c.remotes.error(it) }
 
     /** Into the bin, or [forGood] — also where there is no bin. */
     fun delete(forGood: Boolean): Boolean {
@@ -223,7 +234,7 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
 
     suspend fun facts(node: Node): Facts? = c.files.facts(node.path)
 
-    fun display(path: String): String = c.volumes.display(path)
+    fun display(path: String): String = c.roots.display(path)
 
     fun stop() = c.transfers.stop()
 

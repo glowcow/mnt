@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -45,10 +46,12 @@ import dev.glowcow.mnt.files.Place
 import dev.glowcow.mnt.files.TransferProgress
 import dev.glowcow.mnt.files.Device
 import dev.glowcow.mnt.files.label
+import dev.glowcow.mnt.net.Mount
 import dev.glowcow.mnt.ui.components.Group
 import dev.glowcow.mnt.ui.components.GroupDivider
 import dev.glowcow.mnt.ui.components.GroupRow
 import dev.glowcow.mnt.ui.components.GroupSheet
+import dev.glowcow.mnt.ui.components.IconButton48
 import dev.glowcow.mnt.ui.components.LocalOrigins
 import dev.glowcow.mnt.ui.components.PillButton
 import dev.glowcow.mnt.ui.components.ProgressLine
@@ -73,6 +76,9 @@ class Bin(val folders: Int, val files: Int, val bytes: Long)
 
 class FilesViewModel(private val c: AppContainer) : ViewModel() {
     val devices: StateFlow<List<Device>> = c.volumes.devices
+
+    /** The servers the user added and the MTP devices on the USB port. */
+    val mounts: StateFlow<List<Mount>> = c.remotes.mounts.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
     val progress: StateFlow<TransferProgress?> = c.transfers.progress
 
     // Counts the times the tab came to the front: access may have been granted meanwhile.
@@ -96,13 +102,19 @@ class FilesViewModel(private val c: AppContainer) : ViewModel() {
 
     fun refresh() {
         c.volumes.refresh()
+        c.mtp.refresh()
         c.purge()
         looks.value++
     }
 
-    fun display(path: String): String = c.volumes.display(path)
+    fun display(path: String): String = c.roots.display(path)
 
     fun stop() = c.transfers.stop()
+
+    /** Asks the user to let the app talk to an MTP device. */
+    fun ask(id: String) = c.mtp.ask(id)
+
+    fun forget(id: String) = c.remotes.forget(id)
 }
 
 @Composable
@@ -111,9 +123,12 @@ fun FilesScreen(
     onOpen: (String) -> Unit,
     onDevice: (String) -> Unit,
     onBin: () -> Unit,
+    onServer: (String?) -> Unit,
     vm: FilesViewModel = viewModel { FilesViewModel((this[APPLICATION_KEY] as MntApp).container) },
 ) {
     val devices by vm.devices.collectAsStateWithLifecycle()
+    val mounts by vm.mounts.collectAsStateWithLifecycle()
+    var server by rememberSaveable { mutableStateOf<String?>(null) }
     val places by vm.places.collectAsStateWithLifecycle()
     val pinned by vm.pinned.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
@@ -130,7 +145,12 @@ fun FilesScreen(
         onPauseOrDispose {}
     }
 
-    TabScreen(TopTab.FILES, onTab) { top, bottom ->
+    // The way to add a server stands at the end of the title row.
+    val add: @Composable () -> Unit = {
+        // The glyph, not its 48 dp target, ends where the blocks below do.
+        Box(Modifier.offset(x = 13.dp)) { IconButton48(MntIcons.Plus, stringResource(R.string.server_add)) { onServer(null) } }
+    }
+    TabScreen(TopTab.FILES, onTab, trailing = add) { top, bottom ->
         StorageGate(top) {
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(top = top, bottom = bottom + 16.dp),
@@ -160,6 +180,20 @@ fun FilesScreen(
                             // What can be pulled out has a sheet of its own: what it is, and the way to eject it.
                             onLongClick = if (device.kind == Device.Kind.PHONE) null else ({ about = device.id }),
                             below = { UsageBar(device.free, device.total) },
+                        )
+                    }
+                    // What is not the phone's own stands with the devices: the MTP devices on the port, then the servers.
+                    mounts.forEach { mount ->
+                        GroupDivider()
+                        GroupRow(
+                            mount.title,
+                            Modifier.origin(folderKey(mount.path)),
+                            subtitle = if (mount.ready) mount.detail else stringResource(R.string.mtp_ask),
+                            icon = if (mount.protocol == null) MntFlat.Gadget else MntFlat.Server,
+                            iconTint = Color.Unspecified,
+                            iconSize = PLACE_ICON,
+                            onClick = { if (mount.ready) open(mount.path) else vm.ask(mount.id) },
+                            onLongClick = if (mount.protocol == null) null else ({ server = mount.id }),
                         )
                     }
                 }
@@ -216,6 +250,17 @@ fun FilesScreen(
     }
 
     about?.let { id -> devices.firstOrNull { it.id == id }?.let { DeviceSheet(it) { about = null } } }
+    server?.let { id ->
+        mounts.firstOrNull { it.id == id }?.let { mount ->
+            GroupSheet(mount.title, { server = null }) { pick ->
+                Group {
+                    GroupRow(stringResource(R.string.server_edit), onClick = { pick { onServer(id) } })
+                    GroupDivider()
+                    GroupRow(stringResource(R.string.server_remove), subtitle = stringResource(R.string.server_remove_hint), onClick = { pick { vm.forget(id) } })
+                }
+            }
+        }
+    }
 }
 
 /**

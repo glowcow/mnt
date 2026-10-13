@@ -168,7 +168,7 @@ fun FolderScreen(
     ) { top, bottom ->
         when (val shown = content) {
             FolderContent.Loading -> Unit
-            FolderContent.Closed -> Centered(top, bottom) { EmptyState(stringResource(R.string.folder_closed), stringResource(R.string.folder_closed_text)) }
+            FolderContent.Closed -> Centered(top, bottom) { EmptyState(stringResource(R.string.folder_closed), vm.reason() ?: stringResource(R.string.folder_closed_text)) }
             is FolderContent.Listed -> if (shown.nodes.isEmpty()) {
                 Centered(top, bottom) { EmptyState(stringResource(R.string.folder_empty)) }
             } else {

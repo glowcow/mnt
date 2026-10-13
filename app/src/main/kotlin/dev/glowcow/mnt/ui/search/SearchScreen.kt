@@ -108,7 +108,7 @@ class SearchViewModel(private val c: AppContainer) : ViewModel() {
         if (typed.length >= MIN_LETTERS) viewModelScope.launch { c.settings.rememberSearch(typed) }
     }
 
-    fun display(path: String): String = c.volumes.display(path)
+    fun display(path: String): String = c.roots.display(path)
 
     companion object {
         const val LIMIT = 300

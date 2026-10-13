@@ -32,6 +32,7 @@ import dev.glowcow.mnt.ui.files.BinScreen
 import dev.glowcow.mnt.ui.files.DeviceScreen
 import dev.glowcow.mnt.ui.files.FilesScreen
 import dev.glowcow.mnt.ui.files.FolderScreen
+import dev.glowcow.mnt.ui.files.ServerScreen
 import dev.glowcow.mnt.ui.search.SearchScreen
 import dev.glowcow.mnt.ui.settings.SettingsScreen
 import dev.glowcow.mnt.ui.theme.MntTheme
@@ -44,6 +45,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class FolderRoute(val path: String) : NavKey
 @Serializable data class DeviceRoute(val id: String) : NavKey
 @Serializable data object BinRoute : NavKey
+@Serializable data class ServerRoute(val id: String?) : NavKey
 
 private fun TopTab.route(): NavKey = when (this) {
     TopTab.FILES -> FilesRoute
@@ -131,7 +133,8 @@ fun MntRoot(openTab: Flow<TopTab>) {
             stayBelow
         },
         entryProvider = entryProvider {
-            entry<FilesRoute> { FilesScreen(onTab = ::selectTab, onOpen = ::openFolder, onDevice = { backStack.add(DeviceRoute(it)) }, onBin = { backStack.add(BinRoute) }) }
+            entry<FilesRoute> { FilesScreen(onTab = ::selectTab, onOpen = ::openFolder, onDevice = { backStack.add(DeviceRoute(it)) }, onBin = { backStack.add(BinRoute) }, onServer = { backStack.add(ServerRoute(it)) }) }
+            entry<ServerRoute> { route -> ServerScreen(route.id, onBack = { backStack.remove(route) }) }
             entry<BinRoute> { BinScreen(onBack = { backStack.remove(BinRoute) }) }
             entry<DeviceRoute> { route -> DeviceScreen(route.id, onBack = { backStack.remove(route) }, onOpen = ::openFolder) }
             entry<FolderRoute> { route -> FolderScreen(route.path, onBack = { backStack.removeLastOrNull() }, onOpen = ::openFolder) }

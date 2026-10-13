@@ -60,8 +60,9 @@ fun nodeMeta(node: Node, holds: Holds? = null): String {
     val context = LocalContext.current
     val date = DateUtils.formatDateTime(context, node.modified, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR or DateUtils.FORMAT_ABBREV_MONTH)
     val first = when {
-        !node.directory -> Formatter.formatShortFileSize(context, node.size)
-        holds == null -> return date
+        // A place that keeps no time for a folder says nothing of it.
+        !node.directory -> Formatter.formatShortFileSize(context, node.size).also { if (node.modified <= 0) return it }
+        holds == null -> return if (node.modified > 0) date else ""
         holds.files == 0 && holds.folders == 0 -> stringResource(R.string.folder_holds_nothing)
         else -> listOfNotNull(
             holds.files.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.count_files, it, it) },
@@ -97,7 +98,8 @@ fun NodeRow(node: Node, subtitle: String, selected: Boolean = false, onLongClick
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(node.name, color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.MiddleEllipsis)
-                Text(subtitle, color = c.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.StartEllipsis)
+                // With nothing to say under it the name stands alone, in the middle of the row.
+                if (subtitle.isNotEmpty()) Text(subtitle, color = c.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.StartEllipsis)
             }
         }
         // The line starts where the text does and ends where the page's margin begins.

@@ -102,5 +102,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
 
+    // The network places: SMB, FTP and NFS; S3 is spoken by the app itself.
+    implementation(libs.smbj)
+    implementation(libs.commons.net)
+    implementation(libs.nfs.client)
+
     testImplementation(libs.junit)
 }

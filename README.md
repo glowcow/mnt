@@ -1,13 +1,14 @@
 # Mnt
 
 Android file manager for the phone's own storage, memory cards and drives
-plugged into the USB port: browse, search, copy, move, rename and delete, with
-long jobs running on in the background. Android 16+ only; the interface speaks
-ten languages. Network shares and a built-in viewer are planned and not there
-yet.
+plugged into the USB port, for servers on the network — SMB, FTP, S3, NFS —
+and for cameras and phones that speak MTP: browse, search, copy, move, rename
+and delete, with long jobs running on in the background. Android 16+ only;
+the interface speaks ten languages. A built-in viewer is planned and not
+there yet.
 
 <p>
-  <img src="docs/screenshots/files.png" width="200" alt="Files: the phone with how full it is, its folders and the bin">
+  <img src="docs/screenshots/files.png" width="200" alt="Files: the phone with how full it is, three servers, its folders and the bin">
   <img src="docs/screenshots/folder.png" width="200" alt="A folder: every kind of file with a picture of its own, folders with a count of what they hold">
   <img src="docs/screenshots/select.png" width="200" alt="Three files ticked, with copy, move, details, delete and more on the island at the bottom">
   <img src="docs/screenshots/dark.png" width="200" alt="A folder of photos in the dark theme">
@@ -29,30 +30,28 @@ The files on the screenshots are made up.
 
 ## Features
 
-- **Files** — the phone, the memory card and each drive plugged in with how
-  full it is, the phone's folders you choose to see, the ones you pinned,
-  and the bin with what it holds.
-- **Drives with several volumes** — a drive shows as one device under its own
-  name; a tap lists its volumes, or opens it at once when it has just one.
+- **Files** — the phone, the memory card and each drive with how full it is,
+  a drive of several volumes as one device, the folders you see and pin.
+- **Servers and devices** — add a server by its address and walk it like a
+  folder; a camera or a phone on the USB port shows up by itself.
 - **Folders** — a list sorted the way you choose, each kind of file with a
-  picture of its own, folders with a count of what they hold.
+  picture of its own; a tap hands a file to the app that shows its type.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold.
 - **Bin** — what you delete on the phone is kept for 30 days and can be put
   back where it was; after that, or when you say so, it is removed
   forever. Deleting forever at once is there too. On memory cards and
   drives a delete is forever unless you turn their bin on in the settings.
-- **Copy and move** — pick in one folder, paste in another; a name that is
-  taken can be replaced, kept beside the old one or skipped.
+- **Copy and move** — pick in one folder, paste in another, on the phone or
+  on a server; a taken name can be replaced, kept beside the old or skipped.
 - **In the background** — a long copy goes on with the app closed, shows how
   far and how fast it goes, and stops when told to.
 - **Search** — finds files and folders by a part of their name on the phone
   and on every drive at once, and offers what you searched for before.
-- **Open with** — a tap hands a file to the app that shows its type.
 - **Backup and updates** — settings, pinned folders and the search history in
   one file, encrypted with a password if you like; new versions from GitHub.
 - **Private by default** — no accounts or analytics; the network is used only
-  to check for a new version, and that is off until you turn it on.
+  for the servers you add and for the version check you turn on.
 
 ## Stack
 
@@ -63,7 +62,9 @@ The files on the screenshots are made up.
 | UI | Jetpack Compose (BOM 2026.09), Material 3, Navigation 3 |
 | Files | `java.io` / `java.nio` behind one `FileStore` interface, all files access |
 | Storage | DataStore for settings |
-| Network | `HttpsURLConnection`, kotlinx.serialization for JSON |
+| Servers | smbj for SMB, Apache Commons Net for FTP, nfs-client for NFS; S3 is spoken by the app itself |
+| USB devices | the platform's `MtpDevice` |
+| Network | `HttpURLConnection`, kotlinx.serialization for JSON |
 
 All versions live in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
@@ -78,12 +79,15 @@ app/src/main/kotlin/dev/glowcow/mnt/
                 that runs one at a time and the foreground service that keeps
                 it going;
                 the bin and the daily job that empties it of old things;
-                handing a file to another app
+                handing a file to another app, one on a server included
+  net/          the servers the user adds and how each is spoken to — SMB,
+                FTP, S3, NFS — the MTP devices on the USB port, and the
+                sealed file the servers are kept in
   backup/       the backup file, its password encryption, save and restore
   update/       check for a new release, download, the weekly job
   data/         settings
   ui/files/     the Files tab, a device's volumes, a folder's page and its
-                sheets, the bin
+                sheets, the bin, the page that adds a server
   ui/search/    the Search tab
   ui/settings/  the Settings tab
   ui/           theme + icons, shared components (tab page and detail page
@@ -177,3 +181,9 @@ Arimo and Cormorant Garamond are bundled under the SIL Open Font License
 and [Phosphor Icons](https://phosphoricons.com), both MIT — see
 [`licenses/FlatColorIcons-LICENSE.txt`](licenses/FlatColorIcons-LICENSE.txt)
 and [`licenses/Phosphor-MIT.txt`](licenses/Phosphor-MIT.txt).
+
+The app links [smbj](https://github.com/hierynomus/smbj),
+[Apache Commons Net](https://commons.apache.org/proper/commons-net/) and
+[nfs-client](https://github.com/EMCECS/nfs-client-java) with what they
+bring along, all under the Apache License 2.0, and Bouncy Castle under its
+MIT-style licence.

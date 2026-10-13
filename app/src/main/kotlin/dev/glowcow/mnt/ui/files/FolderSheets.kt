@@ -103,7 +103,8 @@ fun FolderSheets(
         FolderSheet.MORE -> GroupSheet(stringResource(R.string.selected_count, vm.selected().size), close) { pick ->
             val chosen = remember { vm.selected() }
             Group {
-                if (chosen.size == 1) {
+                // A device that speaks MTP gives nothing another name.
+                if (chosen.size == 1 && vm.renames()) {
                     GroupRow(stringResource(R.string.action_rename), onClick = { pick { onSheet(FolderSheet.RENAME) } })
                     GroupDivider()
                 }
@@ -176,7 +177,8 @@ private fun NameSheet(
     GroupSheet(title, onDismiss) { pick ->
         var name by rememberSaveable { mutableStateOf(initial) }
         val typed = name.trim()
-        val clash = typed != initial && typed in taken
+        // The phone's storage does not tell names apart by case: one that differs in case alone is taken too, unless it is this item's own.
+        val clash = !typed.equals(initial, ignoreCase = true) && taken.any { it.equals(typed, ignoreCase = true) }
         Group { GroupField(stringResource(R.string.name_label), name, { name = it }, focused = true, selected = selected) }
         if (clash) {
             Text(

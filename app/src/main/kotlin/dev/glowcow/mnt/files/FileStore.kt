@@ -31,11 +31,14 @@ interface FileStore {
 
     suspend fun setModified(path: String, time: Long)
 
-    /** Blocking: read off the main thread. */
-    fun read(path: String): InputStream
+    /** False where a file cannot be renamed once written: it is then written straight under its own name. */
+    fun renames(path: String): Boolean = true
 
-    /** Blocking: write off the main thread. */
-    fun write(path: String): OutputStream
+    /** Blocking: read off the main thread. The stream starts [offset] bytes into the file. */
+    fun read(path: String, offset: Long = 0): InputStream
+
+    /** Blocking: write off the main thread. [size] is how many bytes will come, or -1 when that is not known. */
+    fun write(path: String, size: Long = -1): OutputStream
 }
 
 /**
@@ -66,8 +69,15 @@ class LocalStore(private val born: (String) -> Long? = { null }) : FileStore {
     override suspend fun mkdir(path: String): Boolean = withContext(Dispatchers.IO) { File(path).mkdir() }
 
     override suspend fun rename(from: String, to: String): Boolean = withContext(Dispatchers.IO) {
-        runCatching { Files.move(File(from).toPath(), File(to).toPath(), StandardCopyOption.ATOMIC_MOVE) }.isSuccess
+        if (!from.equals(to, ignoreCase = true) || from == to) return@withContext move(from, to)
+        // Where case does not tell names apart a change of case alone is taken for no change: it goes by way of a third name.
+        val spare = generateSequence(0) { it + 1 }.map { "$to.$it.rename" }.first { !File(it).exists() }
+        if (!move(from, spare)) return@withContext false
+        move(spare, to).also { if (!it) move(spare, from) }
     }
+
+    private fun move(from: String, to: String): Boolean =
+        runCatching { Files.move(File(from).toPath(), File(to).toPath(), StandardCopyOption.ATOMIC_MOVE) }.isSuccess
 
     override suspend fun remove(path: String): Boolean = withContext(Dispatchers.IO) { File(path).delete() }
 
@@ -75,9 +85,9 @@ class LocalStore(private val born: (String) -> Long? = { null }) : FileStore {
         withContext(Dispatchers.IO) { File(path).setLastModified(time) }
     }
 
-    override fun read(path: String): InputStream = File(path).inputStream()
+    override fun read(path: String, offset: Long): InputStream = File(path).inputStream().also { if (offset > 0) it.channel.position(offset) }
 
-    override fun write(path: String): OutputStream = File(path).outputStream()
+    override fun write(path: String, size: Long): OutputStream = File(path).outputStream()
 
     // One question to the file system for all of it: on a phone each one costs a trip through FUSE.
     private fun File.node(): Node? {
