@@ -41,12 +41,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.glowcow.mnt.AppContainer
 import dev.glowcow.mnt.MntApp
 import dev.glowcow.mnt.R
+import dev.glowcow.mnt.files.Device
 import dev.glowcow.mnt.files.Paths
 import dev.glowcow.mnt.files.Place
 import dev.glowcow.mnt.files.TransferProgress
-import dev.glowcow.mnt.files.Device
 import dev.glowcow.mnt.files.label
 import dev.glowcow.mnt.net.Mount
+import dev.glowcow.mnt.ui.components.BIN_KEY
 import dev.glowcow.mnt.ui.components.Group
 import dev.glowcow.mnt.ui.components.GroupDivider
 import dev.glowcow.mnt.ui.components.GroupRow
@@ -58,11 +59,10 @@ import dev.glowcow.mnt.ui.components.ProgressLine
 import dev.glowcow.mnt.ui.components.StorageGate
 import dev.glowcow.mnt.ui.components.TabScreen
 import dev.glowcow.mnt.ui.components.TopTab
-import dev.glowcow.mnt.ui.components.BIN_KEY
 import dev.glowcow.mnt.ui.components.deviceKey
 import dev.glowcow.mnt.ui.components.folderKey
 import dev.glowcow.mnt.ui.components.origin
-import dev.glowcow.mnt.ui.theme.MntFlat
+import dev.glowcow.mnt.ui.theme.FileIcons
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -189,7 +189,7 @@ fun FilesScreen(
                             mount.title,
                             Modifier.origin(folderKey(mount.path)),
                             subtitle = if (mount.ready) mount.detail else stringResource(R.string.mtp_ask),
-                            icon = if (mount.protocol == null) MntFlat.Gadget else MntFlat.Server,
+                            icon = FileIcons.named(if (mount.protocol == null) "folder-mobile" else "folder-server"),
                             iconTint = Color.Unspecified,
                             iconSize = PLACE_ICON,
                             onClick = { if (mount.ready) open(mount.path) else vm.ask(mount.id) },
@@ -220,7 +220,7 @@ fun FilesScreen(
                                 // A folder listed twice on the tab grows out of the first of its rows.
                                 if (places.none { it.second == path }) Modifier.origin(folderKey(path)) else Modifier,
                                 subtitle = vm.display(Paths.parent(path)),
-                                icon = MntFlat.Folder,
+                                icon = FileIcons.folder(Paths.name(path), !MntTheme.colors.isDark),
                                 iconTint = Color.Unspecified,
                                 iconSize = PLACE_ICON,
                                 onClick = { open(path) },
@@ -236,7 +236,7 @@ fun FilesScreen(
                         stringResource(R.string.bin),
                         Modifier.origin(BIN_KEY),
                         subtitle = held?.let { binText(it) } ?: " ",
-                        icon = if (held == null || held.folders + held.files == 0) MntFlat.Bin else MntFlat.BinFull,
+                        icon = FileIcons.named("folder-trash"),
                         iconTint = Color.Unspecified,
                         iconSize = PLACE_ICON,
                         onClick = {
@@ -360,9 +360,9 @@ private const val USAGE_FULL = 0.9f
 
 val Device.Kind.icon: ImageVector
     get() = when (this) {
-        Device.Kind.PHONE -> MntFlat.Phone
-        Device.Kind.CARD -> MntFlat.Card
-        Device.Kind.DRIVE -> MntFlat.Drive
+        Device.Kind.PHONE -> FileIcons.named("folder-mobile")
+        Device.Kind.CARD -> FileIcons.named("folder-archive")
+        Device.Kind.DRIVE -> FileIcons.named("folder-shared")
     }
 
 val Place.label: Int
@@ -377,10 +377,10 @@ val Place.label: Int
 
 private val Place.icon: ImageVector
     get() = when (this) {
-        Place.DOWNLOADS -> MntFlat.Download
-        Place.CAMERA -> MntFlat.Camera
-        Place.PICTURES -> MntFlat.Image
-        Place.MUSIC -> MntFlat.Music
-        Place.MOVIES -> MntFlat.Movies
-        Place.DOCUMENTS -> MntFlat.Text
+        Place.DOWNLOADS -> FileIcons.named("folder-download")
+        Place.CAMERA -> FileIcons.named("folder-review")
+        Place.PICTURES -> FileIcons.named("folder-images")
+        Place.MUSIC -> FileIcons.named("folder-audio")
+        Place.MOVIES -> FileIcons.named("folder-video")
+        Place.DOCUMENTS -> FileIcons.named("folder-docs")
     }

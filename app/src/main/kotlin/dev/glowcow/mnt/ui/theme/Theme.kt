@@ -134,6 +134,11 @@ val TitleFont = FontFamily(
     Font(R.font.cormorant_garamond, FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
 )
 
+/** JetBrains Mono, the face of code, at its regular weight. */
+val MonoFont = FontFamily(
+    Font(R.font.jetbrains_mono, FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(400))),
+)
+
 private val base = TextStyle(fontFamily = AppFont, fontSize = 15.sp)
 
 private val typography = Typography().let { t ->
@@ -163,13 +168,17 @@ fun MntTheme(mode: ThemeMode = ThemeMode.SYSTEM, palette: Palette = Palette.CLAS
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
+    MntColorsProvider(colorsOf(palette, dark, LocalConfiguration.current.isScreenWideColorGamut), content)
+}
+
+/** The colours of [palette], light or [dark]; on a [wide] screen the bright ones are in Display P3. */
+fun colorsOf(palette: Palette, dark: Boolean, wide: Boolean): MntColors {
     val colors = when (palette) {
         Palette.WARM -> if (dark) DarkColors else LightColors
         Palette.CLASSIC -> if (dark) ClassicDarkColors else ClassicLightColors
     }
     // Only the bright colours leave sRGB; grounds, text and lines lie inside it anyway.
-    val wide = LocalConfiguration.current.isScreenWideColorGamut
-    MntColorsProvider(if (wide) colors.copy(accent = colors.accent.p3(), danger = colors.danger.p3(), wide = true) else colors, content)
+    return if (wide) colors.copy(accent = colors.accent.p3(), danger = colors.danger.p3(), wide = true) else colors
 }
 
 @Composable

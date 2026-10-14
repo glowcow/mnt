@@ -8,11 +8,12 @@ import dev.glowcow.mnt.data.SettingsStore
 import dev.glowcow.mnt.data.ThemeMode
 import dev.glowcow.mnt.files.Place
 import dev.glowcow.mnt.files.SortBy
+import dev.glowcow.mnt.view.code.CodeScheme
+import java.io.BufferedInputStream
+import java.io.InputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import java.io.BufferedInputStream
-import java.io.InputStream
 
 enum class RestoreOutcome { RESTORED, WRONG_PASSWORD, INVALID }
 
@@ -33,6 +34,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                         settings = BackupSettings(
                             s.theme.name, s.palette.name, s.appUpdate, s.showHidden, s.sortBy.name, s.sortDescending,
                             s.pinned, s.hiddenPlaces.toList(), s.searches, s.binExternal,
+                            s.codeLight.name, s.codeDark.name, s.wrapLines, s.lineNumbers, s.linksInApp,
                         ),
                     ),
                 )
@@ -90,6 +92,11 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                 pinned = b.pinned.sane().filter { it.startsWith('/') },
                 hiddenPlaces = b.hiddenPlaces.filter { name -> Place.entries.any { it.name == name } }.toSet(),
                 searches = b.searches.sane(),
+                codeLight = b.codeLight?.let { runCatching { CodeScheme.valueOf(it) }.getOrNull() } ?: d.codeLight,
+                codeDark = b.codeDark?.let { runCatching { CodeScheme.valueOf(it) }.getOrNull() } ?: d.codeDark,
+                wrapLines = b.wrapLines,
+                lineNumbers = b.lineNumbers,
+                linksInApp = b.linksInApp,
             )
         }
     }

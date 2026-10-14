@@ -1,7 +1,5 @@
 package dev.glowcow.mnt.backup
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -9,6 +7,8 @@ import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 @Serializable
 data class BackupSettings(
@@ -22,6 +22,11 @@ data class BackupSettings(
     val hiddenPlaces: List<String> = emptyList(),
     val searches: List<String> = emptyList(),
     val binExternal: Boolean = false,
+    val codeLight: String? = null,
+    val codeDark: String? = null,
+    val wrapLines: Boolean = true,
+    val lineNumbers: Boolean = true,
+    val linksInApp: Boolean = true,
 )
 
 /** `backup.json` of an archive. */

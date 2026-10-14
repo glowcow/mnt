@@ -66,6 +66,7 @@ import dev.glowcow.mnt.ui.components.folderKey
 import dev.glowcow.mnt.ui.components.nodeMeta
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
+import dev.glowcow.mnt.view.Format
 
 /** The sheet a folder's page has open. */
 enum class FolderSheet { SORT, NEW_FOLDER, RENAME, DELETE, MORE, DETAILS, ZIP, CONFLICT }
@@ -75,6 +76,7 @@ fun FolderScreen(
     path: String,
     onBack: () -> Unit,
     onOpen: (String) -> Unit,
+    onView: (String) -> Unit,
     vm: FolderViewModel = viewModel { FolderViewModel(path, (this[APPLICATION_KEY] as MntApp).container) },
 ) {
     val c = MntTheme.colors
@@ -108,6 +110,7 @@ fun FolderScreen(
         when {
             selection.isNotEmpty() -> vm.toggle(node.path)
             node.directory -> onOpen(node.path)
+            Format.of(node.name) != null -> onView(node.path)
             !Opener.open(context, node.path) -> toast(R.string.open_none)
         }
     }

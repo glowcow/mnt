@@ -10,10 +10,10 @@ import dev.glowcow.mnt.files.MediaIndex
 import dev.glowcow.mnt.files.Roots
 import dev.glowcow.mnt.files.Search
 import dev.glowcow.mnt.files.Stores
-import dev.glowcow.mnt.files.Trash
-import dev.glowcow.mnt.files.TrashScheduler
 import dev.glowcow.mnt.files.TransferManager
 import dev.glowcow.mnt.files.TransferService
+import dev.glowcow.mnt.files.Trash
+import dev.glowcow.mnt.files.TrashScheduler
 import dev.glowcow.mnt.files.Volumes
 import dev.glowcow.mnt.net.Connections
 import dev.glowcow.mnt.net.MtpDevices
@@ -58,6 +58,9 @@ class MntApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // The PDF renderer runs in an isolated process of the app, which may not touch the rest of it.
+        if (android.os.Process.isIsolated()) return
+        dev.glowcow.mnt.ui.theme.FileIcons.init(this)
         container = AppContainer(this)
         container.scope.launch {
             container.settings.settings.map { it.appUpdate }.distinctUntilChanged()

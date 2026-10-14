@@ -6,8 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -75,9 +75,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindowProvider
 import dev.glowcow.mnt.R
+import dev.glowcow.mnt.ui.theme.AppFont
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
-import dev.glowcow.mnt.ui.theme.AppFont
 import dev.glowcow.mnt.ui.theme.inked
 import kotlinx.coroutines.launch
 
@@ -310,6 +310,45 @@ fun <T> ChoiceSheet(
             GroupRow(label, onClick = { pick { onSelect(value) } }, trailing = {
                 if (value == selected) Icon(MntIcons.Check, null, tint = accent, modifier = Modifier.size(20.dp).inked(accent))
             })
+        }
+    }
+}
+
+/**
+ * A choice shown rather than named: two columns of cards, each [preview] over its name; the current one has an
+ * `accent` border and a check mark after its name.
+ */
+@Composable
+fun <T> PreviewSheet(
+    title: String,
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    onDismiss: () -> Unit,
+    preview: @Composable (T) -> Unit,
+) = GroupSheet(title, onDismiss) { pick ->
+    val c = MntTheme.colors
+    options.chunked(2).forEach { row ->
+        Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            row.forEach { (value, label) ->
+                val chosen = value == selected
+                Column(
+                    Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).clickable { pick { onSelect(value) } },
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .border(if (chosen) 2.dp else 1.dp, if (chosen) c.accent else c.line, RoundedCornerShape(16.dp)),
+                    ) { preview(value) }
+                    Row(Modifier.padding(start = 4.dp, bottom = 2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(label, color = c.text, fontSize = 14.sp, fontWeight = if (chosen) FontWeight.Medium else FontWeight.Normal)
+                        if (chosen) Icon(MntIcons.Check, null, tint = c.accent, modifier = Modifier.size(16.dp).inked(c.accent))
+                    }
+                }
+            }
+            if (row.size == 1) Box(Modifier.weight(1f))
         }
     }
 }

@@ -1,5 +1,7 @@
 package dev.glowcow.mnt.files
 
+import dev.glowcow.mnt.view.Format
+
 /** A file or a folder as a listing shows it. */
 data class Node(
     val path: String,
@@ -41,6 +43,7 @@ enum class Kind {
             put(PACKAGE, "apk", "apks", "xapk", "apkm")
         }
 
-        fun of(name: String): Kind = byExtension[Paths.extension(name)] ?: OTHER
+        // What the app's viewer shows as text or as a document is drawn as one.
+        fun of(name: String): Kind = byExtension[Paths.extension(name)] ?: Format.of(name)?.takeIf { it != Format.UNKNOWN }?.let { TEXT } ?: OTHER
     }
 }

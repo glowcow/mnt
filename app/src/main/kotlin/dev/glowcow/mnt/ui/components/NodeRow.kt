@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -33,23 +34,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.glowcow.mnt.R
 import dev.glowcow.mnt.files.Holds
-import dev.glowcow.mnt.files.Kind
 import dev.glowcow.mnt.files.Node
-import dev.glowcow.mnt.ui.theme.MntFlat
+import dev.glowcow.mnt.ui.theme.FileIcons
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 
-val Kind.icon: ImageVector
-    get() = when (this) {
-        Kind.FOLDER -> MntFlat.Folder
-        Kind.IMAGE -> MntFlat.Image
-        Kind.VIDEO -> MntFlat.Video
-        Kind.AUDIO -> MntFlat.Audio
-        Kind.TEXT -> MntFlat.Text
-        Kind.ARCHIVE -> MntFlat.Archive
-        Kind.PACKAGE -> MntFlat.Package
-        Kind.OTHER -> MntFlat.File
-    }
+/** The picture of a file or a folder, as VS Code's explorer draws it, the variant for a light ground in a light theme. */
+@Composable
+fun nodeIcon(node: Node): ImageVector {
+    val light = !MntTheme.colors.isDark
+    return remember(node.name, node.directory, light) { if (node.directory) FileIcons.folder(node.name, light) else FileIcons.file(node.name, light) }
+}
 
 /**
  * How large a file is, or what a folder [holds] once that is counted, then when it was changed:
@@ -93,7 +88,7 @@ fun NodeRow(node: Node, subtitle: String, selected: Boolean = false, onLongClick
                         Icon(MntIcons.Check, null, tint = c.onAccent, modifier = Modifier.size(16.dp))
                     }
                 } else {
-                    Icon(node.kind.icon, null, tint = Color.Unspecified, modifier = Modifier.size(36.dp))
+                    Icon(nodeIcon(node), null, tint = Color.Unspecified, modifier = Modifier.size(36.dp))
                 }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

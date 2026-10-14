@@ -12,6 +12,9 @@ coroutines = "1.11.0"
 smbj = "0.15.0"
 commons-net = "3.13.0"
 nfs-client = "1.1.0"
+commonmark = "0.30.0"
+pdf = "1.0.0-beta01"
+kxml2 = "2.3.0"
 junit = "4.13.2"
 
 [libraries]
@@ -35,7 +38,15 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 smbj = { module = "com.hierynomus:smbj", version.ref = "smbj" }
 commons-net = { module = "commons-net:commons-net", version.ref = "commons-net" }
 nfs-client = { module = "com.emc.ecs:nfs-client", version.ref = "nfs-client" }
+commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+commonmark-tables = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
+commonmark-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
+commonmark-tasks = { module = "org.commonmark:commonmark-ext-task-list-items", version.ref = "commonmark" }
+commonmark-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
+pdf-compose = { module = "androidx.pdf:pdf-compose", version.ref = "pdf" }
+pdf-document-service = { module = "androidx.pdf:pdf-document-service", version.ref = "pdf" }
 junit = { module = "junit:junit", version.ref = "junit" }
+kxml2 = { module = "net.sf.kxml:kxml2", version.ref = "kxml2" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

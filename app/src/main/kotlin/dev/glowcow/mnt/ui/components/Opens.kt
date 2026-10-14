@@ -98,6 +98,9 @@ private class Frame(private val height: Float, private val corner: Float) : Shap
         Outline.Rounded(RoundRect(Rect(0f, 0f, size.width, height), CornerRadius(corner)))
 }
 
+/** Whether the page on top is dark whatever the theme, as code in a dark scheme is; null when it follows the theme. */
+val LocalPageDark = staticCompositionLocalOf { androidx.compose.runtime.mutableStateOf<Boolean?>(null) }
+
 /** The key of a folder's page and of the rows that open it. */
 fun folderKey(path: String) = "folder:$path"
 

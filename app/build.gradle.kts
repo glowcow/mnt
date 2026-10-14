@@ -14,6 +14,8 @@ android {
     namespace = "dev.glowcow.mnt"
     compileSdk = 37
     buildToolsVersion = "37.0.0"
+    // The DjVu reader is DjVuLibre, built from app/src/main/cpp.
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
         applicationId = "dev.glowcow.mnt"
@@ -21,6 +23,18 @@ android {
         targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersionName
+        externalNativeBuild {
+            cmake {
+                arguments += listOf("-DANDROID_STL=c++_static")
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "4.1.2"
+        }
     }
 
     // One APK per ABI: arm64-v8a for phones, x86_64 for the emulator.
@@ -107,5 +121,16 @@ dependencies {
     implementation(libs.commons.net)
     implementation(libs.nfs.client)
 
+    // The viewer: Markdown, and PDF through the system's sandboxed renderer.
+    implementation(libs.commonmark)
+    implementation(libs.commonmark.tables)
+    implementation(libs.commonmark.strikethrough)
+    implementation(libs.commonmark.tasks)
+    implementation(libs.commonmark.autolink)
+    implementation(libs.pdf.compose)
+    implementation(libs.pdf.document.service)
+
     testImplementation(libs.junit)
+    // The XML parser Android carries, for the tests of the document readers on the JVM.
+    testImplementation(libs.kxml2)
 }

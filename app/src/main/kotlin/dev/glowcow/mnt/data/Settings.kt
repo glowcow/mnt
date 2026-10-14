@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.glowcow.mnt.files.SortBy
+import dev.glowcow.mnt.view.code.CodeScheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
@@ -32,6 +33,14 @@ data class AppSettings(
     val hiddenPlaces: Set<String> = emptySet(),
     /** What was searched for, the latest first. */
     val searches: List<String> = emptyList(),
+    /** The colours code is shown in while the app is light, and while it is dark. */
+    val codeLight: CodeScheme = CodeScheme.defaultLight,
+    val codeDark: CodeScheme = CodeScheme.defaultDark,
+    /** Long lines of text and code are wrapped to the screen instead of scrolled sideways. */
+    val wrapLines: Boolean = true,
+    val lineNumbers: Boolean = true,
+    /** A link opens in the app's own browser page instead of the phone's browser. */
+    val linksInApp: Boolean = true,
 )
 
 private val Context.dataStore by preferencesDataStore("settings")
@@ -47,6 +56,11 @@ class SettingsStore(private val context: Context) {
     private val pinnedKey = stringPreferencesKey("pinned")
     private val searchesKey = stringPreferencesKey("searches")
     private val hiddenPlacesKey = stringSetPreferencesKey("hidden_places")
+    private val codeLightKey = stringPreferencesKey("code_light")
+    private val codeDarkKey = stringPreferencesKey("code_dark")
+    private val wrapLinesKey = booleanPreferencesKey("wrap_lines")
+    private val lineNumbersKey = booleanPreferencesKey("line_numbers")
+    private val linksInAppKey = booleanPreferencesKey("links_in_app")
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { p ->
         AppSettings(
@@ -60,6 +74,11 @@ class SettingsStore(private val context: Context) {
             pinned = p[pinnedKey].list(),
             searches = p[searchesKey].list(),
             hiddenPlaces = p[hiddenPlacesKey].orEmpty(),
+            codeLight = p[codeLightKey].scheme() ?: CodeScheme.defaultLight,
+            codeDark = p[codeDarkKey].scheme() ?: CodeScheme.defaultDark,
+            wrapLines = p[wrapLinesKey] ?: true,
+            lineNumbers = p[lineNumbersKey] ?: true,
+            linksInApp = p[linksInAppKey] ?: true,
         )
     }
 
@@ -75,6 +94,11 @@ class SettingsStore(private val context: Context) {
         it[pinnedKey] = Json.encodeToString(s.pinned)
         it[hiddenPlacesKey] = s.hiddenPlaces
         it[searchesKey] = Json.encodeToString(s.searches.take(SEARCHES_KEPT))
+        it[codeLightKey] = s.codeLight.name
+        it[codeDarkKey] = s.codeDark.name
+        it[wrapLinesKey] = s.wrapLines
+        it[lineNumbersKey] = s.lineNumbers
+        it[linksInAppKey] = s.linksInApp
     }
 
     /** Adds pinned folders and searches to the ones kept, those already here staying where they are. */
@@ -88,6 +112,15 @@ class SettingsStore(private val context: Context) {
     suspend fun setPalette(palette: Palette) = context.dataStore.edit { it[paletteKey] = palette.name }
 
     suspend fun setAppUpdate(on: Boolean) = context.dataStore.edit { it[appUpdateKey] = on }
+
+    /** The colours of code for the app's light theme, or for its dark one. */
+    suspend fun setCodeScheme(dark: Boolean, scheme: CodeScheme) = context.dataStore.edit { it[if (dark) codeDarkKey else codeLightKey] = scheme.name }
+
+    suspend fun setWrapLines(on: Boolean) = context.dataStore.edit { it[wrapLinesKey] = on }
+
+    suspend fun setLineNumbers(on: Boolean) = context.dataStore.edit { it[lineNumbersKey] = on }
+
+    suspend fun setLinksInApp(on: Boolean) = context.dataStore.edit { it[linksInAppKey] = on }
 
     suspend fun setShowHidden(on: Boolean) = context.dataStore.edit { it[showHiddenKey] = on }
 
@@ -116,6 +149,8 @@ class SettingsStore(private val context: Context) {
     }
 
     suspend fun clearSearches() = context.dataStore.edit { it.remove(searchesKey) }
+
+    private fun String?.scheme(): CodeScheme? = this?.let { runCatching { CodeScheme.valueOf(it) }.getOrNull() }
 
     private fun String?.list(): List<String> = this?.let { runCatching { Json.decodeFromString<List<String>>(it) }.getOrNull() }.orEmpty()
 

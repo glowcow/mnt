@@ -49,7 +49,8 @@ class ListingTest {
         assertEquals(Kind.IMAGE, file("IMG_0001.HEIC").kind)
         assertEquals(Kind.ARCHIVE, file("backup.tar.gz").kind)
         assertEquals(Kind.PACKAGE, file("mnt-0.1.0-arm64-v8a-release.apk").kind)
-        assertEquals(Kind.OTHER, file("Makefile").kind)
+        assertEquals(Kind.TEXT, file("Makefile").kind)
+        assertEquals(Kind.OTHER, file("firmware.bin").kind)
         assertEquals(Kind.FOLDER, folder("photos.jpg").kind)
     }
 }

@@ -51,6 +51,7 @@ import dev.glowcow.mnt.ui.theme.MntTheme
 /**
  * A page opened from a tab: the content runs under a frosted [header] and [bar] and gets the heights they
  * cover. [scrolled] says the page has gone under the header, [from] is the row of a tab it was opened from.
+ * Content that cannot be recorded, a web view, is not [glass]: it is drawn once, below an opaque header.
  */
 @Composable
 fun DetailPage(
@@ -59,6 +60,7 @@ fun DetailPage(
     header: @Composable ColumnScope.() -> Unit,
     from: Rect? = null,
     bar: (@Composable () -> Unit)? = null,
+    glass: Boolean = true,
     content: @Composable (top: Dp, bottom: Dp) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -69,7 +71,7 @@ fun DetailPage(
     val inset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize().pageMotion(from).background(ground).imePadding().onSizeChanged { pageSize = it }) {
         Box(
-            Modifier.fillMaxSize().drawWithContent {
+            if (!glass) Modifier.fillMaxSize() else Modifier.fillMaxSize().drawWithContent {
                 page.record { this@drawWithContent.drawContent() }
                 drawLayer(page)
             },
@@ -80,7 +82,7 @@ fun DetailPage(
             Modifier
                 .fillMaxWidth()
                 .onSizeChanged { headerHeight = it.height }
-                .frosted(page, ground) { Offset.Zero }
+                .then(if (glass) Modifier.frosted(page, ground) { Offset.Zero } else Modifier.background(ground))
                 .solid()
                 .statusBarsPadding(),
         ) {

@@ -58,6 +58,7 @@ import dev.glowcow.mnt.ui.components.TopTab
 import dev.glowcow.mnt.ui.theme.AppFont
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
+import dev.glowcow.mnt.view.Format
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -121,6 +122,7 @@ class SearchViewModel(private val c: AppContainer) : ViewModel() {
 fun SearchScreen(
     onTab: (TopTab) -> Unit,
     onOpen: (String) -> Unit,
+    onView: (String) -> Unit,
     vm: SearchViewModel = viewModel { SearchViewModel((this[APPLICATION_KEY] as MntApp).container) },
 ) {
     val c = MntTheme.colors
@@ -190,6 +192,7 @@ fun SearchScreen(
                             vm.remember()
                             when {
                                 node.directory -> onOpen(node.path)
+                                Format.of(node.name) != null -> onView(node.path)
                                 !Opener.open(context, node.path) -> Toast.makeText(context, none, Toast.LENGTH_SHORT).show()
                             }
                         }

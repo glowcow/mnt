@@ -1,0 +1,24 @@
+/* DjVuLibre 3.5.30 configured by hand for Android: clang, bionic, POSIX threads, no iconv, no JPEG. */
+#define AUTOCONF 1
+#define UNIX 1
+#define HAVE_NAMESPACES 1
+#define HAVE_STDINCLUDES 1
+#define HAVE_EXCEPTIONS 1
+#define HAVE_PTHREAD 1
+#define HAVE_INTEL_ATOMIC_BUILTINS 1
+#define HAVE_LONG_LONG_INT 1
+#define HAVE_STDINT_H 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STDDEF_H 1
+#define HAVE_DIRENT_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_WCHAR_H 1
+#define HAVE_MBSTATE_T 1
+#define HAVE_SNPRINTF 1
+#define HAVE_VSNPRINTF 1
+#define HAVE_STRERROR 1
+#define HAS_WCHAR 1
+#define HAS_WCTYPE 1
+#define HAS_MBSTATE 1
+#define DIR_DATADIR "/system/usr/share"
