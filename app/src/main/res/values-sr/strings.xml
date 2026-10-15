@@ -238,6 +238,8 @@
     <string name="viewer_part">%1$d од %2$d</string>
     <string name="viewer_part_previous">Претходни део</string>
     <string name="viewer_part_next">Следећи део</string>
+    <string name="viewer_page_previous">Претходна страница</string>
+    <string name="viewer_page_next">Следећа страница</string>
     <string name="viewer_locked">Заштићено лозинком</string>
     <string name="viewer_locked_text">Унесите лозинку да бисте је отворили</string>
     <string name="viewer_wrong_password">Погрешна лозинка</string>
@@ -250,7 +252,7 @@
     <string name="settings_files">Датотеке</string>
     <string name="settings_files_hint">Фасцикле на картици Датотеке, скривене датотеке, корпа, претраге</string>
     <string name="settings_viewer">Прегледач</string>
-    <string name="settings_viewer_hint">Боје кода, дуги редови, везе</string>
+    <string name="settings_viewer_hint">Боје кода, дуги редови, странице, везе</string>
     <string name="settings_backup">Резервна копија</string>
     <string name="settings_credits">Лиценца и захвалнице</string>
     <string name="settings_code_light">Код у светлој теми</string>
@@ -262,12 +264,12 @@
     <string name="code_none">Без истицања</string>
     <string name="settings_wrap">Преламај дуге редове</string>
     <string name="settings_wrap_hint">Текст и код стају у ширину екрана уместо помицања у страну</string>
+    <string name="settings_pages">Странице</string>
+    <string name="settings_pages_hint">Word документи су распоређени по листовима, као при штампи</string>
     <string name="settings_numbers">Бројеви редова</string>
     <string name="settings_numbers_hint">Нумериши редове текста и кода</string>
     <string name="settings_links">Отварај везе у апликацији</string>
     <string name="settings_links_hint">Веб странице се отварају овде уместо у прегледачу телефона</string>
     <string name="settings_code_font">Фонт кода</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Претходно поглавље</string>
-    <string name="viewer_chapter_next">Следеће поглавље</string>
 </resources>

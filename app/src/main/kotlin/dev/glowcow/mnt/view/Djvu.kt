@@ -79,8 +79,6 @@ class DjvuDoc(file: File, private val width: Int) : WebDoc() {
 
     override fun path(part: Int) = "/doc/0"
 
-    override val scripted: Boolean get() = true
-
     override fun serve(path: String, look: Look): Served? = when {
         path == "/doc/0" -> Served("text/html", page(look).byteInputStream())
         path.startsWith("/p/") -> path.removePrefix("/p/").substringBefore('.').toIntOrNull()?.let { n ->
@@ -114,10 +112,10 @@ class DjvuDoc(file: File, private val width: Int) : WebDoc() {
                 append("<img loading=\"lazy\" src=\"/p/").append(i).append(".jpg\" alt=\"\"><div class=\"tx\" data-p=\"").append(i).append("\"></div></div>")
             }
         }
-        val css = "body{padding:8px 8px 32px}.pg{position:relative;margin:0 auto 8px;background:#fff;container-type:inline-size;width:100%;box-shadow:0 0 0 1px var(--line)}" +
+        val css = "body{padding:calc(var(--top) + 8px) 8px calc(var(--bottom) + 8px)}.pg{position:relative;margin:0 auto 12px;background:#fff;container-type:inline-size;width:100%;box-shadow:0 .5px 2.5px rgba(0,0,0,.3)}.pg:last-child{margin-bottom:0}" +
             ".pg img{display:block;width:100%;height:100%}.tx{position:absolute;inset:0;overflow:hidden}" +
             ".tx span{position:absolute;color:transparent;white-space:pre;line-height:1;transform-origin:0 0}"
-        return Page.html(body, look, css, "<script>$SCRIPT</script>")
+        return Page.html(body, look, css, Page.script(SCRIPT))
     }
 
     override fun close() = djvu.close()

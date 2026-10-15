@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- The PDF renderer's page label is not drawn: its pages scroll as the app's other pages do. -->
+    <dimen name="page_indicator_text_size" tools:ignore="PrivateResource,UnusedResources">0dp</dimen>
+</resources>

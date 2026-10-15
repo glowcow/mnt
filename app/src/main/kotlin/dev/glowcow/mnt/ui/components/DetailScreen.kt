@@ -20,12 +20,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -51,7 +53,8 @@ import dev.glowcow.mnt.ui.theme.MntTheme
 /**
  * A page opened from a tab: the content runs under a frosted [header] and [bar] and gets the heights they
  * cover. [scrolled] says the page has gone under the header, [from] is the row of a tab it was opened from.
- * Content that cannot be recorded, a web view, is not [glass]: it is drawn once, below an opaque header.
+ * Content that cannot be recorded, a web view, is not [glass]: it is drawn once, below an opaque header, or,
+ * when it draws the glass itself ([clear]), under a header with no ground of its own.
  */
 @Composable
 fun DetailPage(
@@ -61,6 +64,7 @@ fun DetailPage(
     from: Rect? = null,
     bar: (@Composable () -> Unit)? = null,
     glass: Boolean = true,
+    clear: Boolean = false,
     content: @Composable (top: Dp, bottom: Dp) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -68,6 +72,8 @@ fun DetailPage(
     var headerHeight by remember { mutableIntStateOf(0) }
     var pageSize by remember { mutableStateOf(IntSize.Zero) }
     val barHeight = remember { mutableIntStateOf(0) }
+    val spot = remember { mutableStateOf<Rect?>(null) }
+    if (bar == null) spot.value = null
     val inset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize().pageMotion(from).background(ground).imePadding().onSizeChanged { pageSize = it }) {
         Box(
@@ -76,22 +82,33 @@ fun DetailPage(
                 drawLayer(page)
             },
         ) {
-            content(with(density) { headerHeight.toDp() }, if (bar != null) with(density) { barHeight.intValue.toDp() } else inset)
+            CompositionLocalProvider(LocalIsland provides spot) {
+                content(with(density) { headerHeight.toDp() }, if (bar != null) with(density) { barHeight.intValue.toDp() } else inset)
+            }
         }
         Column(
             Modifier
                 .fillMaxWidth()
                 .onSizeChanged { headerHeight = it.height }
-                .then(if (glass) Modifier.frosted(page, ground) { Offset.Zero } else Modifier.background(ground))
+                .then(
+                    when {
+                        glass -> Modifier.frosted(page, ground) { Offset.Zero }
+                        clear -> Modifier
+                        else -> Modifier.background(ground)
+                    },
+                )
                 .solid()
                 .statusBarsPadding(),
         ) {
             header()
             HeaderLine(shown = scrolled)
         }
-        if (bar != null) Island(page, ground, { pageSize }, { barHeight.intValue = it }, bar)
+        if (bar != null) Island(page, ground, { pageSize }, { barHeight.intValue = it }, glass, clear, { spot.value = it }, bar)
     }
 }
+
+/** Where the island of a [DetailPage] stands on its page, in pixels; null when it has none. */
+val LocalIsland = staticCompositionLocalOf { mutableStateOf<Rect?>(null) }
 
 /** The top row of a page opened from a tab: the way out, the title, the page's actions. */
 @Composable

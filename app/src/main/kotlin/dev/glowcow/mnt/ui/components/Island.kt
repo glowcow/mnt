@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.layer.GraphicsLayer
@@ -29,20 +31,35 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import dev.glowcow.mnt.ui.theme.MntTheme
 
 /**
  * The bar at the bottom of a page: an island of glass over [page], as wide as what it holds and clear
  * of the edges, the page fading into its [ground] under it. [onHeight] hears how much of the bottom
- * of the page, [pageSize] large, it takes.
+ * of the page, [pageSize] large, it takes. Over a page that is not recorded it is not [glass]: blurring nothing over
+ * a web view keeps the web view drawing every frame. A page that draws its own glass ([clear]) is told where the
+ * island stands ([onSpot]) and draws the glass and the shadow under it; any other is under an opaque island.
  */
 @Composable
-fun BoxScope.Island(page: GraphicsLayer, ground: Color, pageSize: () -> IntSize, onHeight: (Int) -> Unit, content: @Composable () -> Unit) {
+fun BoxScope.Island(
+    page: GraphicsLayer,
+    ground: Color,
+    pageSize: () -> IntSize,
+    onHeight: (Int) -> Unit,
+    glass: Boolean = true,
+    clear: Boolean = false,
+    onSpot: (Rect) -> Unit = {},
+    content: @Composable () -> Unit,
+) {
     val c = MntTheme.colors
     val density = LocalDensity.current
     var zone by remember { mutableStateOf(IntSize.Zero) }
     var size by remember { mutableStateOf(IntSize.Zero) }
     val gap = with(density) { ISLAND_GAP.toPx() }
+    LaunchedEffect(zone, size) {
+        if (zone.height > 0 && size.width > 0) onSpot(Rect(Offset((pageSize().width - size.width) / 2f, pageSize().height - zone.height + gap), size.toSize()))
+    }
     // The veil starts a little above the island and is all but the ground at the edge of the screen.
     Box(
         Modifier
@@ -64,8 +81,16 @@ fun BoxScope.Island(page: GraphicsLayer, ground: Color, pageSize: () -> IntSize,
         Box(
             Modifier
                 .onSizeChanged { size = it }
-                .shadow(SHADOW, ISLAND, ambientColor = SHADE, spotColor = SHADE)
-                .frosted(page, c.group) { Offset((pageSize().width - size.width) / 2f, pageSize().height - zone.height + gap) }
+                .then(
+                    when {
+                        glass -> Modifier
+                            .shadow(SHADOW, ISLAND, ambientColor = SHADE, spotColor = SHADE)
+                            .frosted(page, c.group) { Offset((pageSize().width - size.width) / 2f, pageSize().height - zone.height + gap) }
+                        // The page draws the glass and the shadow: a shadow of the view's would show through the glass.
+                        clear -> Modifier
+                        else -> Modifier.shadow(SHADOW, ISLAND, ambientColor = SHADE, spotColor = SHADE).background(c.group, ISLAND)
+                    },
+                )
                 .border(1.dp, c.text.copy(alpha = GLASS_LINE), ISLAND)
                 .solid()
                 .heightIn(min = 56.dp),

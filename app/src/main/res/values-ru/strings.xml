@@ -242,6 +242,8 @@
     <string name="viewer_part">%1$d из %2$d</string>
     <string name="viewer_part_previous">Предыдущая часть</string>
     <string name="viewer_part_next">Следующая часть</string>
+    <string name="viewer_page_previous">Предыдущая страница</string>
+    <string name="viewer_page_next">Следующая страница</string>
     <string name="viewer_locked">Защищён паролем</string>
     <string name="viewer_locked_text">Введите пароль, чтобы открыть его</string>
     <string name="viewer_wrong_password">Неверный пароль</string>
@@ -254,7 +256,7 @@
     <string name="settings_files">Файлы</string>
     <string name="settings_files_hint">Папки на вкладке «Файлы», скрытые файлы, корзина, поиск</string>
     <string name="settings_viewer">Просмотр</string>
-    <string name="settings_viewer_hint">Цвета кода, длинные строки, ссылки</string>
+    <string name="settings_viewer_hint">Цвета кода, длинные строки, страницы, ссылки</string>
     <string name="settings_backup">Резервная копия</string>
     <string name="settings_credits">Лицензия и благодарности</string>
     <string name="settings_code_light">Код в светлой теме</string>
@@ -266,12 +268,12 @@
     <string name="code_none">Без подсветки</string>
     <string name="settings_wrap">Переносить длинные строки</string>
     <string name="settings_wrap_hint">Текст и код умещаются по ширине экрана вместо прокрутки вбок</string>
+    <string name="settings_pages">Страницы</string>
+    <string name="settings_pages_hint">Документы Word разложены по листам, как при печати</string>
     <string name="settings_numbers">Номера строк</string>
     <string name="settings_numbers_hint">Нумеровать строки текста и кода</string>
     <string name="settings_links">Открывать ссылки в приложении</string>
     <string name="settings_links_hint">Страницы интернета открываются здесь, а не в браузере телефона</string>
     <string name="settings_code_font">Шрифт кода</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Предыдущая глава</string>
-    <string name="viewer_chapter_next">Следующая глава</string>
 </resources>

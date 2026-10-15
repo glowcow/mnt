@@ -1,7 +1,9 @@
 package dev.glowcow.mnt.view.doc
 
+import dev.glowcow.mnt.view.html.Paper
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
+import kotlin.math.abs
 
 /** Rich Text Format: paragraphs, bold, italic, underline, tables, links and the PNG and JPEG pictures inside. */
 object Rtf {
@@ -19,7 +21,15 @@ object Rtf {
     fun convert(bytes: ByteArray): Converted {
         val pictures = ArrayList<ByteArray>()
         val body = html(bytes, pictures)
-        return Converted(listOf(Converted.Part("", body)), { name -> name.removePrefix("pic").substringBefore('.').toIntOrNull()?.let { pictures.getOrNull(it) } })
+        return Converted(listOf(Converted.Part("", body, paper(bytes))), { name -> name.removePrefix("pic").substringBefore('.').toIntOrNull()?.let { pictures.getOrNull(it) } })
+    }
+
+    // The document's sheet, from `\paperw`, `\margl` and the like before the text: twentieths of a point.
+    private fun paper(bytes: ByteArray): Paper {
+        val raw = String(bytes, 0, minOf(bytes.size, 512 * 1024), Charsets.ISO_8859_1)
+        fun word(name: String, default: Float) = Regex("\\\\$name(-?\\d+)").find(raw)?.groupValues?.get(1)?.toFloatOrNull()?.let { abs(it) / 20f } ?: default
+        val a = Paper.A4
+        return Paper(word("paperw", a.width), word("paperh", a.height), word("margt", a.top), word("margr", a.right), word("margb", a.bottom), word("margl", a.left))
     }
 
     // The names of the paragraph styles, by number: `{\s1 … heading 1;}`.
@@ -169,7 +179,11 @@ object Rtf {
                             }
                             if (state.skip) continue
                             when (name) {
-                                "par", "sect", "page" -> endPara()
+                                "par", "sect" -> endPara()
+                                "page" -> {
+                                    endPara()
+                                    if (row == null && !inTable) out.append("<hr class=\"pb\">")
+                                }
                                 "line" -> {
                                     flushBytes()
                                     target().append("<br>")

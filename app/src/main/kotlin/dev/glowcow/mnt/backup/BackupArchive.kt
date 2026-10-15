@@ -27,6 +27,7 @@ data class BackupSettings(
     val wrapLines: Boolean = true,
     val lineNumbers: Boolean = true,
     val linksInApp: Boolean = true,
+    val pages: Boolean = true,
 )
 
 /** `backup.json` of an archive. */

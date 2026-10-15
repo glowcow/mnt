@@ -3,13 +3,14 @@ package dev.glowcow.mnt.view.doc
 import dev.glowcow.mnt.view.FolderDoc
 import dev.glowcow.mnt.view.Served
 import dev.glowcow.mnt.view.WebDoc
+import dev.glowcow.mnt.view.code.each
 import dev.glowcow.mnt.view.html.Look
 import dev.glowcow.mnt.view.html.Page
 import java.io.File
 
 /**
- * An EPUB book: its chapters as the book lays them out, each at `/e/<its path in the book>`, in the app's colours.
- * [contents] is the table of contents; the parts to step through are the chapters of the spine.
+ * An EPUB book: its chapters one after another on sheets the size of the screen, in the app's colours; what they
+ * show at `/e/<its path in the book>`. [contents] is the table of contents, [parts] the chapters of the spine.
  */
 class Epub(file: File) : WebDoc() {
     private val pkg = Package(file)
@@ -73,36 +74,106 @@ class Epub(file: File) : WebDoc() {
     override val parts: List<String>
         get() = spine.mapIndexed { i, path -> contents.firstOrNull { it.second.substringBefore('#') == path }?.first ?: "${i + 1}" }
 
-    override fun path(part: Int): String = "/e/" + spine.getOrElse(part) { spine.firstOrNull().orEmpty() }.split('/').joinToString("/") { FolderDoc.encode(it) }
+    // The whole book is one page, `/book`; a chapter starts at `#c<n>`, what it names at `#c<n>-<id>`.
+    override fun path(part: Int): String = if (part <= 0) BOOK else "$BOOK#c$part"
 
-    override fun part(path: String): Int = spine.indexOf(FolderDoc.decode(path.removePrefix("/e/")))
+    override fun part(path: String): Int = 0
 
     /** The path a link of the table of contents leads to, fragment and all. */
-    fun link(target: String): String = "/e/" + target.substringBefore('#').split('/').joinToString("/") { FolderDoc.encode(it) } + target.substringAfter('#', "").let { if (it.isEmpty()) "" else "#$it" }
+    fun link(target: String): String = BOOK + anchor(target.substringBefore('#'), target.substringAfter('#', ""))
 
-    override fun stays(path: String): Boolean = path.startsWith("/e/")
+    override fun stays(path: String): Boolean = path == BOOK || path.startsWith("/e/")
 
     override fun serve(path: String, look: Look): Served? {
+        if (path == BOOK) return Served("text/html", book(look).byteInputStream())
         if (!path.startsWith("/e/")) return null
         val name = FolderDoc.decode(path.removePrefix("/e/"))
-        val bytes = pkg.bytes(name) ?: return null
-        val mime = mime(name)
-        if (mime != "text/html") return Served(mime, bytes.inputStream())
-        // A chapter of XHTML is read as XML, or a `<a/>` would swallow what follows it.
-        val xml = !name.endsWith(".html", true) && !name.endsWith(".htm", true)
-        return Served(if (xml) "application/xhtml+xml" else "text/html", restyle(String(bytes, Charsets.UTF_8), look).byteInputStream())
+        return pkg.bytes(name)?.let { Served(mime(name), it.inputStream()) }
     }
 
-    // The book keeps its layout; its colours, its margins and the size of its pictures are the app's.
-    private fun restyle(page: String, look: Look): String {
-        val style = "<style>" + Page.css(look) +
-            "html,body{background:var(--bg)!important;color:var(--fg)!important}" +
-            "body *{color:inherit!important;background-color:transparent!important;border-color:var(--line)!important}" +
+    // `#c<n>` or `#c<n>-<id>` for a place in chapter [path]; the first chapter's when [path] is none.
+    private fun anchor(path: String, id: String): String {
+        val n = spine.indexOf(path).takeIf { it >= 0 } ?: 0
+        return if (id.isEmpty()) "#c$n" else "#c$n-$id"
+    }
+
+    // The chapters one after another, each from a sheet of its own, under the book's own styles; its colours, its
+    // margins and the size of its pictures are the app's.
+    private fun book(look: Look): String {
+        val links = LinkedHashSet<String>()
+        val styles = StringBuilder()
+        val body = StringBuilder()
+        spine.forEachIndexed { i, path ->
+            val text = pkg.bytes(path)?.toString(Charsets.UTF_8) ?: return@forEachIndexed
+            val head = text.indexOf("</head>", ignoreCase = true).let { if (it < 0) "" else text.substring(0, it) }
+            LINK.each(head) { m ->
+                val tag = m.group()
+                if (!tag.contains("stylesheet", ignoreCase = true)) return@each
+                HREF.find(tag)?.let { h -> links += "/e/" + encode(resolve(path, FolderDoc.decode(h.groupValues[2].ifEmpty { h.groupValues[3] }))) }
+            }
+            STYLE.each(head) { m -> styles.append(m.group(1)).append('\n') }
+            val open = BODY.find(text)
+            val from = open?.range?.last?.plus(1) ?: head.length
+            val to = text.lastIndexOf("</body>", ignoreCase = true).takeIf { it >= from } ?: text.length
+            body.append("<div class=\"pbb\" id=\"c").append(i).append("\"></div>")
+            body.append(rewrite(text.substring(from, to), path, i))
+        }
+        val own = "body *{color:inherit!important;background-color:transparent!important;border-color:var(--line)!important}" +
             "body a{color:var(--accent)!important}img,svg,video{max-width:100%!important;height:auto!important}" +
-            "body{margin:0!important;padding:12px 16px 32px!important;max-width:none!important}</style>" +
-            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>"
-        val head = Regex("</head>", RegexOption.IGNORE_CASE).find(page)
-        return if (head != null) page.substring(0, head.range.first) + style + page.substring(head.range.first) else style + page
+            "html,body{background:var(--bg)!important;color:var(--fg)!important}" +
+            "body.paged{margin:0!important;padding:calc(var(--top) + 8px) 0 calc(var(--bottom) + 8px)!important;max-width:none!important}"
+        val head = links.joinToString("") { "<link rel=\"stylesheet\" href=\"" + Page.escape(it) + "\">" } + "<style>" + own + "</style>"
+        return Page.html(body.toString(), look, extra = styles.toString(), head = head, book = true)
+    }
+
+    // A chapter's markup, read as HTML: an element closed in itself is closed after it, ids and links between chapters
+    // become places in the one page, and what it shows is fetched from the book.
+    private fun rewrite(html: String, path: String, chapter: Int): String {
+        val closed = replace(SELF_CLOSED, html) { m ->
+            val name = m.group(1)
+            val rest = m.group(2).orEmpty()
+            if (name.lowercase() in VOID) "<$name$rest>" else "<$name$rest></$name>"
+        }
+        return replace(ATTR, closed) { m ->
+            val value = m.group(5) ?: m.group(6) ?: ""
+            val out = when (m.group(2).lowercase()) {
+                "id" -> "c$chapter-$value"
+                "href" -> when {
+                    value.startsWith("#") -> "#c$chapter-" + value.substring(1)
+                    SCHEME.containsMatchIn(value) -> value
+                    else -> {
+                        val target = resolve(path, FolderDoc.decode(value.substringBefore('#')))
+                        if (target in spine) anchor(target, value.substringAfter('#', "")) else "/e/" + encode(target)
+                    }
+                }
+                else -> if (SCHEME.containsMatchIn(value)) value else "/e/" + encode(resolve(path, FolderDoc.decode(value)))
+            }
+            m.group(1) + m.group(2) + m.group(3) + "\"" + out.replace("\"", "&quot;") + "\""
+        }
+    }
+
+    private fun encode(path: String) = path.split('/').joinToString("/") { FolderDoc.encode(it) }
+
+    private inline fun replace(regex: Regex, text: String, transform: (java.util.regex.Matcher) -> String): String {
+        val out = StringBuilder(text.length + 256)
+        var last = 0
+        regex.each(text) { m ->
+            out.append(text, last, m.start()).append(transform(m))
+            last = m.end()
+        }
+        return out.append(text, last, text.length).toString()
+    }
+
+    private companion object {
+        const val BOOK = "/book"
+        val LINK = Regex("<link\\b[^>]*>", RegexOption.IGNORE_CASE)
+        val HREF = Regex("href\\s*=\\s*(\"([^\"]*)\"|'([^']*)')", RegexOption.IGNORE_CASE)
+        val STYLE = Regex("<style[^>]*>([\\s\\S]*?)</style>", RegexOption.IGNORE_CASE)
+        val BODY = Regex("<body\\b[^>]*>", RegexOption.IGNORE_CASE)
+        val SELF_CLOSED = Regex("<([A-Za-z][\\w:.-]*)(\\s[^<>]*?)?/>")
+        val ATTR = Regex("(\\s)(src|href|xlink:href|id|poster)(\\s*=\\s*)(\"([^\"]*)\"|'([^']*)')", RegexOption.IGNORE_CASE)
+        val SCHEME = Regex("^[A-Za-z][A-Za-z0-9+.-]*:")
+        val VOID = setOf("area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr")
     }
 
     override fun close() = pkg.close()

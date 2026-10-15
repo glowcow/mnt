@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +30,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,6 +54,7 @@ import dev.glowcow.mnt.ui.components.GroupRow
 import dev.glowcow.mnt.ui.components.GroupSheet
 import dev.glowcow.mnt.ui.components.IconButton48
 import dev.glowcow.mnt.ui.components.IslandIcons
+import dev.glowcow.mnt.ui.components.LocalIsland
 import dev.glowcow.mnt.ui.components.LocalPageDark
 import dev.glowcow.mnt.ui.components.PillButton
 import dev.glowcow.mnt.ui.components.ProgressLine
@@ -66,6 +70,8 @@ import dev.glowcow.mnt.view.Texts
 import dev.glowcow.mnt.view.code.CodeScheme
 import dev.glowcow.mnt.view.doc.Epub
 import dev.glowcow.mnt.view.html.Look
+import dev.glowcow.mnt.view.html.Spot
+import kotlin.math.roundToInt
 
 private enum class ViewerSheet { MORE, ENCODING, PARTS }
 
@@ -93,8 +99,8 @@ fun ViewerScreen(
         bars.value = dark
         onDispose { bars.value = null }
     }
-    val look = remember(chrome, scheme, settings.wrapLines, settings.lineNumbers, vm.code, settings.palette) {
-        look(chrome, colorsOf(settings.palette, scheme.dark ?: dark, false), scheme, vm.code, settings.wrapLines, settings.lineNumbers)
+    val look = remember(chrome, scheme, settings.wrapLines, settings.lineNumbers, settings.pages, vm.code, settings.palette) {
+        look(chrome, colorsOf(settings.palette, scheme.dark ?: dark, false), scheme, vm.code, settings.wrapLines, settings.lineNumbers, settings.pages)
     }
     MntColorsProvider(chrome) {
         Viewer(vm, settings, look, onBack, onLink, onFile)
@@ -118,7 +124,9 @@ private fun Viewer(vm: ViewerViewModel, settings: AppSettings, look: Look, onBac
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val finder = remember { Finder() }
+    val sheets = remember { Sheets() }
     val pdfSearch = remember(c.accent) { PdfSearch(scope, matchColor(c.accent, false), matchColor(c.accent, true)) }
+    val pdfPages = remember { PdfPages(scope) }
     var searching by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var sheet by rememberSaveable { mutableStateOf<ViewerSheet?>(null) }
@@ -134,23 +142,15 @@ private fun Viewer(vm: ViewerViewModel, settings: AppSettings, look: Look, onBac
         search.clear()
     }
 
-    val chapters = book?.parts?.size ?: 0
-    val bar: (@Composable () -> Unit)? = if (book != null && chapters > 1) ({
-        IslandIcons {
-            IconButton48(MntIcons.CaretUp, stringResource(R.string.viewer_chapter_previous), enabled = vm.current > 0) { vm.go(book.path(vm.current - 1)) }
-            Box(Modifier.heightIn(min = 48.dp).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.viewer_part, vm.current + 1, chapters), color = c.muted, fontSize = 13.sp)
-            }
-            IconButton48(MntIcons.CaretDown, stringResource(R.string.viewer_chapter_next), enabled = vm.current < chapters - 1) { vm.go(book.path(vm.current + 1)) }
-        }
+    // Sheets, a PDF's pages and the parts of a long text: where the screen is, of how many, and a step either way.
+    // A book has its island from the start: its sheets are cut to what the bars leave.
+    val bar: (@Composable () -> Unit)? = if (shown is Shown.Web && (sheets.count > 1 || book != null)) ({
+        Steps(sheets.page, maxOf(1, sheets.count), R.string.viewer_page_previous, R.string.viewer_page_next) { sheets.go(it) }
     }) else if (vm.code && vm.parts > 1 && shown is Shown.Web) ({
-        IslandIcons {
-            IconButton48(MntIcons.CaretUp, stringResource(R.string.viewer_part_previous), enabled = vm.part > 0) { vm.step(false) }
-            Box(Modifier.heightIn(min = 48.dp).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.viewer_part, vm.part + 1, vm.parts), color = c.muted, fontSize = 13.sp)
-            }
-            IconButton48(MntIcons.CaretDown, stringResource(R.string.viewer_part_next), enabled = vm.part < vm.parts - 1) { vm.step(true) }
-        }
+        Steps(vm.part, vm.parts, R.string.viewer_part_previous, R.string.viewer_part_next) { vm.step(it > vm.part) }
+    }) else if (shown is Shown.Pdf && pdfPages.count > 1) ({
+        val page by remember { derivedStateOf { pdfPages.page } }
+        Steps(page, pdfPages.count, R.string.viewer_page_previous, R.string.viewer_page_next) { pdfPages.go(it) }
     }) else null
 
     DetailPage(
@@ -180,9 +180,13 @@ private fun Viewer(vm: ViewerViewModel, settings: AppSettings, look: Look, onBac
             }
         },
         bar = bar,
-        // A web view drawn a second time under the glass redraws itself without end: it flickers.
+        // A web view drawn a second time under the glass redraws itself without end: it flickers. The app's pages draw the glass themselves.
         glass = shown !is Shown.Web,
+        clear = web?.doc?.own == true,
     ) { top, bottom ->
+        // A page is made once the bars are measured; a bar that comes later only moves its edges.
+        var placed by remember(shown) { mutableStateOf(false) }
+        if (top > 0.dp && (bar == null || bottom > 0.dp)) placed = true
         when (shown) {
             Shown.Loading, Shown.Elsewhere, is Shown.Link -> Unit
             is Shown.Fetching -> Centered(top, bottom) {
@@ -199,18 +203,20 @@ private fun Viewer(vm: ViewerViewModel, settings: AppSettings, look: Look, onBac
                     Box(Modifier.padding(top = 16.dp)) { PillButton(stringResource(R.string.viewer_open_with)) { open(context, vm.path) } }
                 }
             }
-            is Shown.Web -> WebPage(
+            // The page is laid out round the bars once their heights are known, so it is not laid out twice.
+            is Shown.Web -> if (placed || top > 0.dp && (bar == null || bottom > 0.dp)) WebPage(
                 doc = shown.doc,
-                look = look,
+                look = if (shown.doc.own) look.copy(top = top.value.roundToInt(), bottom = bottom.value.roundToInt(), island = island(LocalIsland.current.value)) else look,
                 start = shown.start,
                 finder = finder,
+                sheets = sheets,
                 onLink = onLink,
                 onFile = onFile,
                 onPath = vm::at,
                 onScrolled = { scrolled = it },
-                modifier = Modifier.fillMaxSize().padding(top = top, bottom = bottom),
+                modifier = if (shown.doc.own) Modifier.fillMaxSize() else Modifier.fillMaxSize().padding(top = top, bottom = bottom),
             )
-            is Shown.Pdf -> PdfPage(shown.uri, pdfSearch, onLink, onFailed = { vm.failed(it) }, top = top, bottom = bottom)
+            is Shown.Pdf -> PdfPage(shown.uri, pdfSearch, pdfPages, onLink, onFailed = { vm.failed(it) }, onScrolled = { scrolled = it }, top = top, bottom = bottom)
         }
     }
 
@@ -222,6 +228,11 @@ private fun Viewer(vm: ViewerViewModel, settings: AppSettings, look: Look, onBac
                 GroupRow(stringResource(R.string.action_share), icon = MntIcons.Share, onClick = {
                     pick { if (!Opener.share(context, listOf(vm.path))) Toast.makeText(context, R.string.open_none, Toast.LENGTH_SHORT).show() }
                 }, trailing = {})
+            }
+            if (vm.paged) {
+                Group(Modifier.padding(top = 12.dp)) {
+                    SwitchRow(stringResource(R.string.settings_pages), stringResource(R.string.settings_pages_hint), settings.pages) { vm.setPages(it) }
+                }
             }
             if (vm.code) {
                 Group(Modifier.padding(top = 12.dp)) {
@@ -263,6 +274,26 @@ private fun Viewer(vm: ViewerViewModel, settings: AppSettings, look: Look, onBac
             }
         }
         null -> Unit
+    }
+}
+
+/** Where the island stands, in the CSS pixels of a page: a dp is a CSS pixel in the viewer's web view. */
+@Composable
+private fun island(spot: Rect?): Spot {
+    spot ?: return Spot()
+    val density = LocalDensity.current.density
+    return Spot((spot.left / density).roundToInt(), (spot.top / density).roundToInt(), (spot.width / density).roundToInt(), (spot.height / density).roundToInt())
+}
+
+/** An island that steps through [count] pages or parts: the one in sight (from 0), of how many, and one before or after. */
+@Composable
+private fun Steps(at: Int, count: Int, previous: Int, next: Int, onGo: (Int) -> Unit) {
+    IslandIcons {
+        IconButton48(MntIcons.CaretUp, stringResource(previous), enabled = at > 0) { onGo(at - 1) }
+        Box(Modifier.heightIn(min = 48.dp).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
+            Text(stringResource(R.string.viewer_part, at + 1, count), color = MntTheme.colors.muted, fontSize = 13.sp)
+        }
+        IconButton48(MntIcons.CaretDown, stringResource(next), enabled = at < count - 1) { onGo(at + 1) }
     }
 }
 
@@ -312,7 +343,7 @@ private fun open(context: android.content.Context, path: String) {
  * The colours and the layout of the viewer's pages: [page] are the app's colours round them; [codeColours] those of
  * the scheme's own darkness, which a light scheme's code keeps on a dark page.
  */
-private fun look(page: MntColors, codeColours: MntColors, scheme: CodeScheme, code: Boolean, wrap: Boolean, numbers: Boolean): Look {
+private fun look(page: MntColors, codeColours: MntColors, scheme: CodeScheme, code: Boolean, wrap: Boolean, numbers: Boolean, pages: Boolean): Look {
     fun Color.argb() = toArgb().toLong() and 0xFFFFFFFFL
     val codeGround = scheme.ground ?: (if (code) codeColours.groupBg else codeColours.group).argb()
     val codeText = scheme.text ?: codeColours.text.argb()
@@ -330,5 +361,6 @@ private fun look(page: MntColors, codeColours: MntColors, scheme: CodeScheme, co
         codeGutter = scheme.gutter ?: codeColours.muted.argb(),
         wrap = wrap,
         numbers = numbers,
+        pages = pages,
     )
 }

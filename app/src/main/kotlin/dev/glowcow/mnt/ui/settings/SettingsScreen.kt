@@ -102,6 +102,8 @@ class SettingsViewModel(private val store: SettingsStore, val updater: AppUpdate
     fun setPalette(palette: Palette) = viewModelScope.launch { store.setPalette(palette) }
     fun setShowHidden(on: Boolean) = viewModelScope.launch { store.setShowHidden(on) }
     fun setCodeScheme(dark: Boolean, scheme: CodeScheme) = viewModelScope.launch { store.setCodeScheme(dark, scheme) }
+    fun setPages(on: Boolean) = viewModelScope.launch { store.setPages(on) }
+
     fun setWrapLines(on: Boolean) = viewModelScope.launch { store.setWrapLines(on) }
     fun setLineNumbers(on: Boolean) = viewModelScope.launch { store.setLineNumbers(on) }
     fun setLinksInApp(on: Boolean) = viewModelScope.launch { store.setLinksInApp(on) }
@@ -345,6 +347,9 @@ private fun Viewer(title: String, settings: AppSettings?, vm: SettingsViewModel,
             SwitchRow(stringResource(R.string.settings_wrap), stringResource(R.string.settings_wrap_hint), settings.wrapLines, vm::setWrapLines)
             GroupDivider()
             SwitchRow(stringResource(R.string.settings_numbers), stringResource(R.string.settings_numbers_hint), settings.lineNumbers, vm::setLineNumbers)
+        }
+        Group {
+            SwitchRow(stringResource(R.string.settings_pages), stringResource(R.string.settings_pages_hint), settings.pages, vm::setPages)
         }
         Group {
             SwitchRow(stringResource(R.string.settings_links), stringResource(R.string.settings_links_hint), settings.linksInApp, vm::setLinksInApp)

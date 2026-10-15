@@ -237,6 +237,8 @@
     <string name="viewer_part">%1$d of %2$d</string>
     <string name="viewer_part_previous">Previous part</string>
     <string name="viewer_part_next">Next part</string>
+    <string name="viewer_page_previous">Previous page</string>
+    <string name="viewer_page_next">Next page</string>
     <string name="viewer_locked">Protected by a password</string>
     <string name="viewer_locked_text">Type the password to open it</string>
     <string name="viewer_wrong_password">Wrong password</string>
@@ -249,7 +251,7 @@
     <string name="settings_files">Files</string>
     <string name="settings_files_hint">Folders on the Files tab, hidden files, the bin, searches</string>
     <string name="settings_viewer">Viewer</string>
-    <string name="settings_viewer_hint">Colours of code, long lines, links</string>
+    <string name="settings_viewer_hint">Colours of code, long lines, pages, links</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_credits">Licence and credits</string>
     <string name="settings_code_light">Code in the light theme</string>
@@ -261,12 +263,12 @@
     <string name="code_none">None</string>
     <string name="settings_wrap">Wrap long lines</string>
     <string name="settings_wrap_hint">Text and code fit the width of the screen instead of scrolling sideways</string>
+    <string name="settings_pages">Pages</string>
+    <string name="settings_pages_hint">Word documents are laid out on sheets, as they are printed</string>
     <string name="settings_numbers">Line numbers</string>
     <string name="settings_numbers_hint">Number the lines of text and code</string>
     <string name="settings_links">Open links in the app</string>
     <string name="settings_links_hint">Pages of the web open here instead of in the phone’s browser</string>
     <string name="settings_code_font">Code font</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Previous chapter</string>
-    <string name="viewer_chapter_next">Next chapter</string>
 </resources>

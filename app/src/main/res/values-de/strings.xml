@@ -234,6 +234,8 @@
     <string name="viewer_part">%1$d von %2$d</string>
     <string name="viewer_part_previous">Vorheriger Teil</string>
     <string name="viewer_part_next">Nächster Teil</string>
+    <string name="viewer_page_previous">Vorherige Seite</string>
+    <string name="viewer_page_next">Nächste Seite</string>
     <string name="viewer_locked">Mit Passwort geschützt</string>
     <string name="viewer_locked_text">Gib das Passwort ein, um sie zu öffnen</string>
     <string name="viewer_wrong_password">Falsches Passwort</string>
@@ -246,7 +248,7 @@
     <string name="settings_files">Dateien</string>
     <string name="settings_files_hint">Ordner im Tab Dateien, versteckte Dateien, Papierkorb, Suchen</string>
     <string name="settings_viewer">Ansicht</string>
-    <string name="settings_viewer_hint">Farben von Code, lange Zeilen, Links</string>
+    <string name="settings_viewer_hint">Farben von Code, lange Zeilen, Seiten, Links</string>
     <string name="settings_backup">Sicherung</string>
     <string name="settings_credits">Lizenz und Danksagungen</string>
     <string name="settings_code_light">Code im hellen Design</string>
@@ -258,12 +260,12 @@
     <string name="code_none">Keine</string>
     <string name="settings_wrap">Lange Zeilen umbrechen</string>
     <string name="settings_wrap_hint">Text und Code passen in die Bildschirmbreite statt seitlich zu scrollen</string>
+    <string name="settings_pages">Seiten</string>
+    <string name="settings_pages_hint">Word-Dokumente werden wie gedruckt auf Blättern angezeigt</string>
     <string name="settings_numbers">Zeilennummern</string>
     <string name="settings_numbers_hint">Die Zeilen von Text und Code nummerieren</string>
     <string name="settings_links">Links in der App öffnen</string>
     <string name="settings_links_hint">Webseiten öffnen sich hier statt im Browser des Telefons</string>
     <string name="settings_code_font">Schrift für Code</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Vorheriges Kapitel</string>
-    <string name="viewer_chapter_next">Nächstes Kapitel</string>
 </resources>

@@ -238,6 +238,8 @@
     <string name="viewer_part">%1$d de %2$d</string>
     <string name="viewer_part_previous">Parte anterior</string>
     <string name="viewer_part_next">Parte siguiente</string>
+    <string name="viewer_page_previous">Página anterior</string>
+    <string name="viewer_page_next">Página siguiente</string>
     <string name="viewer_locked">Protegido con contraseña</string>
     <string name="viewer_locked_text">Escribe la contraseña para abrirlo</string>
     <string name="viewer_wrong_password">Contraseña incorrecta</string>
@@ -250,7 +252,7 @@
     <string name="settings_files">Archivos</string>
     <string name="settings_files_hint">Carpetas de la pestaña Archivos, archivos ocultos, papelera, búsquedas</string>
     <string name="settings_viewer">Visor</string>
-    <string name="settings_viewer_hint">Colores del código, líneas largas, enlaces</string>
+    <string name="settings_viewer_hint">Colores del código, líneas largas, páginas, enlaces</string>
     <string name="settings_backup">Copia de seguridad</string>
     <string name="settings_credits">Licencia y créditos</string>
     <string name="settings_code_light">Código en el tema claro</string>
@@ -262,12 +264,12 @@
     <string name="code_none">Ninguno</string>
     <string name="settings_wrap">Ajustar líneas largas</string>
     <string name="settings_wrap_hint">El texto y el código caben en el ancho de la pantalla en lugar de desplazarse de lado</string>
+    <string name="settings_pages">Páginas</string>
+    <string name="settings_pages_hint">Los documentos de Word se muestran en hojas, como al imprimirlos</string>
     <string name="settings_numbers">Números de línea</string>
     <string name="settings_numbers_hint">Numerar las líneas de texto y código</string>
     <string name="settings_links">Abrir enlaces en la aplicación</string>
     <string name="settings_links_hint">Las páginas web se abren aquí en lugar del navegador del teléfono</string>
     <string name="settings_code_font">Fuente del código</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Capítulo anterior</string>
-    <string name="viewer_chapter_next">Capítulo siguiente</string>
 </resources>

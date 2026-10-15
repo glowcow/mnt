@@ -242,6 +242,8 @@
     <string name="viewer_part">%1$d з %2$d</string>
     <string name="viewer_part_previous">Папярэдняя частка</string>
     <string name="viewer_part_next">Наступная частка</string>
+    <string name="viewer_page_previous">Папярэдняя старонка</string>
+    <string name="viewer_page_next">Наступная старонка</string>
     <string name="viewer_locked">Абаронены паролем</string>
     <string name="viewer_locked_text">Увядзіце пароль, каб адкрыць яго</string>
     <string name="viewer_wrong_password">Няправільны пароль</string>
@@ -254,7 +256,7 @@
     <string name="settings_files">Файлы</string>
     <string name="settings_files_hint">Папкі на ўкладцы «Файлы», схаваныя файлы, сметніца, пошук</string>
     <string name="settings_viewer">Прагляд</string>
-    <string name="settings_viewer_hint">Колеры кода, доўгія радкі, спасылкі</string>
+    <string name="settings_viewer_hint">Колеры кода, доўгія радкі, старонкі, спасылкі</string>
     <string name="settings_backup">Рэзервовая копія</string>
     <string name="settings_credits">Ліцэнзія і падзякі</string>
     <string name="settings_code_light">Код у светлай тэме</string>
@@ -266,12 +268,12 @@
     <string name="code_none">Без падсветкі</string>
     <string name="settings_wrap">Пераносіць доўгія радкі</string>
     <string name="settings_wrap_hint">Тэкст і код змяшчаюцца па шырыні экрана замест пракруткі ўбок</string>
+    <string name="settings_pages">Старонкі</string>
+    <string name="settings_pages_hint">Дакументы Word раскладзеныя па лістах, як пры друку</string>
     <string name="settings_numbers">Нумары радкоў</string>
     <string name="settings_numbers_hint">Нумараваць радкі тэксту і кода</string>
     <string name="settings_links">Адкрываць спасылкі ў праграме</string>
     <string name="settings_links_hint">Старонкі інтэрнэту адкрываюцца тут, а не ў браўзеры тэлефона</string>
     <string name="settings_code_font">Шрыфт кода</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Папярэдні раздзел</string>
-    <string name="viewer_chapter_next">Наступны раздзел</string>
 </resources>

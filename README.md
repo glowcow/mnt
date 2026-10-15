@@ -37,7 +37,9 @@ The files on the screenshots are made up.
 - **Folders** — a list sorted the way you choose, each file and folder with
   the picture VS Code gives it.
 - **Viewer** — documents, spreadsheets, slides, books, scans and code open in
-  the app to select, copy and search in; links open in its own browser.
+  the app to select, copy and search in; a Word document is laid out on its
+  pages, as printed, a book on pages the size of the screen, and an island
+  counts the pages and steps through them; links open in its own browser.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold.
 - **Bin** — what you delete on the phone is kept for 30 days and can be put
@@ -173,7 +175,8 @@ Mono. Files, folders and places are drawn with Material Icon Theme, the icons
 of VS Code's explorer, in their own colours; the controls with Phosphor. Code
 takes one of seven schemes — Light, Dark, Solarized Light and Dark, Monokai,
 Dracula or none — one for the light theme and one for the dark. The header is frosted glass and the bar at the bottom an
-island of it: the list scrolls on under them, blurred. The accent and the
+island of it: the list scrolls on under them, blurred — the viewer's pages
+too, which draw that glass in their own HTML. The accent and the
 red of deleting forever are drawn in Display P3 where the screen shows it.
 The launcher icon and the splash screen
 use the brand palette — paper `#F2F0EA`, ink `#14161A`, amber `#F5A524` — and

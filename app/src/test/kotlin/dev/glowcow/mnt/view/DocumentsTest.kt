@@ -14,6 +14,7 @@ import dev.glowcow.mnt.view.doc.Rtf
 import dev.glowcow.mnt.view.doc.Xls
 import dev.glowcow.mnt.view.doc.Xlsx
 import dev.glowcow.mnt.view.html.Look
+import dev.glowcow.mnt.view.html.Page
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -57,6 +58,27 @@ class DocumentsTest {
 
     @Test
     fun doc() = Doc.convert(bytes("sample.doc")).use { word(it) {} }
+
+    // A Word document keeps what the paged layout needs: its sheet, the sizes and indents of its paragraphs, its page breaks.
+    @Test
+    fun docxPages() = Docx.convert(sample("pages.docx")).use { converted ->
+        val part = converted.pages.single()
+        val paper = part.paper!!
+        assertEquals(595.3f, paper.width, 0.1f)
+        assertEquals(85.05f, paper.left, 0.1f)
+        assertHas(part.body, "--sz:12.0pt", "--ff:serif", "--ti:35.5pt", "text-align:justify", "--sa:6.0pt", "--lh:1.322", "<hr class=\"pb\">", "<div class=\"wide\"><table><tr>")
+        assertTrue(Regex("<h1[^>]*--sz:16.0pt[^>]*--fc:#2F5496").containsMatchIn(part.body))
+        val page = Page.html(part.body, LOOK.copy(pages = true), paper = paper)
+        assertHas(page, "id=\"flow\"", "nonce=\"${Page.NONCE}\"", "width:595.30pt")
+        assertTrue(!Page.html(part.body, LOOK, paper = paper).contains("id=\"flow\""))
+    }
+
+    @Test
+    fun sheets() {
+        assertNotNull(Odf.text(sample("sample.odt")).use { it.pages.single().paper })
+        assertNotNull(Rtf.convert(bytes("sample.rtf")).pages.single().paper)
+        assertNotNull(Doc.convert(bytes("sample.doc")).pages.single().paper)
+    }
 
     @Test
     fun docTable() = Doc.convert(bytes("sample.doc")).use {
@@ -120,9 +142,11 @@ class DocumentsTest {
         assertTrue(book.parts.size >= 2)
         assertTrue(book.contents.any { it.first == "Chapter one" })
         assertTrue(book.contents.any { it.first == "Глава вторая" })
-        val chapter = book.link(book.contents.first { it.first == "Chapter one" }.second)
+        // The whole book is one page, each chapter from a sheet of its own; a link of the contents is a place in it.
+        val chapter = book.link(book.contents.first { it.first == "Глава вторая" }.second)
+        assertTrue(chapter, chapter.startsWith("/book#c"))
         val page = book.serve(chapter.substringBefore('#'), LOOK)!!.stream.readBytes().decodeToString()
-        assertHas(page, "Text of the first chapter", "--bg:#FAFAFA")
+        assertHas(page, "Text of the first chapter", "Глава вторая", "--bg:#FAFAFA", "class=\"pbb\" id=\"c0\"", "body class=\"paged book\"")
     }
 
     @Test

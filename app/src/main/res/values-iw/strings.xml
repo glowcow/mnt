@@ -238,6 +238,8 @@
     <string name="viewer_part">%1$d מתוך %2$d</string>
     <string name="viewer_part_previous">החלק הקודם</string>
     <string name="viewer_part_next">החלק הבא</string>
+    <string name="viewer_page_previous">העמוד הקודם</string>
+    <string name="viewer_page_next">העמוד הבא</string>
     <string name="viewer_locked">מוגן בסיסמה</string>
     <string name="viewer_locked_text">יש להקליד את הסיסמה כדי לפתוח אותו</string>
     <string name="viewer_wrong_password">סיסמה שגויה</string>
@@ -250,7 +252,7 @@
     <string name="settings_files">קבצים</string>
     <string name="settings_files_hint">תיקיות בכרטיסייה קבצים, קבצים מוסתרים, סל המחזור, חיפושים</string>
     <string name="settings_viewer">תצוגה</string>
-    <string name="settings_viewer_hint">צבעי קוד, שורות ארוכות, קישורים</string>
+    <string name="settings_viewer_hint">צבעי קוד, שורות ארוכות, עמודים, קישורים</string>
     <string name="settings_backup">גיבוי</string>
     <string name="settings_credits">רישיון ותודות</string>
     <string name="settings_code_light">קוד בערכת הנושא הבהירה</string>
@@ -262,12 +264,12 @@
     <string name="code_none">ללא</string>
     <string name="settings_wrap">גלישת שורות ארוכות</string>
     <string name="settings_wrap_hint">טקסט וקוד מתאימים לרוחב המסך במקום גלילה הצידה</string>
+    <string name="settings_pages">עמודים</string>
+    <string name="settings_pages_hint">מסמכי Word מוצגים על גבי דפים, כמו בהדפסה</string>
     <string name="settings_numbers">מספרי שורות</string>
     <string name="settings_numbers_hint">מספור שורות הטקסט והקוד</string>
     <string name="settings_links">פתיחת קישורים ביישום</string>
     <string name="settings_links_hint">דפי אינטרנט נפתחים כאן ולא בדפדפן של הטלפון</string>
     <string name="settings_code_font">גופן הקוד</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">הפרק הקודם</string>
-    <string name="viewer_chapter_next">הפרק הבא</string>
 </resources>

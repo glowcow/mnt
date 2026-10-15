@@ -31,8 +31,8 @@ abstract class WebDoc : Closeable {
     /** Whether a link to [path] stays in this page's web view, as the chapters of a book do. */
     open fun stays(path: String): Boolean = false
 
-    /** Pages laid out with a script of the app's own, as the text over the pictures of a DjVu. */
-    open val scripted: Boolean get() = false
+    /** Pages the app makes: they run its scripts and carry the glass under its header. A file served as it is does neither. */
+    open val own: Boolean get() = true
 
     override fun close() = Unit
 
@@ -68,7 +68,7 @@ open class ConvertedDoc(private val converted: Converted) : WebDoc() {
     override fun serve(path: String, look: Look): Served? {
         if (path.startsWith("/doc/")) {
             val page = converted.pages.getOrNull(part(path)) ?: converted.pages.firstOrNull() ?: Converted.Part("", "")
-            return Served("text/html", Page.html(page.body, look).byteInputStream())
+            return Served("text/html", Page.html(page.body, look, paper = page.paper).byteInputStream())
         }
         if (path.startsWith("/a/")) {
             val name = FolderDoc.decode(path.removePrefix("/a/"))

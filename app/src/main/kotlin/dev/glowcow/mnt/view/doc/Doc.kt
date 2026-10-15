@@ -2,7 +2,9 @@ package dev.glowcow.mnt.view.doc
 
 import dev.glowcow.mnt.view.doc.Cfb.Companion.u16
 import dev.glowcow.mnt.view.doc.Cfb.Companion.u32
+import dev.glowcow.mnt.view.html.Paper
 import java.io.IOException
+import kotlin.math.abs
 
 /**
  * A Word 97–2003 document: the text of its body from the piece table, bold, italic, underline and the rest from
@@ -158,7 +160,10 @@ object Doc {
                             }
                         }
                         ch == '\u000B' -> target().append("<br>")
-                        ch == '\u000C' -> endParagraph(Para())
+                        ch == '\u000C' -> {
+                            endParagraph(Para())
+                            if (row == null) out.append("<hr class=\"pb\">")
+                        }
                         ch == '\u0001' -> if (props.picture >= 0 && data != null) picture(data, props.picture)?.let {
                             pictures += it
                             target().append("<img src=\"/a/pic").append(pictures.size - 1).append("\">")
@@ -177,7 +182,7 @@ object Doc {
         }
         if (para.isNotEmpty()) endParagraph(Para())
         endTable()
-        return Converted(listOf(Converted.Part("", out.toString())), { name -> name.removePrefix("pic").toIntOrNull()?.let { pictures.getOrNull(it) } })
+        return Converted(listOf(Converted.Part("", out.toString(), paper(word, table, fc(6), lcb(6)))), { name -> name.removePrefix("pic").toIntOrNull()?.let { pictures.getOrNull(it) } })
     }
 
     private data class Piece(val cpStart: Int, val cpEnd: Int, val fc: Int, val compressed: Boolean)
@@ -270,6 +275,35 @@ object Doc {
             at += 2 + cb
             sti
         }
+    }
+
+    // The first section's sheet: its size and margins from the section's properties, in twentieths of a point.
+    private fun paper(word: ByteArray, table: ByteArray, fc: Int, lcb: Int): Paper {
+        // The table of sections: n + 1 character positions, then n descriptors of 12 bytes.
+        val n = (lcb - 4) / 16
+        if (n < 1 || fc + 4 * (n + 1) + 12 > table.size) return Paper.A4
+        val sepx = u32(table, fc + 4 * (n + 1) + 2)
+        if (sepx <= 0 || sepx + 2 > word.size) return Paper.A4
+        val grpprl = word.copyOfRange(sepx + 2, minOf(word.size, sepx + 2 + u16(word, sepx)))
+        val a = Paper.A4
+        var width = a.width
+        var height = a.height
+        var top = a.top
+        var right = a.right
+        var bottom = a.bottom
+        var left = a.left
+        sprms(grpprl, 0) { sprm, at, _ ->
+            val value = abs(u16(grpprl, at).toShort().toInt()) / 20f
+            when (sprm) {
+                0xB01F -> width = value
+                0xB020 -> height = value
+                0xB021 -> left = value
+                0xB022 -> right = value
+                0x9023 -> top = value
+                0x9024 -> bottom = value
+            }
+        }
+        return Paper(width, height, top, right, bottom, left)
     }
 
     private inline fun sprms(grpprl: ByteArray, from: Int, each: (Int, Int, Int) -> Unit) {

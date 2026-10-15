@@ -1,5 +1,6 @@
 package dev.glowcow.mnt.view.doc
 
+import dev.glowcow.mnt.view.html.Paper
 import java.io.File
 
 /** OpenDocument: text (odt), spreadsheets (ods) and presentations (odp), all from `content.xml`. */
@@ -9,7 +10,7 @@ object Odf {
         val writer = Writer(styles)
         content.find("text")?.let { writer.blocks(it, out) }
         writer.notes(out)
-        listOf(Converted.Part("", out.toString()))
+        listOf(Converted.Part("", out.toString(), paper(pkg)))
     }
 
     fun presentation(file: File): Converted = open(file) { _, content, styles ->
@@ -88,6 +89,27 @@ object Odf {
         }
     }
 
+    // The sheet of the first master page: its size and margins, in any unit OpenDocument writes.
+    private fun paper(pkg: Package): Paper {
+        val styles = pkg.xml("styles.xml") ?: return Paper.A4
+        val name = styles.find("master-styles")?.child("master-page")?.attr("page-layout-name")
+        val layout = styles.all("page-layout").firstOrNull { name == null || it.attr("name") == name }?.child("page-layout-properties") ?: return Paper.A4
+        fun length(attr: String, default: Float): Float {
+            val value = layout.attr(attr) ?: return default
+            val number = value.takeWhile { it.isDigit() || it == '.' || it == '-' }.toFloatOrNull() ?: return default
+            return when (value.substring(value.indexOfFirst { it.isLetter() }.takeIf { it >= 0 } ?: value.length)) {
+                "cm" -> number * 72f / 2.54f
+                "mm" -> number * 72f / 25.4f
+                "in" -> number * 72f
+                "pt" -> number
+                "pc" -> number * 12f
+                else -> default
+            }
+        }
+        val a = Paper.A4
+        return Paper(length("page-width", a.width), length("page-height", a.height), length("margin-top", a.top), length("margin-right", a.right), length("margin-bottom", a.bottom), length("margin-left", a.left))
+    }
+
     private fun open(file: File, read: (Package, El, Styles) -> List<Converted.Part>): Converted {
         val pkg = Package(file)
         try {
@@ -113,7 +135,9 @@ object Odf {
                     }
                     s.attr("name").orEmpty() to tags
                 }
-            return Converted(read(pkg, content, Styles(tags, parents, hidden, numbered)), { name -> pkg.bytes(name) }, pkg::close)
+            val before = all.filter { it.child("paragraph-properties")?.attr("break-before") == "page" }.mapNotNull { it.attr("name") }.toSet()
+            val after = all.filter { it.child("paragraph-properties")?.attr("break-after") == "page" }.mapNotNull { it.attr("name") }.toSet()
+            return Converted(read(pkg, content, Styles(tags, parents, hidden, numbered, before, after)), { name -> pkg.bytes(name) }, pkg::close)
         } catch (e: Exception) {
             pkg.close()
             throw e
@@ -121,7 +145,17 @@ object Odf {
     }
 
     /** The text formatting of each style by name, and the style each is based on. */
-    private class Styles(val tags: Map<String, Set<String>>, private val parents: Map<String, String?>, val hidden: Set<String>, val numbered: Set<String>) {
+    private class Styles(
+        val tags: Map<String, Set<String>>,
+        private val parents: Map<String, String?>,
+        val hidden: Set<String>,
+        val numbered: Set<String>,
+        private val breakBefore: Set<String> = emptySet(),
+        private val breakAfter: Set<String> = emptySet(),
+    ) {
+        /** A page break a paragraph's style puts before it, or after it. */
+        fun breaks(style: String?, before: Boolean): Boolean = (if (before) breakBefore else breakAfter).let { set -> style != null && set.contains(style) }
+
         /** Whether a paragraph's style is, or is based on, [name]. */
         fun derives(style: String?, name: String): Boolean {
             var s = style
@@ -144,11 +178,13 @@ object Odf {
                     "p" -> {
                         val inner = inline(el)
                         val style = el.attr("style-name")
+                        if (styles.breaks(style, before = true)) out.append("<hr class=\"pb\">")
                         when {
                             styles.derives(style, "Title") -> out.append("<h1>").append(inner).append("</h1>")
                             styles.derives(style, "Subtitle") -> out.append("<h2>").append(inner).append("</h2>")
                             else -> out.append("<p>").append(if (inner.isBlank()) "&nbsp;" else inner).append("</p>")
                         }
+                        if (styles.breaks(style, before = false)) out.append("<hr class=\"pb\">")
                     }
                     "h" -> {
                         val level = (el.attr("outline-level")?.toIntOrNull() ?: 1).coerceIn(1, 6)

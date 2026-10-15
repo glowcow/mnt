@@ -34,7 +34,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                         settings = BackupSettings(
                             s.theme.name, s.palette.name, s.appUpdate, s.showHidden, s.sortBy.name, s.sortDescending,
                             s.pinned, s.hiddenPlaces.toList(), s.searches, s.binExternal,
-                            s.codeLight.name, s.codeDark.name, s.wrapLines, s.lineNumbers, s.linksInApp,
+                            s.codeLight.name, s.codeDark.name, s.wrapLines, s.lineNumbers, s.linksInApp, s.pages,
                         ),
                     ),
                 )
@@ -97,6 +97,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                 wrapLines = b.wrapLines,
                 lineNumbers = b.lineNumbers,
                 linksInApp = b.linksInApp,
+                pages = b.pages,
             )
         }
     }

@@ -2,6 +2,8 @@ package dev.glowcow.mnt.ui.view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.View
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -19,6 +21,7 @@ import dev.glowcow.mnt.R
 import dev.glowcow.mnt.view.WebDoc
 import dev.glowcow.mnt.view.html.Look
 import dev.glowcow.mnt.view.html.Page
+import dev.glowcow.mnt.view.html.Spot
 import java.io.ByteArrayInputStream
 
 /** Looks for text in a page: how many matches it found, which of them is in sight (from 1), and the way to the others. */
@@ -60,6 +63,26 @@ class Finder : Search {
     }
 }
 
+/** The sheets of a page laid out on them: which is at the middle of the screen (from 0), of how many, and the way to another. */
+class Sheets {
+    internal var view: WebView? = null
+    var page by mutableIntStateOf(0)
+        private set
+    var count by mutableIntStateOf(0)
+        private set
+
+    // The page writes `mnt-pages:3/12` into its title as it scrolls.
+    internal fun heard(title: String?) {
+        val (at, of) = title?.removePrefix("mnt-pages:")?.takeIf { it != title }?.split('/')?.mapNotNull { it.toIntOrNull() }?.takeIf { it.size == 2 } ?: listOf(1, 0)
+        page = at - 1
+        count = of
+    }
+
+    fun go(page: Int) {
+        view?.evaluateJavascript("window.mntPage&&mntPage(${page.coerceIn(0, maxOf(0, count - 1))})", null)
+    }
+}
+
 /**
  * A page of the viewer: [doc]'s pages served from the app, in [look], starting at [start]. Nothing comes from the
  * network; a link out goes to [onLink], one to a file beside the page to [onFile], and [onPath] hears each page shown.
@@ -72,6 +95,7 @@ fun WebPage(
     /** Where to go, and a count that changes each time it is asked for, so the same place can be asked for again. */
     start: Pair<String, Int>,
     finder: Finder,
+    sheets: Sheets,
     onLink: (String) -> Unit,
     onFile: (String) -> Unit,
     onPath: (String) -> Unit,
@@ -89,7 +113,7 @@ fun WebPage(
         factory = { context ->
             WebView(context).apply {
                 settings.apply {
-                    javaScriptEnabled = doc.scripted
+                    javaScriptEnabled = doc.own
                     allowFileAccess = false
                     allowContentAccess = false
                     builtInZoomControls = true
@@ -101,8 +125,13 @@ fun WebPage(
                     isAlgorithmicDarkeningAllowed = false
                 }
                 isVerticalScrollBarEnabled = true
+                // A pull past the edge stretches the whole view, the glass the page draws with it, away from the bars.
+                overScrollMode = View.OVER_SCROLL_NEVER
                 setOnScrollChangeListener { _, _, y, _, _ -> scrolled(y > 0) }
                 setFindListener { active, total, _ -> finder.found(active, total) }
+                webChromeClient = object : WebChromeClient() {
+                    override fun onReceivedTitle(view: WebView, title: String?) = sheets.heard(title)
+                }
                 webViewClient = object : WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse {
                         val url = request.url
@@ -110,7 +139,8 @@ fun WebPage(
                         val at = url.encodedPath.orEmpty()
                         font(context, at)?.let { return it }
                         val served = runCatching { doc.serve(at, current) }.getOrNull() ?: return missing()
-                        return WebResourceResponse(served.mime, if (served.mime.startsWith("text/") || served.mime.endsWith("xml")) "UTF-8" else null, served.stream)
+                        val text = served.mime.startsWith("text/") || served.mime.endsWith("xml")
+                        return WebResourceResponse(served.mime, if (text) "UTF-8" else null, 200, "OK", if (text) POLICY else emptyMap(), served.stream)
                     }
 
                     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -130,28 +160,39 @@ fun WebPage(
                     }
                 }
                 finder.view = this
+                sheets.view = this
             }
         },
         update = { view ->
             view.setBackgroundColor(look.ground.toInt())
-            view.settings.javaScriptEnabled = doc.scripted
-            // New colours lay out the page shown again; a new document or a place asked for goes there.
+            view.settings.javaScriptEnabled = doc.own
+            // New colours lay out the page shown again; a new document or a place asked for goes there. The bars' heights
+            // and the island's place only move the page's edges and its glass.
+            val bare = look.copy(top = 0, bottom = 0, island = Spot())
             when {
                 shown.doc !== doc || shown.start != start -> view.loadUrl(Page.ORIGIN + start.first)
-                shown.look != look -> view.reload()
+                shown.look != bare -> view.reload()
+                shown.top != look.top || shown.bottom != look.bottom || shown.island != look.island ->
+                    view.evaluateJavascript("document.documentElement.style.cssText+=';--top:${look.top}px;--bottom:${look.bottom}px;${look.island.css()}';window.mntGlass&&mntGlass()", null)
             }
             shown.doc = doc
-            shown.look = look
+            shown.look = bare
             shown.start = start
+            shown.top = look.top
+            shown.bottom = look.bottom
+            shown.island = look.island
         },
         onRelease = { view ->
             finder.view = null
+            sheets.view = null
             view.destroy()
         },
     )
 }
 
-private class Loaded(var doc: WebDoc? = null, var look: Look? = null, var start: Pair<String, Int>? = null)
+private class Loaded(var doc: WebDoc? = null, var look: Look? = null, var start: Pair<String, Int>? = null, var top: Int = 0, var bottom: Int = 0, var island: Spot = Spot())
+
+private val POLICY = mapOf("Content-Security-Policy" to Page.CSP)
 
 private const val HOST = "mnt.local"
 

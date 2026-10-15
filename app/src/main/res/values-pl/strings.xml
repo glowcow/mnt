@@ -242,6 +242,8 @@
     <string name="viewer_part">%1$d z %2$d</string>
     <string name="viewer_part_previous">Poprzednia część</string>
     <string name="viewer_part_next">Następna część</string>
+    <string name="viewer_page_previous">Poprzednia strona</string>
+    <string name="viewer_page_next">Następna strona</string>
     <string name="viewer_locked">Chroniony hasłem</string>
     <string name="viewer_locked_text">Wpisz hasło, aby go otworzyć</string>
     <string name="viewer_wrong_password">Błędne hasło</string>
@@ -254,7 +256,7 @@
     <string name="settings_files">Pliki</string>
     <string name="settings_files_hint">Foldery na karcie Pliki, ukryte pliki, kosz, wyszukiwania</string>
     <string name="settings_viewer">Podgląd</string>
-    <string name="settings_viewer_hint">Kolory kodu, długie wiersze, linki</string>
+    <string name="settings_viewer_hint">Kolory kodu, długie wiersze, strony, linki</string>
     <string name="settings_backup">Kopia zapasowa</string>
     <string name="settings_credits">Licencja i podziękowania</string>
     <string name="settings_code_light">Kod w jasnym motywie</string>
@@ -266,12 +268,12 @@
     <string name="code_none">Brak</string>
     <string name="settings_wrap">Zawijaj długie wiersze</string>
     <string name="settings_wrap_hint">Tekst i kod mieszczą się w szerokości ekranu zamiast przewijać się w bok</string>
+    <string name="settings_pages">Strony</string>
+    <string name="settings_pages_hint">Dokumenty Word są układane na arkuszach, jak po wydruku</string>
     <string name="settings_numbers">Numery wierszy</string>
     <string name="settings_numbers_hint">Numeruj wiersze tekstu i kodu</string>
     <string name="settings_links">Otwieraj linki w aplikacji</string>
     <string name="settings_links_hint">Strony internetowe otwierają się tutaj zamiast w przeglądarce telefonu</string>
     <string name="settings_code_font">Czcionka kodu</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Poprzedni rozdział</string>
-    <string name="viewer_chapter_next">Następny rozdział</string>
 </resources>

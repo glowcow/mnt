@@ -39,6 +39,8 @@ data class AppSettings(
     /** Long lines of text and code are wrapped to the screen instead of scrolled sideways. */
     val wrapLines: Boolean = true,
     val lineNumbers: Boolean = true,
+    /** Word documents are laid out in pages, as they are printed, instead of flowing to the width of the screen. */
+    val pages: Boolean = true,
     /** A link opens in the app's own browser page instead of the phone's browser. */
     val linksInApp: Boolean = true,
 )
@@ -61,6 +63,7 @@ class SettingsStore(private val context: Context) {
     private val wrapLinesKey = booleanPreferencesKey("wrap_lines")
     private val lineNumbersKey = booleanPreferencesKey("line_numbers")
     private val linksInAppKey = booleanPreferencesKey("links_in_app")
+    private val pagesKey = booleanPreferencesKey("pages")
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { p ->
         AppSettings(
@@ -79,6 +82,7 @@ class SettingsStore(private val context: Context) {
             wrapLines = p[wrapLinesKey] ?: true,
             lineNumbers = p[lineNumbersKey] ?: true,
             linksInApp = p[linksInAppKey] ?: true,
+            pages = p[pagesKey] ?: true,
         )
     }
 
@@ -99,6 +103,7 @@ class SettingsStore(private val context: Context) {
         it[wrapLinesKey] = s.wrapLines
         it[lineNumbersKey] = s.lineNumbers
         it[linksInAppKey] = s.linksInApp
+        it[pagesKey] = s.pages
     }
 
     /** Adds pinned folders and searches to the ones kept, those already here staying where they are. */
@@ -119,6 +124,8 @@ class SettingsStore(private val context: Context) {
     suspend fun setWrapLines(on: Boolean) = context.dataStore.edit { it[wrapLinesKey] = on }
 
     suspend fun setLineNumbers(on: Boolean) = context.dataStore.edit { it[lineNumbersKey] = on }
+
+    suspend fun setPages(on: Boolean) = context.dataStore.edit { it[pagesKey] = on }
 
     suspend fun setLinksInApp(on: Boolean) = context.dataStore.edit { it[linksInAppKey] = on }
 

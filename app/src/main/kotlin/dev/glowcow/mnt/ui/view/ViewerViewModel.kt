@@ -103,6 +103,9 @@ class ViewerViewModel(val path: String, private val app: Application) : ViewMode
     /** Shown as code: a text, or a document shown as it is written. */
     val code: Boolean get() = format == Format.TEXT || format == Format.UNKNOWN || source && format in setOf(Format.MARKDOWN, Format.HTML, Format.TABLE)
 
+    /** A text document, which can be laid out on its pages. */
+    val paged: Boolean get() = format in setOf(Format.DOCX, Format.DOC, Format.ODT, Format.RTF)
+
     /** Whether the page can be shown as it is written and as it looks. */
     val twoWays: Boolean get() = format in setOf(Format.MARKDOWN, Format.HTML, Format.TABLE)
 
@@ -163,6 +166,8 @@ class ViewerViewModel(val path: String, private val app: Application) : ViewMode
     }
 
     fun setWrap(on: Boolean) = viewModelScope.launch { c.settings.setWrapLines(on) }
+
+    fun setPages(on: Boolean) = viewModelScope.launch { c.settings.setPages(on) }
 
     fun setNumbers(on: Boolean) = viewModelScope.launch { c.settings.setLineNumbers(on) }
 

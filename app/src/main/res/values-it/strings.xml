@@ -238,6 +238,8 @@
     <string name="viewer_part">%1$d di %2$d</string>
     <string name="viewer_part_previous">Parte precedente</string>
     <string name="viewer_part_next">Parte successiva</string>
+    <string name="viewer_page_previous">Pagina precedente</string>
+    <string name="viewer_page_next">Pagina successiva</string>
     <string name="viewer_locked">Protetto da password</string>
     <string name="viewer_locked_text">Inserisci la password per aprirlo</string>
     <string name="viewer_wrong_password">Password errata</string>
@@ -250,7 +252,7 @@
     <string name="settings_files">File</string>
     <string name="settings_files_hint">Cartelle nella scheda File, file nascosti, cestino, ricerche</string>
     <string name="settings_viewer">Visualizzatore</string>
-    <string name="settings_viewer_hint">Colori del codice, righe lunghe, link</string>
+    <string name="settings_viewer_hint">Colori del codice, righe lunghe, pagine, link</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_credits">Licenza e riconoscimenti</string>
     <string name="settings_code_light">Codice nel tema chiaro</string>
@@ -262,12 +264,12 @@
     <string name="code_none">Nessuno</string>
     <string name="settings_wrap">Manda a capo le righe lunghe</string>
     <string name="settings_wrap_hint">Testo e codice stanno nella larghezza dello schermo invece di scorrere di lato</string>
+    <string name="settings_pages">Pagine</string>
+    <string name="settings_pages_hint">I documenti Word sono impaginati su fogli, come in stampa</string>
     <string name="settings_numbers">Numeri di riga</string>
     <string name="settings_numbers_hint">Numera le righe di testo e codice</string>
     <string name="settings_links">Apri i link nell’app</string>
     <string name="settings_links_hint">Le pagine web si aprono qui invece che nel browser del telefono</string>
     <string name="settings_code_font">Font del codice</string>
     <string name="settings_djvu">DjVu</string>
-    <string name="viewer_chapter_previous">Capitolo precedente</string>
-    <string name="viewer_chapter_next">Capitolo successivo</string>
 </resources>

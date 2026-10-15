@@ -20,6 +20,8 @@ class FolderDoc(
 
     override fun path(part: Int) = self
 
+    override val own: Boolean get() = page != null
+
     override fun serve(path: String, look: Look): Served? {
         if (path == self || decode(path) == decode(self)) {
             page?.let { return Served("text/html", it(look).byteInputStream()) }
