@@ -118,6 +118,29 @@
     <string name="transfer_moved">Movido</string>
     <string name="transfer_deleted">Eliminado</string>
     <string name="transfer_zipped">Archivo ZIP guardado</string>
+    <string name="action_unpack">Descomprimir</string>
+    <string name="action_extract">Extraer</string>
+    <string name="paste_extract">Extraer aquí</string>
+    <string name="paste_archive">No se puede añadir nada a un archivo comprimido</string>
+    <string name="transfer_unpacking">Descomprimiendo</string>
+    <string name="transfer_unpacked">Descomprimido</string>
+    <string name="transfer_no_room">No hay espacio suficiente</string>
+    <string name="archive_reading">Leyendo el archivo comprimido</string>
+    <string name="archive_locked">Este archivo comprimido tiene contraseña</string>
+    <string name="archive_locked_text">Mnt no abre archivos comprimidos con contraseña</string>
+    <string name="archive_memory">Este archivo comprimido necesita demasiada memoria</string>
+    <string name="archive_memory_text">Descomprimirlo podría agotar la memoria del teléfono</string>
+    <string name="archive_broken">No se puede leer este archivo comprimido</string>
+    <string name="archive_broken_text">Está dañado o comprimido de una forma que Mnt no conoce</string>
+    <string name="archive_slow">Archivo comprimido grande</string>
+    <string name="archive_slow_text">Para mostrar su contenido, Mnt lo leerá entero: tardará %1$s</string>
+    <string name="archive_slow_minutes">unos %1$d min</string>
+    <string name="archive_slow_quick">menos de un minuto</string>
+    <string name="archive_read">Leer</string>
+    <string name="archive_many">Este archivo comprimido tiene demasiados archivos</string>
+    <string name="archive_many_text">Más de los que Mnt puede tener en memoria</string>
+    <string name="archive_open_with">Abrir en otra app</string>
+    <string name="file_locked">Este archivo tiene contraseña</string>
     <string name="open_none">Ninguna aplicación abre este archivo</string>
 
     <string name="details_location">Ubicación</string>
@@ -273,4 +296,5 @@
     <string name="settings_code_font">Fuente del código</string>
     <string name="settings_document_font">Fuente de los documentos</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Archivos comprimidos</string>
 </resources>

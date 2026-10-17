@@ -118,6 +118,29 @@
     <string name="transfer_moved">Déplacé</string>
     <string name="transfer_deleted">Supprimé</string>
     <string name="transfer_zipped">Archive enregistrée</string>
+    <string name="action_unpack">Décompresser</string>
+    <string name="action_extract">Extraire</string>
+    <string name="paste_extract">Extraire ici</string>
+    <string name="paste_archive">Rien ne peut être ajouté à une archive</string>
+    <string name="transfer_unpacking">Décompression</string>
+    <string name="transfer_unpacked">Décompressé</string>
+    <string name="transfer_no_room">Espace insuffisant</string>
+    <string name="archive_reading">Lecture de l\'archive</string>
+    <string name="archive_locked">Cette archive a un mot de passe</string>
+    <string name="archive_locked_text">Mnt n\'ouvre pas les archives protégées par mot de passe</string>
+    <string name="archive_memory">Cette archive demande trop de mémoire</string>
+    <string name="archive_memory_text">La décompresser pourrait épuiser la mémoire du téléphone</string>
+    <string name="archive_broken">Cette archive ne peut pas être lue</string>
+    <string name="archive_broken_text">Elle est endommagée ou compressée d\'une façon que Mnt ne connaît pas</string>
+    <string name="archive_slow">Archive volumineuse</string>
+    <string name="archive_slow_text">Pour montrer son contenu, Mnt la lit en entier : cela prend %1$s</string>
+    <string name="archive_slow_minutes">environ %1$d min</string>
+    <string name="archive_slow_quick">moins d\'une minute</string>
+    <string name="archive_read">Lire</string>
+    <string name="archive_many">Cette archive contient trop de fichiers</string>
+    <string name="archive_many_text">Plus que Mnt ne peut garder en mémoire</string>
+    <string name="archive_open_with">Ouvrir dans une autre app</string>
+    <string name="file_locked">Ce fichier a un mot de passe</string>
     <string name="open_none">Aucune application n’ouvre ce fichier</string>
 
     <string name="details_location">Emplacement</string>
@@ -273,4 +296,5 @@
     <string name="settings_code_font">Police du code</string>
     <string name="settings_document_font">Police des documents</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Archives</string>
 </resources>

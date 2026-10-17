@@ -110,6 +110,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
         context.container.transfers.results.collect { result ->
             val text = when {
                 result.stopped -> resources.getString(R.string.transfer_stopped)
+                result.full -> resources.getString(R.string.transfer_no_room)
                 result.failed > 0 -> resources.getString(R.string.transfer_failed, result.failed)
                 else -> resources.getString(
                     when (result.kind) {
@@ -117,6 +118,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
                         TransferKind.MOVE -> R.string.transfer_moved
                         TransferKind.DELETE -> R.string.transfer_deleted
                         TransferKind.ZIP -> R.string.transfer_zipped
+                        TransferKind.UNPACK -> R.string.transfer_unpacked
                     },
                 )
             }

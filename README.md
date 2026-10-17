@@ -3,8 +3,8 @@
 Android file manager for the phone's own storage, memory cards and drives
 plugged into the USB port, for servers on the network — SMB, FTP, S3, NFS —
 and for cameras and phones that speak MTP: browse, search, copy, move, rename
-and delete, with long jobs running on in the background, and open documents,
-books, tables and code right inside it. Android 16+ only; the
+and delete, with long jobs running on in the background, open archives as
+folders, and open documents, books, tables and code right inside it. Android 16+ only; the
 interface speaks ten languages.
 
 <p>
@@ -42,6 +42,15 @@ The files on the screenshots are made up.
   the screen, and an island counts the pages and steps through them; a
   spreadsheet keeps its fonts, fills, borders and column widths, as Excel
   shows it; links open in its own browser.
+- **Archives** — ZIP, 7z, RAR, TAR with gzip, bzip2, xz or zstd, ISO and more
+  open as folders: open any file in them, take out the ones you pick, or hold
+  an archive and unpack it whole next to itself into a folder of its name.
+  Names a Windows zip wrote in its DOS code page read right. A large
+  compressed stream asks before it is read through, the way to a file deep
+  in one shows how far it has got, and what an archive holds is remembered
+  for the next time. An archive with a password, too many files, or one
+  that would need more memory than the phone has to spare, says so and
+  offers the app that can.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold.
 - **Bin** — what you delete on the phone is kept for 30 days and can be put
@@ -71,6 +80,7 @@ The files on the screenshots are made up.
 | USB devices | the platform's `MtpDevice` |
 | Network | `HttpURLConnection`, kotlinx.serialization for JSON |
 | Viewer | pages of the app's own HTML in a `WebView`; its own readers for Office, OpenDocument, RTF and EPUB files and its own syntax colouring; commonmark for Markdown, androidx.pdf for PDF, DjVuLibre 3.5 for DjVu |
+| Archives | libarchive 3.8 (read only) with XZ Utils 5.8, Zstandard 1.5 and bzip2 1.0, zlib of the system |
 
 All versions live in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
@@ -89,6 +99,9 @@ app/src/main/kotlin/dev/glowcow/mnt/
   net/          the servers the user adds and how each is spoken to — SMB,
                 FTP, S3, NFS — the MTP devices on the USB port, and the
                 sealed file the servers are kept in
+  archive/      archives as places to walk: libarchive's reader over a file
+                of the phone or of a server, what an archive holds, the
+                store that reads its files
   view/         the viewer: what kind of file is shown how, the readers of
                 documents, workbooks, slides, books and DjVu, the colouring of
                 code and its schemes, the pages they are turned into
@@ -103,7 +116,8 @@ app/src/main/kotlin/dev/glowcow/mnt/
   ui/           theme + icons, shared components (tab page and detail page
                 with the frosted bars, grouped rows and sheets, the row of a
                 file, the all files access gate), navigation root
-app/src/main/cpp/  DjVuLibre's library and the JNI bridge to it
+app/src/main/cpp/  DjVuLibre and libarchive (with liblzma, zstd and bzip2), each
+                with its JNI bridge
 app/src/main/assets/material-icons.json  the shapes of the file icons
 app/src/test/   unit tests of the plain JVM code in files, backup, update and
                 view, the readers checked on sample documents
@@ -206,6 +220,18 @@ and [`licenses/Phosphor-MIT.txt`](licenses/Phosphor-MIT.txt).
 its source in `app/src/main/cpp/djvulibre`, under the GNU General Public
 License v2.0 or later — see
 [`licenses/DjVuLibre-GPL-2.0.txt`](licenses/DjVuLibre-GPL-2.0.txt).
+
+The reading side of [libarchive](https://libarchive.org) 3.8.10 is built in
+from `app/src/main/cpp/libarchive`, with the decoders of
+[XZ Utils](https://tukaani.org/xz/) 5.8.4, [Zstandard](https://facebook.github.io/zstd/)
+1.5.7 and [bzip2](https://sourceware.org/bzip2/) 1.0.8 beside it — under the
+BSD 2-Clause, 0BSD, BSD 3-Clause and bzip2 licences, see
+[`licenses/libarchive-BSD-2-Clause.txt`](licenses/libarchive-BSD-2-Clause.txt),
+[`licenses/XZ-Utils-0BSD.txt`](licenses/XZ-Utils-0BSD.txt),
+[`licenses/Zstandard-BSD-3-Clause.txt`](licenses/Zstandard-BSD-3-Clause.txt) and
+[`licenses/bzip2-1.0.8.txt`](licenses/bzip2-1.0.8.txt). Three files carry a
+change of the app's, marked `mnt:` — a decoder's dictionary is held to the
+memory the phone can spare.
 
 The app links [smbj](https://github.com/hierynomus/smbj),
 [Apache Commons Net](https://commons.apache.org/proper/commons-net/) and

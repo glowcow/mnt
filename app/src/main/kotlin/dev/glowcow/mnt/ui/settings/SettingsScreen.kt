@@ -243,6 +243,8 @@ fun SettingsPageScreen(
                 GroupRow(stringResource(R.string.settings_document_font), value = "Tinos · SIL OFL 1.1")
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_djvu), value = "DjVuLibre · GPL-2.0-or-later")
+                GroupDivider()
+                GroupRow(stringResource(R.string.settings_archives), value = "libarchive, XZ Utils, Zstandard, bzip2 · BSD")
             }
         }
     }

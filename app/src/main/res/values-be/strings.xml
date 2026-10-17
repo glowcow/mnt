@@ -122,6 +122,29 @@
     <string name="transfer_moved">Перамешчана</string>
     <string name="transfer_deleted">Выдалена</string>
     <string name="transfer_zipped">Архіў захаваны</string>
+    <string name="action_unpack">Распакаваць</string>
+    <string name="action_extract">Выняць</string>
+    <string name="paste_extract">Выняць сюды</string>
+    <string name="paste_archive">У архіў нічога не ўставіць</string>
+    <string name="transfer_unpacking">Распакоўка</string>
+    <string name="transfer_unpacked">Распакавана</string>
+    <string name="transfer_no_room">Не хапае месца</string>
+    <string name="archive_reading">Чытаю архіў</string>
+    <string name="archive_locked">Архіў абаронены паролем</string>
+    <string name="archive_locked_text">Mnt не адкрывае архівы з паролем</string>
+    <string name="archive_memory">Архіву трэба занадта шмат памяці</string>
+    <string name="archive_memory_text">Распакоўка можа не ўмясціцца ў памяць тэлефона</string>
+    <string name="archive_broken">Архіў не чытаецца</string>
+    <string name="archive_broken_text">Ён пашкоджаны або спакаваны так, як Mnt не ўмее</string>
+    <string name="archive_slow">Вялікі архіў</string>
+    <string name="archive_slow_text">Каб паказаць, што ў ім, Mnt прачытае яго цалкам: гэта зойме %1$s</string>
+    <string name="archive_slow_minutes">каля %1$d хв</string>
+    <string name="archive_slow_quick">менш за хвіліну</string>
+    <string name="archive_read">Прачытаць</string>
+    <string name="archive_many">У архіве занадта шмат файлаў</string>
+    <string name="archive_many_text">Столькі Mnt не ўтрымае ў памяці</string>
+    <string name="archive_open_with">Адкрыць у іншай праграме</string>
+    <string name="file_locked">Файл абаронены паролем</string>
     <string name="open_none">Няма праграмы, якая адкрывае гэты файл</string>
 
     <string name="details_location">Размяшчэнне</string>
@@ -277,4 +300,5 @@
     <string name="settings_code_font">Шрыфт кода</string>
     <string name="settings_document_font">Шрыфт дакументаў</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Архівы</string>
 </resources>

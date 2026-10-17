@@ -117,6 +117,29 @@
     <string name="transfer_moved">Moved</string>
     <string name="transfer_deleted">Deleted</string>
     <string name="transfer_zipped">Archive saved</string>
+    <string name="action_unpack">Unpack</string>
+    <string name="action_extract">Extract</string>
+    <string name="paste_extract">Extract here</string>
+    <string name="paste_archive">Nothing can be put into an archive</string>
+    <string name="transfer_unpacking">Unpacking</string>
+    <string name="transfer_unpacked">Unpacked</string>
+    <string name="transfer_no_room">Not enough space</string>
+    <string name="archive_reading">Reading the archive</string>
+    <string name="archive_locked">This archive has a password</string>
+    <string name="archive_locked_text">Mnt does not open archives with a password</string>
+    <string name="archive_memory">This archive needs too much memory</string>
+    <string name="archive_memory_text">Unpacking it could run the phone out of memory</string>
+    <string name="archive_broken">This archive cannot be read</string>
+    <string name="archive_broken_text">It is damaged, or packed in a way Mnt does not know</string>
+    <string name="archive_slow">This archive is large</string>
+    <string name="archive_slow_text">To show what it holds, Mnt reads all of it: that takes %1$s</string>
+    <string name="archive_slow_minutes">about %1$d min</string>
+    <string name="archive_slow_quick">under a minute</string>
+    <string name="archive_read">Read it</string>
+    <string name="archive_many">This archive holds too many files</string>
+    <string name="archive_many_text">More than Mnt can keep in memory</string>
+    <string name="archive_open_with">Open in another app</string>
+    <string name="file_locked">This file has a password</string>
     <string name="open_none">No app opens this file</string>
 
     <string name="details_location">Location</string>
@@ -272,4 +295,5 @@
     <string name="settings_code_font">Code font</string>
     <string name="settings_document_font">Document font</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Archives</string>
 </resources>

@@ -60,6 +60,19 @@ class Stores(private val local: FileStore, private val remote: (id: String) -> F
 
     override fun renames(path: String): Boolean = find(path)?.run { store.renames(this.path) } ?: true
 
+    override fun writes(path: String): Boolean = find(path)?.run { store.writes(this.path) } ?: true
+
+    override fun free(path: String): Long? = find(path)?.run { store.free(this.path) }
+
+    override suspend fun readEach(paths: List<String>, each: suspend (path: String, input: InputStream) -> Unit) {
+        // Each place reads its own files, in its own order.
+        for ((id, group) in paths.groupBy { Remote.id(it) }) {
+            val at = at(group.first()) ?: continue
+            val inner = group.associateBy { if (id == null) it else Remote.inner(it) }
+            at.store.readEach(inner.keys.toList()) { path, input -> each(inner.getValue(path), input) }
+        }
+    }
+
     override fun read(path: String, offset: Long): InputStream = open(path).run { store.read(this.path, offset) }
 
     override fun write(path: String, size: Long): OutputStream = open(path).run { store.write(this.path, size) }

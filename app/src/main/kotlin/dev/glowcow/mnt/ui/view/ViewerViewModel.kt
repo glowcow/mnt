@@ -8,6 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.glowcow.mnt.R
+import dev.glowcow.mnt.archive.ArchiveException
+import dev.glowcow.mnt.archive.Reason
 import dev.glowcow.mnt.container
 import dev.glowcow.mnt.data.AppSettings
 import dev.glowcow.mnt.files.Node
@@ -46,14 +49,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 
 /** What the viewer's page holds. */
 sealed interface Shown {
     data object Loading : Shown
 
-    /** A server's file on its way into the phone: how much of it has come. */
-    data class Fetching(val fraction: Float) : Shown
+    /** A server's file on its way into the phone: how much of it has come; or, [reading], how far an archive is gone through to it. */
+    data class Fetching(val fraction: Float, val reading: Boolean = false) : Shown
 
     data class Failed(val reason: String?) : Shown
 
@@ -125,13 +129,24 @@ class ViewerViewModel(val path: String, private val app: Application) : ViewMode
         val previous = (shown as? Shown.Web)?.doc
         shown = Shown.Loading
         job = viewModelScope.launch {
+            // A file deep in an archive packed as one stream is a while away: how far, as it is gone through.
+            val watching = Remote.id(path)?.let { c.archives.store(it) }?.let { store ->
+                launch {
+                    store.reaching.collect { done ->
+                        if (done != null && (shown == Shown.Loading || (shown as? Shown.Fetching)?.reading == true)) shown = Shown.Fetching(done, reading = true)
+                    }
+                }
+            }
             val next = try {
                 withContext(Dispatchers.IO) { open() }
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: ArchiveException) {
+                Shown.Failed(app.getString(if (e.reason == Reason.LOCKED) R.string.file_locked else if (e.reason == Reason.MEMORY) R.string.archive_memory else R.string.archive_broken))
             } catch (e: Throwable) {
                 Shown.Failed(e.message?.takeIf { it.isNotBlank() } ?: e.javaClass.simpleName)
             }
+            watching?.cancel()
             if (previous != null && (next as? Shown.Web)?.doc !== previous) runCatching { previous.close() }
             shown = next
         }
@@ -225,9 +240,10 @@ class ViewerViewModel(val path: String, private val app: Application) : ViewMode
     }
 
     // A text in parts of a megabyte, each from a line's start to a line's end; numbering goes on from the part before.
-    private fun text(found: Node): Shown {
+    private suspend fun text(found: Node): Shown {
         val start = part.toLong() * PART
-        val bytes = c.files.read(path, start).use { read(it, PART + SLACK) }
+        // Interruptible: leaving the page stops a long way through an archive.
+        val bytes = runInterruptible { c.files.read(path, start).use { read(it, PART + SLACK) } }
         if (part == 0 && format == Format.UNKNOWN && !Texts.isText(bytes, minOf(bytes.size, SNIFF))) return Shown.Elsewhere
         parts = ((found.size + PART - 1) / PART).toInt().coerceAtLeast(1)
         var from = 0
@@ -257,7 +273,7 @@ class ViewerViewModel(val path: String, private val app: Application) : ViewMode
         return Texts.decode(bytes, bytes.size, charset)
     }
 
-    private fun read(found: Node, limit: Int): ByteArray = c.files.read(found.path).use { read(it, limit) }
+    private suspend fun read(found: Node, limit: Int): ByteArray = runInterruptible { c.files.read(found.path).use { read(it, limit) } }
 
     private fun read(input: InputStream, limit: Int): ByteArray {
         val out = java.io.ByteArrayOutputStream()
@@ -277,19 +293,22 @@ class ViewerViewModel(val path: String, private val app: Application) : ViewMode
         val dir = File(app.cacheDir, "view").apply { mkdirs() }
         val target = File(dir, "${path.hashCode().toUInt()}-${name.takeLast(60)}")
         val total = found.size.coerceAtLeast(1)
-        c.files.read(path).use { input ->
-            target.outputStream().use { out ->
-                val buffer = ByteArray(256 * 1024)
-                var done = 0L
-                var shownAt = 0L
-                while (true) {
-                    val n = input.read(buffer)
-                    if (n < 0) break
-                    out.write(buffer, 0, n)
-                    done += n
-                    if (done - shownAt > total / 50) {
-                        shownAt = done
-                        withContext(Dispatchers.Main) { shown = Shown.Fetching(done.toFloat() / total) }
+        runInterruptible {
+            c.files.read(path).use { input ->
+                target.outputStream().use { out ->
+                    val buffer = ByteArray(256 * 1024)
+                    var done = 0L
+                    var shownAt = 0L
+                    while (true) {
+                        val n = input.read(buffer)
+                        if (n < 0) break
+                        out.write(buffer, 0, n)
+                        done += n
+                        if (done - shownAt > total / 50) {
+                            shownAt = done
+                            val fraction = done.toFloat() / total
+                            viewModelScope.launch { shown = Shown.Fetching(fraction) }
+                        }
                     }
                 }
             }

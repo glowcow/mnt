@@ -8,6 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
@@ -16,6 +17,15 @@ import java.util.zip.ZipOutputStream
 
 /** What happens to an item whose name is already taken where it goes. */
 enum class Conflict { REPLACE, KEEP_BOTH, SKIP }
+
+/**
+ * One archive to unpack: what lies in the folder [root] goes into the new folder [target]. A lone folder called
+ * [stem] is gone into rather than kept, and a lone file of that name becomes [target] itself, so nothing is doubled.
+ */
+class Unpacking(val root: String, val stem: String, val target: String)
+
+/** There is less room where the files go than they take. */
+class NoRoomException : IOException("No room")
 
 /**
  * Copies, moves, deletes and packs trees of files in a [FileStore]. [onProgress] gets the name being
@@ -29,10 +39,48 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
     private var done = 0L
     private var total = 0L
 
+    // Files of a place that is only read — an archive — and where each goes: copied together, in one pass through it.
+    private val waiting = ArrayList<Pair<Node, String>>()
+
     /** Puts [sources] into the folder [dest]; with [move] they leave where they were. */
     suspend fun copy(sources: List<String>, dest: String, move: Boolean, conflict: Conflict) {
         total = sources.sumOf { bytes(it) }
         for (source in sources) place(source, dest, move, conflict)
+        flush()
+    }
+
+    /** Unpacks each of [archives] next to itself; a folder is filled under a temporary name and takes its own once whole. */
+    suspend fun unpack(archives: List<Unpacking>) {
+        // What each holds is learnt first: for an archive packed as one stream that is a pass through all of it.
+        val inside = archives.map { archive ->
+            val top = files.list(archive.root)
+            val lone = top?.singleOrNull()?.takeIf { it.directory && it.name == archive.stem }
+            if (lone != null) files.list(lone.path) else top
+        }
+        total = inside.sumOf { nodes -> nodes.orEmpty().sumOf { bytes(it.path) } }
+        archives.zip(inside).forEach { (archive, nodes) ->
+            if (nodes == null) return@forEach fail()
+            val need = nodes.sumOf { bytes(it.path) }
+            files.free(Paths.parent(archive.target))?.let { if (need > it) throw NoRoomException() }
+            val file = nodes.singleOrNull()?.takeIf { !it.directory && it.name == archive.stem && Paths.parent(it.path) == archive.root }
+            if (file != null) {
+                waiting += file to archive.target
+                return@forEach flush()
+            }
+            val part = if (files.renames(archive.target)) Paths.child(Paths.parent(archive.target), ".${Paths.name(archive.target)}.part") else archive.target
+            try {
+                if (!files.mkdir(part)) return@forEach fail()
+                for (node in nodes) place(node.path, part, move = false, Conflict.REPLACE)
+                flush()
+                if (part != archive.target && !files.rename(part, archive.target)) {
+                    clear(part)
+                    fail()
+                }
+            } catch (e: Exception) {
+                withContext(NonCancellable) { clear(part) }
+                throw e
+            }
+        }
     }
 
     suspend fun delete(paths: List<String>) {
@@ -109,6 +157,8 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
             for (child in children) place(child.path, target, move, conflict)
             // Still holds what could not be moved; then it stays.
             if (move) files.remove(source)
+        } else if (!files.writes(source)) {
+            waiting += node to target
         } else if (duplicate(node, target)) {
             if (move && !files.remove(source)) fail()
         } else {
@@ -116,13 +166,27 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
         }
     }
 
-    /** Copies one file under a temporary name next to [target], which it takes once whole. */
-    private suspend fun duplicate(node: Node, target: String): Boolean {
+    /** Copies the files [waiting] in one pass through the place they lie in; what is not handed over counts as failed. */
+    private suspend fun flush() {
+        if (waiting.isEmpty()) return
+        val targets = waiting.associateBy { it.first.path }
+        val given = HashSet<String>()
+        files.readEach(waiting.map { it.first.path }) { path, input ->
+            val (node, target) = targets.getValue(path)
+            given += path
+            if (!duplicate(node, target) { input }) fail()
+        }
+        repeat(waiting.count { it.first.path !in given }) { fail() }
+        waiting.clear()
+    }
+
+    /** Copies one file, read from [open], under a temporary name next to [target], which it takes once whole. */
+    private suspend fun duplicate(node: Node, target: String, open: () -> InputStream = { files.read(node.path) }): Boolean {
         // Where nothing can be renamed the file is written under its own name, over what was there.
         val part = if (files.renames(target)) Paths.child(Paths.parent(target), ".${Paths.name(target)}.part") else target
         try {
             withContext(Dispatchers.IO) {
-                files.read(node.path).use { input ->
+                open().use { input ->
                     files.write(part, node.size).use { output ->
                         pump(input) { buffer, n ->
                             output.write(buffer, 0, n)
@@ -156,7 +220,8 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
                     val buffer = spare.tryReceive().getOrNull() ?: ByteArray(BUFFER)
                     var n = 0
                     while (n < buffer.size) {
-                        val got = input.read(buffer, n, buffer.size - n)
+                        // Interruptible: Stop lets go of a read that goes a long way through an archive.
+                        val got = runInterruptible { input.read(buffer, n, buffer.size - n) }
                         if (got < 0) break
                         n += got
                     }

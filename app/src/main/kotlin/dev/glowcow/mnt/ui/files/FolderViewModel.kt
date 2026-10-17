@@ -3,6 +3,9 @@ package dev.glowcow.mnt.ui.files
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.glowcow.mnt.AppContainer
+import dev.glowcow.mnt.archive.ArchiveException
+import dev.glowcow.mnt.archive.Archives
+import dev.glowcow.mnt.archive.Reason
 import dev.glowcow.mnt.Haptics
 import dev.glowcow.mnt.data.AppSettings
 import dev.glowcow.mnt.files.Clip
@@ -16,7 +19,11 @@ import dev.glowcow.mnt.files.Remote
 import dev.glowcow.mnt.files.SortBy
 import dev.glowcow.mnt.files.Transfer
 import dev.glowcow.mnt.files.TransferProgress
+import dev.glowcow.mnt.files.Unpacking
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -27,7 +34,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
+import java.io.IOException
 
 /** What a folder's page shows. */
 sealed interface FolderContent {
@@ -35,6 +46,9 @@ sealed interface FolderContent {
 
     /** The folder cannot be read: it is gone, or the system keeps it shut. */
     data object Closed : FolderContent
+
+    /** An archive that is read through to learn what it holds, about [seconds] long: asked about first. */
+    class Slow(val seconds: Long) : FolderContent
 
     class Listed(val nodes: List<Node>) : FolderContent
 }
@@ -49,11 +63,13 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     // What the folder holds as read from the store; null until read, and empty with [closed] when it cannot be.
     private val read = MutableStateFlow<List<Node>?>(null)
     private val closed = MutableStateFlow(false)
+    private val slow = MutableStateFlow<Long?>(null)
 
     val settings: StateFlow<AppSettings> = c.settings.settings.stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 
-    val content: StateFlow<FolderContent> = combine(read, closed, settings) { nodes, closed, s ->
+    val content: StateFlow<FolderContent> = combine(read, closed, slow, settings) { nodes, closed, slow, s ->
         when {
+            slow != null -> FolderContent.Slow(slow)
             closed -> FolderContent.Closed
             nodes == null -> FolderContent.Loading
             else -> FolderContent.Listed(Listing.arrange(nodes, s.sortBy, s.sortDescending, s.showHidden))
@@ -74,35 +90,63 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     // The place outside the phone's file system this folder lies in; null on the phone and its drives.
     private val remote = Remote.id(path)
 
+    /** The archive this folder lies in; null outside archives. */
+    val archive: String? = Archives.of(path)
+
+    // A server or a device: a place reached over a wire, where every question is a trip.
+    private val far = remote != null && archive == null
+
+    /** How far the archive is read through to learn what it holds, 0–1; null when it is not being read. */
+    val reading: StateFlow<Float?> = remote?.let { c.archives.store(it)?.reading } ?: MutableStateFlow(null)
+
+    /** False inside an archive: nothing can be made, renamed, moved or deleted there. */
+    val writes: Boolean = c.files.writes(path)
+
+    /** How far a file of the archive is copied out for another app to open, 0–1; null when none is. */
+    val opening = MutableStateFlow<Float?>(null)
+    private var openJob: Job? = null
+
     /** The volume by its name, or the folder's own name below it. */
     val title: String
     val crumbs: List<Crumb>
 
     init {
-        val root = c.roots.of(path)
-        val steps = path.removePrefix(root?.path.orEmpty()).split('/').filter { it.isNotEmpty() }
-        var at = root?.path.orEmpty()
-        crumbs = listOfNotNull(root?.let { Crumb(it.label, it.path) }) + steps.map { step ->
-            at = Paths.child(at.ifEmpty { "/" }, step)
-            Crumb(step, at)
-        }
+        crumbs = crumbs(path)
         title = crumbs.lastOrNull()?.label ?: path
         // A transfer that ends anywhere may have changed what is here.
         viewModelScope.launch { c.transfers.changes.collect { reload() } }
     }
 
+    // In an archive, the way to the archive comes first, then the archive by its name, then the folders inside.
+    private fun crumbs(path: String): List<Crumb> {
+        val archive = Archives.of(path)
+        val root = if (archive != null) Archives.root(archive) else c.roots.of(path)?.path
+        val head = if (archive != null) crumbs(Paths.parent(archive)) + Crumb(Paths.name(archive), root!!) else listOfNotNull(c.roots.of(path)?.let { Crumb(it.label, it.path) })
+        val steps = path.removePrefix(root.orEmpty()).split('/').filter { it.isNotEmpty() }
+        var at = root.orEmpty()
+        return head + steps.map { step ->
+            at = Paths.child(at.ifEmpty { "/" }, step)
+            Crumb(step, at)
+        }
+    }
+
     fun reload() {
+        // A first reading still under way goes on: an archive read through would start again.
+        if (read.value == null && slow.value == null && counting?.isActive == true) return
         counting?.cancel()
         counting = viewModelScope.launch {
+            // A big stream is read through only once the user agrees to wait.
+            slow.value = remote?.takeIf { archive != null }?.let { c.archives.store(it)?.slow() }
+            if (slow.value != null) return@launch
             val started = System.nanoTime()
             val nodes = c.files.list(path)
             // A server's top folder opened the first time is the server reached, or not.
-            if (read.value == null && remote != null && path == Remote.root(remote)) {
+            if (read.value == null && far && path == Remote.root(remote!!)) {
                 if (nodes == null) c.haptics.done(false) else if ((System.nanoTime() - started) / 1_000_000 >= Haptics.WAIT_MS) c.haptics.done(true)
             }
             val hidden = c.settings.settings.first().showHidden
             // Looking into every folder of a place on the network would take as many trips there.
-            val folders = if (remote == null) nodes.orEmpty().filter { it.directory } else emptyList()
+            val folders = if (!far) nodes.orEmpty().filter { it.directory } else emptyList()
             // The list waits a moment for its folders to be counted, so it shows up whole instead of
             // changing line by line; what takes longer comes after it, all at once.
             val counted = HashMap<String, Holds>()
@@ -159,7 +203,7 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
 
     /** Takes the ticked rows to be pasted elsewhere. */
     fun pick(move: Boolean) {
-        c.transfers.clip.value = Clip(selected().map { it.path }, move)
+        c.transfers.clip.value = Clip(selected().map { it.path }, move, extract = !writes)
         clearSelection()
     }
 
@@ -210,7 +254,82 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     fun renames(): Boolean = c.files.renames(path)
 
     /** Why this folder of a place on the network could not be read, in that place's own words. */
-    fun reason(): String? = remote?.let { c.remotes.error(it) }
+    fun reason(): String? = remote?.takeIf { far }?.let { c.remotes.error(it) }
+
+    /** Reads the archive through, however long that takes. */
+    fun agree() {
+        remote?.let { c.archives.store(it)?.agree() }
+        reload()
+    }
+
+    /** Why the archive this folder lies in could not be read. */
+    fun refused(): Reason? = remote?.let { c.archives.store(it)?.error?.reason }
+
+    /** Whether every ticked row is an archive that can be unpacked here. */
+    fun unpacks(): Boolean = writes && selected().let { chosen -> chosen.isNotEmpty() && chosen.all { !it.directory && Archives.opens(it.name) } }
+
+    /** Unpacks the ticked archives here, each into a new folder named after it; false when another transfer is running. */
+    fun unpack(): Boolean {
+        val taken = names().toMutableSet()
+        val archives = selected().filter { !it.directory && Archives.opens(it.name) }.map { node ->
+            val stem = Archives.stem(node.name)
+            val name = Paths.free(stem) { it in taken }.also { taken += it }
+            Unpacking(Archives.root(node.path), stem, Paths.child(path, name))
+        }
+        if (!c.transfers.unpack(archives)) return false
+        clearSelection()
+        return true
+    }
+
+    /**
+     * Copies a file of the archive out to the cache for another app to open; [onDone] gets the copy, or why there
+     * is none. The bar shows the way through the archive to the file first, then the copy.
+     */
+    fun openOutside(node: Node, onDone: (path: String?, refused: Reason?) -> Unit) {
+        openJob?.cancel()
+        openJob = viewModelScope.launch {
+            opening.value = 0f
+            val target = File(c.cache, "$OPENED/${node.path.hashCode().toUInt()}/${node.name}")
+            val watching = remote?.let { c.archives.store(it) }?.let { store -> launch { store.reaching.collect { done -> if (done != null) opening.value = done } } }
+            val result = try {
+                // Interruptible: Stop lets go of a long way through the archive at once.
+                runInterruptible(Dispatchers.IO) {
+                    target.parentFile?.mkdirs()
+                    c.files.read(node.path).use { input ->
+                        target.outputStream().use { output ->
+                            val buffer = ByteArray(BUFFER)
+                            var done = 0L
+                            while (true) {
+                                val n = input.read(buffer)
+                                if (n < 0) break
+                                output.write(buffer, 0, n)
+                                done += n
+                                if (node.size > 0) opening.value = (done.toFloat() / node.size).coerceAtMost(1f)
+                            }
+                        }
+                    }
+                }
+                target.path to null
+            } catch (e: ArchiveException) {
+                target.delete()
+                null to e.reason
+            } catch (_: IOException) {
+                target.delete()
+                null to Reason.BROKEN
+            } catch (e: CancellationException) {
+                withContext(NonCancellable + Dispatchers.IO) { target.delete() }
+                throw e
+            } finally {
+                watching?.cancel()
+                opening.value = null
+            }
+            onDone(result.first, result.second)
+        }
+    }
+
+    fun stopOpening() {
+        openJob?.cancel()
+    }
 
     /** Into the bin, or [forGood] — also where there is no bin. */
     fun delete(forGood: Boolean): Boolean {
@@ -248,9 +367,13 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
 
     fun togglePinned() = viewModelScope.launch { c.settings.togglePinned(path) }
 
-    private companion object {
-        const val COUNT_WAIT_MS = 150L
-        const val COUNT_AT_ONCE = 16
-        const val ZIP = ".zip"
+    companion object {
+        private const val COUNT_WAIT_MS = 150L
+        private const val COUNT_AT_ONCE = 16
+        private const val ZIP = ".zip"
+        private const val BUFFER = 256 * 1024
+
+        /** The folder of the cache that files of archives are copied out to for other apps; emptied when the app starts. */
+        const val OPENED = "open"
     }
 }

@@ -122,6 +122,29 @@
     <string name="transfer_moved">Przeniesiono</string>
     <string name="transfer_deleted">Usunięto</string>
     <string name="transfer_zipped">Zapisano archiwum</string>
+    <string name="action_unpack">Rozpakuj</string>
+    <string name="action_extract">Wyodrębnij</string>
+    <string name="paste_extract">Wyodrębnij tutaj</string>
+    <string name="paste_archive">Do archiwum nie można niczego dodać</string>
+    <string name="transfer_unpacking">Rozpakowywanie</string>
+    <string name="transfer_unpacked">Rozpakowano</string>
+    <string name="transfer_no_room">Za mało miejsca</string>
+    <string name="archive_reading">Odczyt archiwum</string>
+    <string name="archive_locked">To archiwum ma hasło</string>
+    <string name="archive_locked_text">Mnt nie otwiera archiwów z hasłem</string>
+    <string name="archive_memory">To archiwum wymaga zbyt dużo pamięci</string>
+    <string name="archive_memory_text">Rozpakowanie mogłoby wyczerpać pamięć telefonu</string>
+    <string name="archive_broken">Nie można odczytać tego archiwum</string>
+    <string name="archive_broken_text">Jest uszkodzone lub spakowane w sposób, którego Mnt nie zna</string>
+    <string name="archive_slow">Duże archiwum</string>
+    <string name="archive_slow_text">Aby pokazać zawartość, Mnt przeczyta je w całości: zajmie to %1$s</string>
+    <string name="archive_slow_minutes">około %1$d min</string>
+    <string name="archive_slow_quick">mniej niż minutę</string>
+    <string name="archive_read">Czytaj</string>
+    <string name="archive_many">To archiwum zawiera zbyt wiele plików</string>
+    <string name="archive_many_text">Więcej, niż Mnt zmieści w pamięci</string>
+    <string name="archive_open_with">Otwórz w innej aplikacji</string>
+    <string name="file_locked">Ten plik ma hasło</string>
     <string name="open_none">Żadna aplikacja nie otwiera tego pliku</string>
 
     <string name="details_location">Położenie</string>
@@ -277,4 +300,5 @@
     <string name="settings_code_font">Czcionka kodu</string>
     <string name="settings_document_font">Czcionka dokumentów</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Archiwa</string>
 </resources>

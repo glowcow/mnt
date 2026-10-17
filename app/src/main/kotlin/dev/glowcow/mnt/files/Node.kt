@@ -39,7 +39,7 @@ enum class Kind {
             put(VIDEO, "mp4", "mkv", "webm", "mov", "avi", "m4v", "3gp", "ts", "mpg", "mpeg", "wmv", "flv")
             put(AUDIO, "mp3", "flac", "ogg", "opus", "m4a", "aac", "wav", "wma", "aiff", "ape", "mid", "amr")
             put(TEXT, "txt", "md", "pdf", "doc", "docx", "odt", "rtf", "xls", "xlsx", "ods", "csv", "ppt", "pptx", "odp", "epub", "fb2", "json", "xml", "html", "htm", "log", "ini", "yaml", "yml")
-            put(ARCHIVE, "zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "xz", "zst", "iso", "jar")
+            put(ARCHIVE, "zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "tbz", "tbz2", "xz", "txz", "zst", "tzst", "lz", "tlz", "lzma", "z", "iso", "jar", "cab", "cpio", "lzh", "lha")
             put(PACKAGE, "apk", "apks", "xapk", "apkm")
         }
 

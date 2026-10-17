@@ -118,6 +118,29 @@
     <string name="transfer_moved">הועבר</string>
     <string name="transfer_deleted">נמחק</string>
     <string name="transfer_zipped">הארכיון נשמר</string>
+    <string name="action_unpack">חילוץ הכול</string>
+    <string name="action_extract">חילוץ</string>
+    <string name="paste_extract">חילוץ לכאן</string>
+    <string name="paste_archive">אי אפשר להוסיף דבר לארכיון</string>
+    <string name="transfer_unpacking">מחלץ</string>
+    <string name="transfer_unpacked">חולץ</string>
+    <string name="transfer_no_room">אין מספיק מקום</string>
+    <string name="archive_reading">קורא את הארכיון</string>
+    <string name="archive_locked">לארכיון הזה יש סיסמה</string>
+    <string name="archive_locked_text">Mnt לא פותח ארכיונים עם סיסמה</string>
+    <string name="archive_memory">הארכיון הזה דורש יותר מדי זיכרון</string>
+    <string name="archive_memory_text">החילוץ עלול למלא את זיכרון הטלפון</string>
+    <string name="archive_broken">אי אפשר לקרוא את הארכיון הזה</string>
+    <string name="archive_broken_text">הוא פגום או ארוז בדרך ש־Mnt לא מכיר</string>
+    <string name="archive_slow">ארכיון גדול</string>
+    <string name="archive_slow_text">כדי להציג את תוכנו, Mnt יקרא את כולו: זה ייקח %1$s</string>
+    <string name="archive_slow_minutes">כ־%1$d דק׳</string>
+    <string name="archive_slow_quick">פחות מדקה</string>
+    <string name="archive_read">קריאה</string>
+    <string name="archive_many">בארכיון הזה יש יותר מדי קבצים</string>
+    <string name="archive_many_text">יותר ממה ש־Mnt יכול להחזיק בזיכרון</string>
+    <string name="archive_open_with">פתיחה באפליקציה אחרת</string>
+    <string name="file_locked">לקובץ הזה יש סיסמה</string>
     <string name="open_none">אין יישום שפותח את הקובץ הזה</string>
 
     <string name="details_location">מיקום</string>
@@ -273,4 +296,5 @@
     <string name="settings_code_font">גופן הקוד</string>
     <string name="settings_document_font">גופן המסמכים</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">ארכיונים</string>
 </resources>

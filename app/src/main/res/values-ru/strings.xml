@@ -122,6 +122,29 @@
     <string name="transfer_moved">Перемещено</string>
     <string name="transfer_deleted">Удалено</string>
     <string name="transfer_zipped">Архив сохранён</string>
+    <string name="action_unpack">Распаковать</string>
+    <string name="action_extract">Извлечь</string>
+    <string name="paste_extract">Извлечь сюда</string>
+    <string name="paste_archive">В архив ничего не вставить</string>
+    <string name="transfer_unpacking">Распаковка</string>
+    <string name="transfer_unpacked">Распаковано</string>
+    <string name="transfer_no_room">Не хватает места</string>
+    <string name="archive_reading">Читаю архив</string>
+    <string name="archive_locked">Архив защищён паролем</string>
+    <string name="archive_locked_text">Mnt не открывает архивы с паролем</string>
+    <string name="archive_memory">Архиву нужно слишком много памяти</string>
+    <string name="archive_memory_text">Распаковка может не уместиться в память телефона</string>
+    <string name="archive_broken">Архив не читается</string>
+    <string name="archive_broken_text">Он повреждён или упакован так, как Mnt не умеет</string>
+    <string name="archive_slow">Большой архив</string>
+    <string name="archive_slow_text">Чтобы показать, что в нём, Mnt прочитает его целиком: это займёт %1$s</string>
+    <string name="archive_slow_minutes">около %1$d мин</string>
+    <string name="archive_slow_quick">меньше минуты</string>
+    <string name="archive_read">Прочитать</string>
+    <string name="archive_many">В архиве слишком много файлов</string>
+    <string name="archive_many_text">Столько Mnt не удержит в памяти</string>
+    <string name="archive_open_with">Открыть в другом приложении</string>
+    <string name="file_locked">Файл защищён паролем</string>
     <string name="open_none">Нет приложения, которое открывает этот файл</string>
 
     <string name="details_location">Расположение</string>
@@ -277,4 +300,5 @@
     <string name="settings_code_font">Шрифт кода</string>
     <string name="settings_document_font">Шрифт документов</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Архивы</string>
 </resources>

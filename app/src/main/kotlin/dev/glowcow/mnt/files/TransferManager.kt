@@ -9,16 +9,16 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-enum class TransferKind { COPY, MOVE, DELETE, ZIP }
+enum class TransferKind { COPY, MOVE, DELETE, ZIP, UNPACK }
 
 /** A copy, a move, a delete or an archive in the making that is running: what it works on now, how far it has got, 0–1, and for bytes how fast, a second. */
 data class TransferProgress(val kind: TransferKind, val name: String, val fraction: Float, val speed: Long? = null)
 
-/** How a transfer ended: how many items it could not do, whether it was stopped, and how long it ran, ms. */
-data class TransferResult(val kind: TransferKind, val failed: Int, val stopped: Boolean, val took: Long = 0)
+/** How a transfer ended: how many items it could not do, whether it was stopped or found no room, and how long it ran, ms. */
+data class TransferResult(val kind: TransferKind, val failed: Int, val stopped: Boolean, val took: Long = 0, val full: Boolean = false)
 
-/** Files picked in one folder to be put into another, or packed there into an archive called [zip]. */
-data class Clip(val paths: List<String>, val move: Boolean, val zip: String? = null)
+/** Files picked in one folder to be put into another, or packed there into an archive called [zip]; [extract] when taken out of an archive. */
+data class Clip(val paths: List<String>, val move: Boolean, val zip: String? = null, val extract: Boolean = false)
 
 /** Runs one transfer at a time, outside any screen, and tells what it is doing. */
 class TransferManager(private val scope: CoroutineScope, private val files: FileStore, private val trash: Trash) {
@@ -48,6 +48,9 @@ class TransferManager(private val scope: CoroutineScope, private val files: File
     /** Packs [sources] into the archive [target]. */
     fun zip(sources: List<String>, target: String): Boolean = begin(TransferKind.ZIP) { zip(sources, target) }
 
+    /** Unpacks [archives], each into a folder of its own. */
+    fun unpack(archives: List<Unpacking>): Boolean = begin(TransferKind.UNPACK) { unpack(archives) }
+
     fun stop() {
         job?.cancel()
     }
@@ -69,10 +72,13 @@ class TransferManager(private val scope: CoroutineScope, private val files: File
         job = scope.launch {
             var stopped = false
             var broken = false
+            var full = false
             try {
                 transfer.work()
             } catch (_: CancellationException) {
                 stopped = true
+            } catch (_: NoRoomException) {
+                full = true
             } catch (_: Exception) {
                 // A drive pulled out half way, a file system that gave up: the rest was not done.
                 broken = true
@@ -80,7 +86,7 @@ class TransferManager(private val scope: CoroutineScope, private val files: File
                 _progress.value = null
                 changes.value++
                 val failed = if (broken) transfer.failed.coerceAtLeast(1) else transfer.failed
-                _results.tryEmit(TransferResult(kind, failed, stopped, (System.nanoTime() - started) / 1_000_000))
+                _results.tryEmit(TransferResult(kind, failed, stopped, (System.nanoTime() - started) / 1_000_000, full))
             }
         }
         return true

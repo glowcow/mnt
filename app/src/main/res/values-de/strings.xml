@@ -114,6 +114,29 @@
     <string name="transfer_moved">Verschoben</string>
     <string name="transfer_deleted">Gelöscht</string>
     <string name="transfer_zipped">Archiv gespeichert</string>
+    <string name="action_unpack">Entpacken</string>
+    <string name="action_extract">Extrahieren</string>
+    <string name="paste_extract">Hier extrahieren</string>
+    <string name="paste_archive">In ein Archiv lässt sich nichts einfügen</string>
+    <string name="transfer_unpacking">Entpacken</string>
+    <string name="transfer_unpacked">Entpackt</string>
+    <string name="transfer_no_room">Nicht genug Speicherplatz</string>
+    <string name="archive_reading">Archiv wird gelesen</string>
+    <string name="archive_locked">Dieses Archiv hat ein Passwort</string>
+    <string name="archive_locked_text">Mnt öffnet keine Archive mit Passwort</string>
+    <string name="archive_memory">Dieses Archiv braucht zu viel Speicher</string>
+    <string name="archive_memory_text">Das Entpacken könnte den Speicher des Telefons erschöpfen</string>
+    <string name="archive_broken">Dieses Archiv lässt sich nicht lesen</string>
+    <string name="archive_broken_text">Es ist beschädigt oder auf eine Art gepackt, die Mnt nicht kennt</string>
+    <string name="archive_slow">Großes Archiv</string>
+    <string name="archive_slow_text">Um den Inhalt zu zeigen, liest Mnt es ganz: das dauert %1$s</string>
+    <string name="archive_slow_minutes">etwa %1$d Min.</string>
+    <string name="archive_slow_quick">unter einer Minute</string>
+    <string name="archive_read">Lesen</string>
+    <string name="archive_many">Dieses Archiv enthält zu viele Dateien</string>
+    <string name="archive_many_text">Mehr, als Mnt im Speicher halten kann</string>
+    <string name="archive_open_with">In anderer App öffnen</string>
+    <string name="file_locked">Diese Datei hat ein Passwort</string>
     <string name="open_none">Keine App öffnet diese Datei</string>
 
     <string name="details_location">Ort</string>
@@ -269,4 +292,5 @@
     <string name="settings_code_font">Schrift für Code</string>
     <string name="settings_document_font">Schrift für Dokumente</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Archive</string>
 </resources>

@@ -3,6 +3,7 @@ package dev.glowcow.mnt.files
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Files
@@ -33,6 +34,27 @@ interface FileStore {
 
     /** False where a file cannot be renamed once written: it is then written straight under its own name. */
     fun renames(path: String): Boolean = true
+
+    /** False where nothing can be written, renamed or removed: inside an archive. */
+    fun writes(path: String): Boolean = true
+
+    /** Bytes free where [path] lies; null when that is not known. */
+    fun free(path: String): Long? = null
+
+    /**
+     * Hands each file of [paths] to [each] with its stream, in the order the store reads them fastest: an archive
+     * packed as one stream gives them all in one pass. What cannot be opened is left out.
+     */
+    suspend fun readEach(paths: List<String>, each: suspend (path: String, input: InputStream) -> Unit) {
+        for (path in paths) {
+            val input = try {
+                withContext(Dispatchers.IO) { read(path) }
+            } catch (_: IOException) {
+                continue
+            }
+            input.use { each(path, it) }
+        }
+    }
 
     /** Blocking: read off the main thread. The stream starts [offset] bytes into the file. */
     fun read(path: String, offset: Long = 0): InputStream
@@ -88,6 +110,10 @@ class LocalStore(private val born: (String) -> Long? = { null }) : FileStore {
     override fun read(path: String, offset: Long): InputStream = File(path).inputStream().also { if (offset > 0) it.channel.position(offset) }
 
     override fun write(path: String, size: Long): OutputStream = File(path).outputStream()
+
+    // The room files can take now: what the system could clear from caches is not counted on.
+    @Suppress("UsableSpace")
+    override fun free(path: String): Long? = generateSequence(File(path)) { it.parentFile }.firstOrNull { it.exists() }?.usableSpace
 
     // One question to the file system for all of it: on a phone each one costs a trip through FUSE.
     private fun File.node(): Node? {

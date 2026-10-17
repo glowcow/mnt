@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.glowcow.mnt.R
+import dev.glowcow.mnt.archive.Archives
 import dev.glowcow.mnt.files.Conflict
 import dev.glowcow.mnt.files.Facts
 import dev.glowcow.mnt.files.Node
@@ -49,6 +50,7 @@ fun FolderSheets(
     onSheet: (FolderSheet?) -> Unit,
     onStarted: (Boolean) -> Unit,
     onShare: () -> Unit,
+    onOpenWith: (Node) -> Unit,
     onFailed: () -> Unit,
 ) {
     val close = { onSheet(null) }
@@ -114,6 +116,11 @@ fun FolderSheets(
                     GroupDivider()
                 }
                 GroupRow(stringResource(R.string.action_zip), onClick = { pick { onSheet(FolderSheet.ZIP) } })
+                // An archive opens as a folder; an app that knows more of them may still be wanted.
+                chosen.singleOrNull()?.takeIf { !it.directory && Archives.opens(it.name) }?.let { archive ->
+                    GroupDivider()
+                    GroupRow(stringResource(R.string.archive_open_with), onClick = { pick { onOpenWith(archive) } })
+                }
             }
         }
 

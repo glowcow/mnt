@@ -118,6 +118,29 @@
     <string name="transfer_moved">Премештено</string>
     <string name="transfer_deleted">Избрисано</string>
     <string name="transfer_zipped">Архива је сачувана</string>
+    <string name="action_unpack">Распакуј</string>
+    <string name="action_extract">Извади</string>
+    <string name="paste_extract">Извади овде</string>
+    <string name="paste_archive">У архиву се ништа не може убацити</string>
+    <string name="transfer_unpacking">Распакивање</string>
+    <string name="transfer_unpacked">Распаковано</string>
+    <string name="transfer_no_room">Нема довољно простора</string>
+    <string name="archive_reading">Читам архиву</string>
+    <string name="archive_locked">Ова архива има лозинку</string>
+    <string name="archive_locked_text">Mnt не отвара архиве са лозинком</string>
+    <string name="archive_memory">Овој архиви треба превише меморије</string>
+    <string name="archive_memory_text">Распакивање би могло да потроши меморију телефона</string>
+    <string name="archive_broken">Ова архива се не може прочитати</string>
+    <string name="archive_broken_text">Оштећена је или спакована на начин који Mnt не познаје</string>
+    <string name="archive_slow">Велика архива</string>
+    <string name="archive_slow_text">Да би показао садржај, Mnt ће је прочитати целу: то ће трајати %1$s</string>
+    <string name="archive_slow_minutes">око %1$d мин</string>
+    <string name="archive_slow_quick">мање од минута</string>
+    <string name="archive_read">Прочитај</string>
+    <string name="archive_many">Ова архива има превише датотека</string>
+    <string name="archive_many_text">Више него што Mnt може да држи у меморији</string>
+    <string name="archive_open_with">Отвори у другој апликацији</string>
+    <string name="file_locked">Ова датотека има лозинку</string>
     <string name="open_none">Ниједна апликација не отвара ову датотеку</string>
 
     <string name="details_location">Локација</string>
@@ -273,4 +296,5 @@
     <string name="settings_code_font">Фонт кода</string>
     <string name="settings_document_font">Фонт докумената</string>
     <string name="settings_djvu">DjVu</string>
+    <string name="settings_archives">Архиве</string>
 </resources>

@@ -192,7 +192,9 @@ private fun Viewer(vm: ViewerViewModel, settings: AppSettings, look: Look, onBac
             is Shown.Fetching -> Centered(top, bottom) {
                 Box(Modifier.fillMaxWidth().padding(horizontal = 48.dp)) {
                     androidx.compose.foundation.layout.Column {
-                        Text(stringResource(R.string.viewer_fetching, (shown.fraction * 100).toInt()), color = c.muted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
+                        val percent = (shown.fraction * 100).toInt()
+                        val said = if (shown.reading) stringResource(R.string.transfer_progress, stringResource(R.string.archive_reading), percent) else stringResource(R.string.viewer_fetching, percent)
+                        Text(said, color = c.muted, fontSize = 14.sp, modifier = Modifier.padding(bottom = 10.dp))
                         ProgressLine(shown.fraction)
                     }
                 }

@@ -47,6 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.glowcow.mnt.AppContainer
 import dev.glowcow.mnt.MntApp
 import dev.glowcow.mnt.R
+import dev.glowcow.mnt.archive.Archives
 import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.files.Opener
 import dev.glowcow.mnt.files.Paths
@@ -192,6 +193,7 @@ fun SearchScreen(
                             vm.remember()
                             when {
                                 node.directory -> onOpen(node.path)
+                                Archives.opens(node.name) -> onOpen(Archives.root(node.path))
                                 Format.of(node.name) != null -> onView(node.path)
                                 !Opener.open(context, node.path) -> Toast.makeText(context, none, Toast.LENGTH_SHORT).show()
                             }
