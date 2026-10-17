@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Brand palette of the launcher icon and the splash screen, light. -->
+<!-- Brand palette: the launcher icon is dark in either theme, the splash follows the theme. -->
 <resources>
-    <color name="ic_launcher_bg">#F2F0EA</color>
-    <color name="ic_launcher_text">#14161A</color>
+    <color name="ic_launcher_bg">#14161A</color>
+    <color name="ic_launcher_text">#F2F0EA</color>
     <color name="ic_launcher_accent">#F5A524</color>
+    <color name="splash_bg">#F2F0EA</color>
+    <color name="splash_text">#14161A</color>
 </resources>

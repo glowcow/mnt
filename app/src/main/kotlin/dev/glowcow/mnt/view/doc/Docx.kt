@@ -477,14 +477,14 @@ object Docx {
         }
     }
 
-    private fun points(value: Float) = String.format(Locale.US, "%.1fpt", value)
+    internal fun points(value: Float) = String.format(Locale.US, "%.1fpt", value)
 
     // The faces the phone has: a font with serifs is set in the phone's serif, a fixed one in the app's mono, the rest in Arimo.
-    private fun family(face: String): String {
+    internal fun family(face: String): String {
         val name = face.lowercase()
         return when {
             MONO.any { name.contains(it) } -> "Mono,monospace"
-            SERIF.any { name.contains(it) } -> "serif"
+            SERIF.any { name.contains(it) } -> "Tinos,serif"
             else -> "Arimo,sans-serif"
         }
     }
@@ -499,7 +499,7 @@ object Docx {
     )
 
     // Word's single line is about this many times the size of its font.
-    private const val LINE = 1.15f
+    internal const val LINE = 1.15f
 
     // What Word leaves round a paragraph spaced "automatically", as a web page would.
     private const val AUTO_SPACE = 14f

@@ -68,7 +68,7 @@ open class ConvertedDoc(private val converted: Converted) : WebDoc() {
     override fun serve(path: String, look: Look): Served? {
         if (path.startsWith("/doc/")) {
             val page = converted.pages.getOrNull(part(path)) ?: converted.pages.firstOrNull() ?: Converted.Part("", "")
-            return Served("text/html", Page.html(page.body, look, paper = page.paper).byteInputStream())
+            return Served("text/html", Page.html(page.body, look, paper = page.paper, running = page.running).byteInputStream())
         }
         if (path.startsWith("/a/")) {
             val name = FolderDoc.decode(path.removePrefix("/a/"))

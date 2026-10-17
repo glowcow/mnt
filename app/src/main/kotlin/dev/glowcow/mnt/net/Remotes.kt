@@ -57,6 +57,6 @@ class Remotes(private val connections: Connections, private val mtp: MtpDevices)
     }
 
     private fun Connection.where(): String = listOf(protocol.name, host.ifBlank { null }, share.trim('/').ifEmpty { null }).filterNotNull().let { parts ->
-        parts.first() + if (parts.size > 1) " | " + parts.drop(1).joinToString("/") else ""
+        parts.first() + if (parts.size > 1) " · " + parts.drop(1).joinToString("/") else ""
     }
 }

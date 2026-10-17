@@ -31,8 +31,26 @@ object Odf {
     }
 
     fun spreadsheet(file: File): Converted = open(file) { _, content, styles ->
+        val cells = CellStyles(styles)
         content.find("spreadsheet")?.children("table").orEmpty().filter { it.attr("style-name") !in styles.hidden }.map { table ->
             val sheet = Sheet(table.attr("name").orEmpty())
+            sheet.looks = cells.looks
+            sheet.fontSize = cells.fontSize
+            val digit = cells.fontSize * 4 / 3 * 0.556f
+            // Columns: their widths, whether they are shown, and the style of a cell that names none.
+            val columnLooks = HashMap<Int, Int>()
+            var col = 0
+            for (column in columns(table)) {
+                val times = (column.attr("number-columns-repeated")?.toIntOrNull() ?: 1).coerceAtMost(Sheets.MAX_COLUMNS)
+                val width = styles.byName[column.attr("style-name")]?.child("table-column-properties")?.attr("column-width")?.let { points(it) }
+                val look = cells.index(column.attr("default-cell-style-name"))
+                for (k in col until minOf(col + times, Sheets.MAX_COLUMNS)) {
+                    if (width != null) sheet.widths[k] = width * 4 / 3 / digit
+                    if (column.attr("visibility") == "collapse") sheet.hiddenColumns += k
+                    if (look != 0) columnLooks[k] = look
+                }
+                col += times
+            }
             var r = 0
             for (row in rows(table)) {
                 val repeat = row.attr("number-rows-repeated")?.toIntOrNull() ?: 1
@@ -41,15 +59,22 @@ object Odf {
                     r += repeat
                     continue
                 }
+                val height = styles.byName[row.attr("style-name")]?.child("table-row-properties")?.attr("row-height")?.let { points(it) }
+                val rowLook = cells.index(row.attr("default-cell-style-name"))
                 repeat(minOf(repeat, 1000)) {
+                    if (height != null) sheet.heights[r] = height
+                    if (row.attr("visibility") == "collapse") sheet.hiddenRows += r
                     var c = 0
                     for (cell in row.elements) {
                         if (cell.local != "table-cell" && cell.local != "covered-table-cell") continue
                         val times = cell.attr("number-columns-repeated")?.toIntOrNull() ?: 1
                         val text = cell.children("p").joinToString("\n") { p -> plain(p) }
-                        if (cell.local == "table-cell" && text.isNotEmpty()) {
-                            val number = cell.attr("value-type") in setOf("float", "percentage", "currency")
-                            for (k in 0 until minOf(times, 100)) sheet.put(r, c + k, text, number)
+                        val number = cell.attr("value-type") in setOf("float", "percentage", "currency")
+                        for (k in 0 until minOf(times, Sheets.MAX_COLUMNS - c)) {
+                            val look = cell.attr("style-name")?.let { cells.index(it) } ?: columnLooks[c + k] ?: rowLook
+                            sheet.put(r, c + k, if (cell.local == "table-cell") text else "", number, look)
+                        }
+                        if (cell.local == "table-cell" && text.isNotEmpty() || cell.attr("number-rows-spanned") != null || cell.attr("number-columns-spanned") != null) {
                             val spanR = cell.attr("number-rows-spanned")?.toIntOrNull() ?: 1
                             val spanC = cell.attr("number-columns-spanned")?.toIntOrNull() ?: 1
                             if (spanR > 1 || spanC > 1) sheet.merge(r, c, r + spanR - 1, c + spanC - 1)
@@ -61,6 +86,101 @@ object Odf {
                 }
             }
             Converted.Part(sheet.name, Sheets.html(sheet))
+        }
+    }
+
+    private fun columns(table: El): List<El> = table.elements.flatMap {
+        when (it.local) {
+            "table-column" -> listOf(it)
+            "table-column-group", "table-header-columns", "table-columns" -> columns(it)
+            else -> emptyList()
+        }
+    }
+
+    /** A length of ODF (`2.1in`, `0.74pt`, `5mm`) in points. */
+    private fun points(length: String): Float? {
+        val n = length.takeWhile { it.isDigit() || it == '.' || it == '-' }.toFloatOrNull() ?: return null
+        return when (length.drop(length.indexOfFirst { it.isLetter() }.coerceAtLeast(0)).lowercase()) {
+            "in" -> n * 72
+            "cm" -> n * 72 / 2.54f
+            "mm" -> n * 72 / 25.4f
+            "pc" -> n * 12
+            "px" -> n * 0.75f
+            else -> n
+        }
+    }
+
+    // The looks of a spreadsheet's cell styles, each resolved along its parents; 0 is the default one.
+    private class CellStyles(private val styles: Styles) {
+        val looks = arrayListOf(CellLook())
+        private val indices = HashMap<String, Int>()
+        val fontSize: Float = (styles.cellDefault?.child("text-properties")?.attr("font-size")
+            ?: styles.byName["Default"]?.child("text-properties")?.attr("font-size"))?.let { points(it) } ?: 10f
+
+        fun index(name: String?): Int {
+            name ?: return 0
+            return indices.getOrPut(name) {
+                looks += look(name)
+                looks.size - 1
+            }
+        }
+
+        // A property of the style or of the nearest of its parents that has it.
+        private fun prop(name: String, kind: String, attr: String): String? {
+            var s: String? = name
+            repeat(8) {
+                val el = styles.byName[s] ?: return styles.cellDefault?.child(kind)?.attr(attr)
+                el.child(kind)?.attr(attr)?.let { return it }
+                s = el.attr("parent-style-name") ?: return styles.cellDefault?.child(kind)?.attr(attr)
+            }
+            return null
+        }
+
+        private fun color(value: String?): Int? = value?.takeIf { it.startsWith("#") }?.drop(1)?.toIntOrNull(16)
+
+        private fun edge(value: String?): Edge? {
+            val parts = value?.split(' ')?.filter { it.isNotEmpty() } ?: return null
+            if (parts.isEmpty() || parts[0] == "none" || parts.contains("none")) return null
+            val width = points(parts[0]) ?: 0.75f
+            val style = parts.getOrNull(1) ?: "solid"
+            val px = if (width <= 1.1f) 1 else if (width <= 2f) 2 else 3
+            return Edge(px, if (style in setOf("dashed", "dotted", "double")) style else "solid", color(parts.getOrNull(2)))
+        }
+
+        private fun look(name: String): CellLook {
+            val cell = "table-cell-properties"
+            val text = "text-properties"
+            val para = "paragraph-properties"
+            val all = prop(name, cell, "border")
+            val size = prop(name, text, "font-size")?.let { points(it) }
+            val fixed = prop(name, cell, "text-align-source") != "value-type"
+            return CellLook(
+                bold = prop(name, text, "font-weight").let { it == "bold" || (it?.toIntOrNull() ?: 400) >= 600 },
+                italic = prop(name, text, "font-style") == "italic",
+                underline = prop(name, text, "text-underline-style").let { it != null && it != "none" },
+                strike = prop(name, text, "text-line-through-style").let { it != null && it != "none" },
+                size = size?.takeIf { it != fontSize },
+                face = Xlsx.face(prop(name, text, "font-name")),
+                color = color(prop(name, text, "color"))?.takeIf { it != 0 },
+                fill = color(prop(name, cell, "background-color")),
+                left = edge(prop(name, cell, "border-left") ?: all),
+                right = edge(prop(name, cell, "border-right") ?: all),
+                top = edge(prop(name, cell, "border-top") ?: all),
+                bottom = edge(prop(name, cell, "border-bottom") ?: all),
+                align = if (!fixed) null else when (prop(name, para, "text-align")) {
+                    "start", "left" -> "left"
+                    "center" -> "center"
+                    "end", "right" -> "right"
+                    "justify" -> "justify"
+                    else -> null
+                },
+                valign = when (prop(name, cell, "vertical-align")) {
+                    "top" -> "top"
+                    "middle" -> "middle"
+                    else -> null
+                },
+                wrap = prop(name, cell, "wrap-option") == "wrap",
+            )
         }
     }
 
@@ -117,6 +237,8 @@ object Odf {
             val all = (listOfNotNull(content.find("automatic-styles"), pkg.xml("styles.xml")?.find("styles"), pkg.xml("styles.xml")?.find("automatic-styles")))
                 .flatMap { it.children("style") }
             val parents = all.associate { it.attr("name").orEmpty() to it.attr("parent-style-name") }
+            val byName = all.associateBy { it.attr("name").orEmpty() }
+            val cellDefault = pkg.xml("styles.xml")?.find("styles")?.children("default-style")?.firstOrNull { it.attr("family") == "table-cell" }
             // A sheet whose style says it is not shown, and the list styles that number their items.
             val hidden = all.filter { it.child("table-properties")?.attr("display") == "false" }.mapNotNull { it.attr("name") }.toSet()
             val numbered = listOfNotNull(content.find("automatic-styles"), pkg.xml("styles.xml")?.find("styles"))
@@ -137,7 +259,7 @@ object Odf {
                 }
             val before = all.filter { it.child("paragraph-properties")?.attr("break-before") == "page" }.mapNotNull { it.attr("name") }.toSet()
             val after = all.filter { it.child("paragraph-properties")?.attr("break-after") == "page" }.mapNotNull { it.attr("name") }.toSet()
-            return Converted(read(pkg, content, Styles(tags, parents, hidden, numbered, before, after)), { name -> pkg.bytes(name) }, pkg::close)
+            return Converted(read(pkg, content, Styles(tags, parents, hidden, numbered, before, after, byName, cellDefault)), { name -> pkg.bytes(name) }, pkg::close)
         } catch (e: Exception) {
             pkg.close()
             throw e
@@ -152,6 +274,9 @@ object Odf {
         val numbered: Set<String>,
         private val breakBefore: Set<String> = emptySet(),
         private val breakAfter: Set<String> = emptySet(),
+        val byName: Map<String, El> = emptyMap(),
+        /** The default style of a spreadsheet's cells. */
+        val cellDefault: El? = null,
     ) {
         /** A page break a paragraph's style puts before it, or after it. */
         fun breaks(style: String?, before: Boolean): Boolean = (if (before) breakBefore else breakAfter).let { set -> style != null && set.contains(style) }

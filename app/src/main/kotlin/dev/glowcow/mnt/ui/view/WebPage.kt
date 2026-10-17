@@ -198,12 +198,23 @@ private const val HOST = "mnt.local"
 
 private fun missing() = WebResourceResponse("text/plain", "UTF-8", 404, "Not found", emptyMap(), ByteArrayInputStream(ByteArray(0)))
 
-// The app's own faces, for the pages to be set in what the rest of the app is.
+// The app's own faces, for the pages to be set in what the rest of the app is, and Tinos for documents set in Times.
 private fun font(context: Context, path: String): WebResourceResponse? {
     val id = when (path) {
         "/font/arimo.ttf" -> R.font.arimo
         "/font/mono.ttf" -> R.font.jetbrains_mono
-        else -> return null
+        else -> return TINOS[path.removePrefix("/font/")]?.let { WebResourceResponse("font/woff2", null, context.resources.openRawResource(it)) }
     }
     return WebResourceResponse("font/ttf", null, context.resources.openRawResource(id))
 }
+
+private val TINOS = mapOf(
+    "tinos-latin-400-normal.woff2" to R.raw.tinos_latin_400_normal,
+    "tinos-latin-400-italic.woff2" to R.raw.tinos_latin_400_italic,
+    "tinos-latin-700-normal.woff2" to R.raw.tinos_latin_700_normal,
+    "tinos-latin-700-italic.woff2" to R.raw.tinos_latin_700_italic,
+    "tinos-cyrillic-400-normal.woff2" to R.raw.tinos_cyrillic_400_normal,
+    "tinos-cyrillic-400-italic.woff2" to R.raw.tinos_cyrillic_400_italic,
+    "tinos-cyrillic-700-normal.woff2" to R.raw.tinos_cyrillic_700_normal,
+    "tinos-cyrillic-700-italic.woff2" to R.raw.tinos_cyrillic_700_italic,
+)

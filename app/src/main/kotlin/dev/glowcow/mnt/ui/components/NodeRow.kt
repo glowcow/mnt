@@ -64,7 +64,7 @@ fun nodeMeta(node: Node, holds: Holds? = null): String {
             holds.folders.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.count_folders, it, it) },
         ).joinToString(", ")
     }
-    return "$first | $date"
+    return "$first · $date"
 }
 
 /**

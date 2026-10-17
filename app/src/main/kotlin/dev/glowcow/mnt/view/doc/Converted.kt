@@ -2,14 +2,15 @@ package dev.glowcow.mnt.view.doc
 
 import dev.glowcow.mnt.view.html.Page
 import dev.glowcow.mnt.view.html.Paper
+import dev.glowcow.mnt.view.html.Running
 import java.io.Closeable
 import java.io.File
 import java.util.zip.ZipFile
 
 /** A document turned into HTML: one page or several (the sheets of a workbook), and the pictures they show from `/a/<name>`. */
 class Converted(val pages: List<Part>, private val asset: (String) -> ByteArray? = { null }, private val closing: () -> Unit = {}) : Closeable {
-    /** A page: its name among the others and its body; a text document has the [paper] it is printed on. */
-    class Part(val name: String, val body: String, val paper: Paper? = null)
+    /** A page: its name among the others and its body; a text document has the [paper] it is printed on, and maybe a header and a footer on each sheet. */
+    class Part(val name: String, val body: String, val paper: Paper? = null, val running: Running? = null)
 
     fun asset(name: String): ByteArray? = asset.invoke(name)
 

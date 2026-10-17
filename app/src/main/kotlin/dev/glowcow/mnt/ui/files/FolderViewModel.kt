@@ -3,6 +3,7 @@ package dev.glowcow.mnt.ui.files
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.glowcow.mnt.AppContainer
+import dev.glowcow.mnt.Haptics
 import dev.glowcow.mnt.data.AppSettings
 import dev.glowcow.mnt.files.Clip
 import dev.glowcow.mnt.files.Conflict
@@ -93,7 +94,12 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     fun reload() {
         counting?.cancel()
         counting = viewModelScope.launch {
+            val started = System.nanoTime()
             val nodes = c.files.list(path)
+            // A server's top folder opened the first time is the server reached, or not.
+            if (read.value == null && remote != null && path == Remote.root(remote)) {
+                if (nodes == null) c.haptics.done(false) else if ((System.nanoTime() - started) / 1_000_000 >= Haptics.WAIT_MS) c.haptics.done(true)
+            }
             val hidden = c.settings.settings.first().showHidden
             // Looking into every folder of a place on the network would take as many trips there.
             val folders = if (remote == null) nodes.orEmpty().filter { it.directory } else emptyList()

@@ -291,7 +291,7 @@ private fun Steps(at: Int, count: Int, previous: Int, next: Int, onGo: (Int) -> 
     IslandIcons {
         IconButton48(MntIcons.CaretUp, stringResource(previous), enabled = at > 0) { onGo(at - 1) }
         Box(Modifier.heightIn(min = 48.dp).padding(horizontal = 4.dp), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.viewer_part, at + 1, count), color = MntTheme.colors.muted, fontSize = 13.sp)
+            Text(stringResource(R.string.viewer_part, at + 1, count), color = MntTheme.colors.text, fontSize = 13.sp)
         }
         IconButton48(MntIcons.CaretDown, stringResource(next), enabled = at < count - 1) { onGo(at + 1) }
     }

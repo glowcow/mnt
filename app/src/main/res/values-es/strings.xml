@@ -271,5 +271,6 @@
     <string name="settings_links">Abrir enlaces en la aplicación</string>
     <string name="settings_links_hint">Las páginas web se abren aquí en lugar del navegador del teléfono</string>
     <string name="settings_code_font">Fuente del código</string>
+    <string name="settings_document_font">Fuente de los documentos</string>
     <string name="settings_djvu">DjVu</string>
 </resources>

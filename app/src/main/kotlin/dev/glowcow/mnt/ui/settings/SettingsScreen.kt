@@ -240,6 +240,8 @@ fun SettingsPageScreen(
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_code_font), value = "JetBrains Mono · SIL OFL 1.1")
                 GroupDivider()
+                GroupRow(stringResource(R.string.settings_document_font), value = "Tinos · SIL OFL 1.1")
+                GroupDivider()
                 GroupRow(stringResource(R.string.settings_djvu), value = "DjVuLibre · GPL-2.0-or-later")
             }
         }

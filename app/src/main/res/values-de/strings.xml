@@ -267,5 +267,6 @@
     <string name="settings_links">Links in der App öffnen</string>
     <string name="settings_links_hint">Webseiten öffnen sich hier statt im Browser des Telefons</string>
     <string name="settings_code_font">Schrift für Code</string>
+    <string name="settings_document_font">Schrift für Dokumente</string>
     <string name="settings_djvu">DjVu</string>
 </resources>

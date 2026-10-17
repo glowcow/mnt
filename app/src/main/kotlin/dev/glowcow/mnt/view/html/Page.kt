@@ -43,6 +43,12 @@ data class Paper(val width: Float, val height: Float, val top: Float, val right:
     }
 }
 
+/**
+ * What stands on every sheet outside its text: a header [headerAt] points from the top, a footer [footerAt] from the
+ * bottom, and on the first sheet their own when the document has them.
+ */
+data class Running(val header: String, val footer: String, val headerAt: Float, val footerAt: Float, val firstHeader: String? = null, val firstFooter: String? = null)
+
 /** Builds the pages the viewer shows: a document's body in the app's faces and colours. */
 object Page {
     /** Where the pages and what they need are served from; nothing is fetched from anywhere else. */
@@ -58,17 +64,25 @@ object Page {
      * A page of [body]; with [paper], and pages asked for, the body is laid out on sheets of it, and a [book] on sheets
      * the size of the screen.
      */
-    fun html(body: String, look: Look, extra: String = "", head: String = "", paper: Paper? = null, book: Boolean = false): String = buildString {
+    fun html(body: String, look: Look, extra: String = "", head: String = "", paper: Paper? = null, book: Boolean = false, running: Running? = null): String = buildString {
         val paged = paper != null && look.pages || book
         append("<!doctype html><html><head><meta charset=\"utf-8\">")
-        append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
+        // Never below the screen's width: a wide table would widen the viewport the bars' glass and sticky headers hold to.
+        append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=1\">")
         append("<meta name=\"color-scheme\" content=\"").append(if (look.dark) "dark" else "light").append("\">")
         append("<style>").append(css(look)).append(extra)
         if (book) append(SHEETS_CSS).append(BOOK_CSS) else if (paged) append(paperCss(paper!!))
         append("</style>").append(script(SHEETS)).append(head)
         if (paged) {
-            append("</head><body class=\"paged").append(if (book) " book" else "").append("\"><div id=\"pages\"><div class=\"pg\"><div class=\"pc\" id=\"flow\">").append(body).append("</div></div></div>")
-            append(script(if (book) BOOK else paginate(paper!!)))
+            append("</head><body class=\"paged").append(if (book) " book" else "").append("\"><div id=\"pages\"><div class=\"pg\">")
+            val dressed = !book && running != null
+            if (dressed) {
+                append("<div class=\"hd\">").append(running!!.header).append("</div><div class=\"ft\">").append(running.footer).append("</div>")
+                running.firstHeader?.let { append("<div class=\"hd hd1\">").append(it).append("</div>") }
+                running.firstFooter?.let { append("<div class=\"ft ft1\">").append(it).append("</div>") }
+            }
+            append("<div class=\"pc\" id=\"flow\">").append(body).append("</div></div></div>")
+            append(script(if (book) BOOK else paginate(paper!!, if (dressed) running else null)))
         } else {
             append("</head><body>").append(body)
         }
@@ -89,6 +103,11 @@ object Page {
         "if(l){var x=px('--ix'),y=px('--iy');l.style.transform=z?'translate('+(v.offsetLeft+x/s-x)+'px,'+(v.offsetTop+y/s-y)+'px) scale('+(1/s)+')':''}}" +
         "v.addEventListener('resize',f);v.addEventListener('scroll',f);window.mntGlass=f;f()})();"
 
+    private val TINOS_RANGES = listOf(
+        "latin" to "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD",
+        "cyrillic" to "U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116",
+    )
+
     private fun pt(value: Float) = String.format(java.util.Locale.US, "%.2fpt", value)
 
     // Word's sheets: white as paper in either theme, shrunk to the screen's width, to be zoomed into; their shadow is
@@ -98,6 +117,7 @@ object Page {
         append(SHEETS_CSS)
         append(".pg{box-sizing:border-box;width:").append(pt(paper.width)).append(";min-height:").append(pt(paper.height))
         append(";padding:").append(pt(paper.top)).append(' ').append(pt(paper.right)).append(' ').append(pt(paper.bottom)).append(' ').append(pt(paper.left))
+        append(";--pl:").append(pt(paper.left)).append(";--pr:").append(pt(paper.right))
         append(";background:#fff;color:#000;box-shadow:0 1px 5px rgba(0,0,0,.3);font:11pt/1.15 Arimo,sans-serif;")
         append("--fg:#000;--muted:#595959;--line:#8C8C8C;--block:#F2F2F2;--accent:#0B57D0}")
         append(
@@ -119,15 +139,37 @@ object Page {
             .pg [style*="--ti"]{text-indent:var(--ti)!important}
             .pg [style*="--hg"] .mk{display:inline-block;min-width:var(--hg);text-indent:0}
             .pg [style*="--cw"]{width:var(--cw)}
+            .pg{position:relative}
+            .pg>.hd,.pg>.ft{position:absolute;left:var(--pl);right:var(--pr)}
+            .pg>.hd{top:var(--ha)}
+            .pg>.ft{bottom:var(--fa)}
+            .pg>.hd1,.pg>.ft1{display:none}
+            .pg table[style*="--tw"]{width:var(--tw);table-layout:fixed;margin-left:var(--tl)}
             .pg img[style*="--iw"]{width:var(--iw)}
             """.trimIndent(),
         )
     }
 
-    private fun paginate(paper: Paper): String {
+    private fun paginate(paper: Paper, running: Running?): String {
         val px = 4f / 3f
-        val limit = (paper.height - paper.top - paper.bottom) * px
-        return "addEventListener('load',function(){document.fonts.ready.then(function(){mntPaginate(${paper.width * px},$limit,true,false)})});"
+        var limit = "${(paper.height - paper.top - paper.bottom) * px}"
+        val dress = StringBuilder()
+        if (running != null) {
+            // The header and the footer take from the text what they need past the margins, as in Word.
+            dress.append("var pg=document.querySelector('.pg'),hd=pg.querySelector(':scope>.hd:not(.hd1)'),ft=pg.querySelector(':scope>.ft:not(.ft1)'),")
+            dress.append("h1=pg.querySelector(':scope>.hd1'),f1=pg.querySelector(':scope>.ft1');")
+            dress.append("pg.style.setProperty('--ha','").append(pt(running.headerAt)).append("');pg.style.setProperty('--fa','").append(pt(running.footerAt)).append("');")
+            dress.append("var T=Math.max(").append(paper.top * px).append(",").append(running.headerAt * px).append("+hd.offsetHeight),")
+            dress.append("B=Math.max(").append(paper.bottom * px).append(",").append(running.footerAt * px).append("+ft.offsetHeight),")
+            dress.append("parts=[hd,ft,h1,f1].map(function(e){if(e)e.parentNode.removeChild(e);return e});")
+            dress.append("window.mntDress=function(s,i,n){s.style.paddingTop=T+'px';s.style.paddingBottom=B+'px';")
+            dress.append("s.style.setProperty('--ha','").append(pt(running.headerAt)).append("');s.style.setProperty('--fa','").append(pt(running.footerAt)).append("');")
+            dress.append("[i==0&&parts[2]?parts[2]:parts[0],i==0&&parts[3]?parts[3]:parts[1]].forEach(function(e){var c=e.cloneNode(true);c.classList.remove('hd1','ft1');")
+            dress.append("[].forEach.call(c.querySelectorAll('.pn'),function(p){p.textContent=i+1});[].forEach.call(c.querySelectorAll('.np'),function(p){p.textContent=n});s.insertBefore(c,s.firstChild)})};")
+            limit = "${paper.height * px}-T-B"
+        }
+        // Faces with a unicode-range load only once text asks for them, so they are all loaded before anything is measured.
+        return "addEventListener('load',function(){Promise.all(Array.from(document.fonts).map(function(f){return f.load().catch(function(){})})).then(function(){$dress" + "mntPaginate(${paper.width * px},$limit,true,false)})});"
     }
 
     // A book's sheets: as large as what the bars leave of the screen, in the app's colours, its text at the app's size.
@@ -145,9 +187,10 @@ object Page {
         ".pg{box-sizing:border-box;margin:0 auto var(--gap,12px);box-shadow:0 .5px 2.5px rgba(0,0,0,.3)}.pg:last-child{margin-bottom:0}.pc{display:flow-root}"
 
     // `mntPaginate` measures the flow once on a sheet and deals it out: a block that would run past the foot of a sheet
-    // starts the next, a table is cut between its rows, `pb` breaks a page and `pbb` starts one; [flat] first opens
-    // the boxes a book wraps its text in. `mntReport` writes the sheet at the middle of the screen into the title, where
-    // the app reads it, and `mntPage` goes to a sheet.
+    // starts the next, a paragraph is cut between its lines, a table between its rows and a row too tall for what is
+    // left inside its cells, its heading rows repeated on each sheet; `pb` breaks a page and `pbb` starts one; [flat] first opens the
+    // boxes a book wraps its text in. `mntReport` writes the sheet at the middle of the screen into the title, where the
+    // app reads it, and `mntPage` goes to a sheet; `mntDress`, when there is one, puts a header and a footer on a sheet.
     private const val SHEETS = """(function(){var M=window;
 function inset(n){return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n))||0}
 function sheets(){return document.querySelectorAll('.pg')}
@@ -167,18 +210,31 @@ while(k.firstChild)flow.insertBefore(k.firstChild,k);flow.removeChild(k);again=t
 var base=flow.getBoundingClientRect().top,plan=[],cur=[],y0=null;
 function top(e){return e.getBoundingClientRect().top-base}function bottom(e){return e.getBoundingClientRect().bottom-base}
 function cut(){if(cur.length)plan.push(cur);cur=[];y0=null}
-[].slice.call(flow.children).forEach(function(k){
+function split(e,s){if(!/^(P|H[1-6])$/.test(e.tagName)||top(e)>=s)return null;var w=document.createTreeWalker(e,NodeFilter.SHOW_TEXT),r=document.createRange(),at=null,n;
+while(n=w.nextNode()){if(!n.length)continue;r.setStart(n,0);r.setEnd(n,1);if(r.getBoundingClientRect().bottom-base>s)break;var lo=0,hi=n.length-1;
+while(lo<hi){var m=(lo+hi+1)>>1;r.setStart(n,m);r.setEnd(n,m+1);if(r.getBoundingClientRect().bottom-base<=s)lo=m;else hi=m-1}at={n:n,o:lo+1}}
+if(!at)return null;r.setStart(at.n,at.o);r.setEnd(e,e.childNodes.length);if(!r.toString().trim())return e;
+var e2=e.cloneNode(false);e2.appendChild(r.extractContents());e2.style.paddingTop='0';e2.style.textIndent='0';e.style.paddingBottom='0';
+if(getComputedStyle(e).textAlign=='justify')e.style.textAlignLast='justify';e.parentNode.insertBefore(e2,e.nextSibling);return e2}
+var kids=[].slice.call(flow.children);for(var q=0;q<kids.length;q++)(function(k){
 if(k.classList.contains('pb')){cut();return}if(k.classList.contains('pbb'))cut();
 if(y0===null)y0=top(k);if(bottom(k)-y0<=LIMIT){cur.push(k);return}
+var k2=cur.length?split(k,y0+LIMIT):null;if(k2===k){cur.push(k);return}if(k2){cur.push(k);cut();kids.splice(q+1,0,k2);return}
 var t=k.tagName=='TABLE'?k:k.querySelector(':scope>table');
-if(!t||t.rows.length<2){if(cur.length){cut();y0=top(k)}cur.push(k);return}
-var rows=[].slice.call(t.rows),from=0;
-for(var i=0;i<rows.length;i++){if(bottom(rows[i])-y0>LIMIT&&(i>from||cur.length)){if(i>from)cur.push({w:k,t:t,rows:rows.slice(from,i)});cut();y0=top(rows[i]);from=i}}
-cur.push({w:k,t:t,rows:rows.slice(from)})});
+if(!t){if(cur.length){cut();y0=top(k)}cur.push(k);return}
+var parts=[],heads=[].filter.call(t.rows,function(r){return r.classList.contains('hr')}),hh=heads.length?bottom(heads[heads.length-1])-top(heads[0]):0,piece=0;
+function flush(){if(parts.length){cur.push({w:k,t:t,rows:parts,h:piece?heads:null});piece++}parts=[]}
+[].slice.call(t.rows).forEach(function(r){var items=[].slice.call(r.cells).map(function(c){return [].slice.call(c.children)}),whole=true;
+while(bottom(r)-y0>LIMIT){if(r.classList.contains('ns')){if(!parts.length&&!cur.length)break;flush();cut();y0=top(r)-(piece?hh:0);continue}var s=y0+LIMIT,keep=[],rest=[],kept=false,next=Infinity;
+items.forEach(function(list){var a=[],b=[];list.forEach(function(e){if(b.length||bottom(e)<=s){(b.length?b:a).push(e);return}var e2=split(e,s);if(e2===e)a.push(e);else if(e2){a.push(e);b.push(e2)}else b.push(e)});keep.push(a);rest.push(b);if(a.length)kept=true;if(b.length)next=Math.min(next,top(b[0]))});
+if(kept&&next<Infinity){parts.push({r:r,c:keep});flush();cut();items=rest;whole=false;y0=next-4-(piece?hh:0);continue}
+if(!parts.length&&!cur.length)break;flush();cut();y0=whole?top(r)-(piece?hh:0):y0}
+parts.push(whole?r:{r:r,c:items})});flush()})(kids[q]);
 cut();if(!plan.length)plan.push([]);var out=document.createDocumentFragment();
-plan.forEach(function(list){var pg=document.createElement('div'),pc=document.createElement('div');pg.className='pg';pc.className='pc';pg.appendChild(pc);
+plan.forEach(function(list,n){var pg=document.createElement('div'),pc=document.createElement('div');pg.className='pg';pc.className='pc';pg.appendChild(pc);if(M.mntDress)M.mntDress(pg,n,plan.length);
 list.forEach(function(it){if(it.nodeType){pc.appendChild(it);return}
-var t=it.t.cloneNode(false),b=document.createElement('tbody');t.appendChild(b);it.rows.forEach(function(r){b.appendChild(r)});
+var t=it.t.cloneNode(false),g=it.t.querySelector(':scope>colgroup'),b=document.createElement('tbody');if(g)t.appendChild(g.cloneNode(true));t.appendChild(b);if(it.h)it.h.forEach(function(r){b.appendChild(r.cloneNode(true))});it.rows.forEach(function(r){if(r.nodeType){b.appendChild(r);return}
+var n=r.r.cloneNode(false);[].slice.call(r.r.cells).forEach(function(c,i){var d=c.cloneNode(false);(r.c[i]||[]).forEach(function(e){d.appendChild(e)});n.appendChild(d)});b.appendChild(n)});
 if(it.w===it.t){pc.appendChild(t)}else{var w=it.w.cloneNode(false);w.appendChild(t);pc.appendChild(w)}});out.appendChild(pg)});
 pages.textContent='';pages.appendChild(out);
 function fit(){var z=zoomed?Math.min(1,(document.documentElement.clientWidth-16)/W):1;pages.style.zoom=z;pages.style.setProperty('--gap',(12/z)+'px');M.mntReport()}
@@ -189,18 +245,25 @@ fit();addEventListener('resize',fit);pages.classList.add('ready')};
     fun css(look: Look): String = buildString {
         append("@font-face{font-family:Arimo;src:url(/font/arimo.ttf);font-weight:400 700}")
         append("@font-face{font-family:Mono;src:url(/font/mono.ttf);font-weight:100 800}")
+        // Tinos is as wide as Times New Roman, so a document set in it breaks its lines and pages where Word does.
+        for ((subset, range) in TINOS_RANGES) for (weight in listOf(400, 700)) for (style in listOf("normal", "italic")) {
+            append("@font-face{font-family:Tinos;src:url(/font/tinos-").append(subset).append('-').append(weight).append('-').append(style)
+            append(".woff2) format('woff2');font-weight:").append(weight).append(";font-style:").append(style).append(";unicode-range:").append(range).append('}')
+        }
         append(":root{")
         append("--bg:").append(hex(look.ground)).append(";--fg:").append(hex(look.text)).append(";--muted:").append(hex(look.muted))
         append(";--line:").append(hex(look.line)).append(";--block:").append(hex(look.block)).append(";--accent:").append(hex(look.accent))
         append(";--cg:").append(hex(look.codeGround)).append(";--ct:").append(hex(look.codeText)).append(";--cn:").append(hex(look.codeGutter))
+        // The glass pulls what shows through halfway to its own darkness, as the app's bars do.
+        append(";--pull:").append(if (look.dark) "brightness(.5)" else "invert(1) brightness(.5) invert(1)")
         append(";--top:").append(look.top).append("px;--bottom:").append(look.bottom).append("px;").append(look.island.css())
         append("}")
         append(
             """
             html{-webkit-text-size-adjust:100%;background:var(--bg);scroll-padding-top:var(--top)}
             body{margin:0;padding:calc(var(--top) + 12px) 16px calc(var(--bottom) + 32px);background:var(--bg);color:var(--fg);font:15px/1.55 Arimo,sans-serif;overflow-wrap:break-word}
-            #mnt-island{position:fixed;left:var(--ix);top:var(--iy);width:var(--iw);height:var(--ih);visibility:var(--iv);border-radius:calc(var(--ih) / 2);z-index:2147483646;pointer-events:none;transform-origin:0 0;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);background:color-mix(in srgb,var(--block) 50%,transparent);box-shadow:0 6px 16px rgba(0,0,0,.22),0 0 4px rgba(0,0,0,.1)}
-            #mnt-glass{position:fixed;left:0;top:0;width:100%;height:var(--top);z-index:2147483647;pointer-events:none;transform-origin:0 0;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);background:color-mix(in srgb,var(--bg) 50%,transparent)}
+            #mnt-island{position:fixed;left:var(--ix);top:var(--iy);width:var(--iw);height:var(--ih);visibility:var(--iv);border-radius:calc(var(--ih) / 2);z-index:2147483646;pointer-events:none;transform-origin:0 0;-webkit-backdrop-filter:blur(12px) var(--pull);backdrop-filter:blur(12px) var(--pull);background:color-mix(in srgb,var(--block) 50%,transparent);box-shadow:0 6px 16px rgba(0,0,0,.22),0 0 4px rgba(0,0,0,.1)}
+            #mnt-glass{position:fixed;left:0;top:0;width:100%;height:var(--top);z-index:2147483647;pointer-events:none;transform-origin:0 0;-webkit-backdrop-filter:blur(12px) var(--pull);backdrop-filter:blur(12px) var(--pull);background:color-mix(in srgb,var(--bg) 50%,transparent)}
             ::selection{background:color-mix(in srgb,var(--accent) 35%,transparent)}
             a{color:var(--accent)}
             h1,h2,h3,h4,h5,h6{line-height:1.25;margin:1.2em 0 .5em}
@@ -235,6 +298,12 @@ fit();addEventListener('resize',fit);pages.classList.add('ready')};
             .sheet tbody th{left:0;z-index:1;text-align:right}
             .sheet thead th:first-child{left:0;z-index:3}
             .sheet td.num{text-align:right}
+            .xl{table-layout:fixed;font-family:Arimo,sans-serif;line-height:1.2}
+            .xl td{background:#fff;color:#000;max-width:none;padding:0 3px;white-space:pre;overflow:hidden;vertical-align:bottom;border-right:1px solid #e1e1e1;border-bottom:1px solid #e1e1e1}
+            .xl.nogrid td{border-color:transparent}
+            .xl th{padding:0 4px;white-space:nowrap;overflow:hidden;font-size:12px;vertical-align:middle}
+            .xl td.sp{overflow:visible}
+            .xl td.sp>span{display:inline-block;overflow:hidden;vertical-align:bottom;background:inherit}
             """.trimIndent(),
         )
         append(code(look))

@@ -275,5 +275,6 @@
     <string name="settings_links">Адкрываць спасылкі ў праграме</string>
     <string name="settings_links_hint">Старонкі інтэрнэту адкрываюцца тут, а не ў браўзеры тэлефона</string>
     <string name="settings_code_font">Шрыфт кода</string>
+    <string name="settings_document_font">Шрыфт дакументаў</string>
     <string name="settings_djvu">DjVu</string>
 </resources>

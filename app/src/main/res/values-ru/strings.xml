@@ -275,5 +275,6 @@
     <string name="settings_links">Открывать ссылки в приложении</string>
     <string name="settings_links_hint">Страницы интернета открываются здесь, а не в браузере телефона</string>
     <string name="settings_code_font">Шрифт кода</string>
+    <string name="settings_document_font">Шрифт документов</string>
     <string name="settings_djvu">DjVu</string>
 </resources>

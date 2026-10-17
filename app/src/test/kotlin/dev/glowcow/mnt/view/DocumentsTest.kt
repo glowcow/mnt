@@ -66,7 +66,7 @@ class DocumentsTest {
         val paper = part.paper!!
         assertEquals(595.3f, paper.width, 0.1f)
         assertEquals(85.05f, paper.left, 0.1f)
-        assertHas(part.body, "--sz:12.0pt", "--ff:serif", "--ti:35.5pt", "text-align:justify", "--sa:6.0pt", "--lh:1.322", "<hr class=\"pb\">", "<div class=\"wide\"><table><tr>")
+        assertHas(part.body, "--sz:12.0pt", "--ff:Tinos,serif", "--ti:35.5pt", "text-align:justify", "--sa:6.0pt", "--lh:1.322", "<hr class=\"pb\">", "<div class=\"wide\"><table><tr>")
         assertTrue(Regex("<h1[^>]*--sz:16.0pt[^>]*--fc:#2F5496").containsMatchIn(part.body))
         val page = Page.html(part.body, LOOK.copy(pages = true), paper = paper)
         assertHas(page, "id=\"flow\"", "nonce=\"${Page.NONCE}\"", "width:595.30pt")
@@ -80,10 +80,12 @@ class DocumentsTest {
         assertNotNull(Doc.convert(bytes("sample.doc")).pages.single().paper)
     }
 
+    // A Word 97 table keeps its cells' widths on one grid of columns: the merged cell spans two of the three.
     @Test
     fun docTable() = Doc.convert(bytes("sample.doc")).use {
         val text = html(it)
-        assertHas(text, "<td>R2C1</td>", "<td>R2C2</td>")
+        assertHas(text, ">R2C1</p></td>", ">R2C2</p></td>", "<colgroup><col style=\"--cw:144.0pt\">", "colspan=\"2\"")
+        assertEquals(3, Regex("<col ").findAll(text).count())
     }
 
     // What the Excel sample holds: its visible sheets, formats, dates, merges and formulas.

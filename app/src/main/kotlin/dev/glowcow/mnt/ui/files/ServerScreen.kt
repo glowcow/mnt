@@ -70,6 +70,7 @@ class ServerViewModel(id: String?, private val c: AppContainer) : ViewModel() {
             val store = draft.value.store()
             val listed = store.list("/")
             checked.value = if (listed != null) Checked.Fine else Checked.Failed(store.error.orEmpty())
+            c.haptics.done(listed != null)
             withContext(Dispatchers.IO) { store.close() }
         }
     }

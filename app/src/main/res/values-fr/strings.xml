@@ -271,5 +271,6 @@
     <string name="settings_links">Ouvrir les liens dans l’application</string>
     <string name="settings_links_hint">Les pages web s’ouvrent ici plutôt que dans le navigateur du téléphone</string>
     <string name="settings_code_font">Police du code</string>
+    <string name="settings_document_font">Police des documents</string>
     <string name="settings_djvu">DjVu</string>
 </resources>

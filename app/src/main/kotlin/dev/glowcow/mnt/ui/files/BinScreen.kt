@@ -197,7 +197,7 @@ fun BinScreen(onBack: () -> Unit, vm: BinViewModel = viewModel { BinViewModel((t
             LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(top = top, bottom = bottom)) {
                 items(shown, key = { it.id }) { item ->
                     val days = Trash.daysLeft(item.deleted, now).coerceAtLeast(1)
-                    val meta = "${Formatter.formatShortFileSize(context, item.bytes)} | ${pluralStringResource(R.plurals.days_left, days, days)}"
+                    val meta = "${Formatter.formatShortFileSize(context, item.bytes)} · ${pluralStringResource(R.plurals.days_left, days, days)}"
                     // There is nothing to open in the bin: a tap ticks the row like a long press.
                     NodeRow(item.node, meta, selected = item.id in selection, onLongClick = { vm.toggle(item.id) }) { vm.toggle(item.id) }
                 }

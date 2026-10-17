@@ -164,7 +164,7 @@ fun FilesScreen(
                         GroupRow(
                             device.title(),
                             Modifier.origin(if (parts > 1) deviceKey(device.id) else folderKey(device.volumes.first().path)),
-                            subtitle = if (parts > 1) "${pluralStringResource(R.plurals.count_volumes, parts, parts)} | $space" else space,
+                            subtitle = if (parts > 1) "${pluralStringResource(R.plurals.count_volumes, parts, parts)} · $space" else space,
                             icon = device.kind.icon,
                             iconTint = Color.Unspecified,
                             iconSize = PLACE_ICON,
@@ -274,7 +274,7 @@ private fun DeviceSheet(device: Device, onDismiss: () -> Unit) {
         Group {
             device.volumes.forEachIndexed { i, volume ->
                 if (i > 0) GroupDivider()
-                GroupRow(volume.label, subtitle = listOfNotNull(volume.format, spaceText(volume.free, volume.total)).joinToString(" | "))
+                GroupRow(volume.label, subtitle = listOfNotNull(volume.format, spaceText(volume.free, volume.total)).joinToString(" · "))
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -318,7 +318,7 @@ private fun binText(bin: Bin): String {
         bin.folders.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.count_folders, it, it) },
         bin.files.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.count_files, it, it) },
     ).joinToString(", ")
-    return "$counts | ${Formatter.formatShortFileSize(LocalContext.current, bin.bytes)}"
+    return "$counts · ${Formatter.formatShortFileSize(LocalContext.current, bin.bytes)}"
 }
 
 /** `58 GB free of 63 GB` */

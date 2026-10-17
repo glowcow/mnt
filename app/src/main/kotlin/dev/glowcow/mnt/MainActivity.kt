@@ -32,6 +32,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        container.haptics.show(window.decorView)
+    }
+
+    override fun onPause() {
+        container.haptics.show(null)
+        super.onPause()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

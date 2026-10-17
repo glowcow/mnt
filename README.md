@@ -38,8 +38,10 @@ The files on the screenshots are made up.
   the picture VS Code gives it.
 - **Viewer** — documents, spreadsheets, slides, books, scans and code open in
   the app to select, copy and search in; a Word document is laid out on its
-  pages, as printed, a book on pages the size of the screen, and an island
-  counts the pages and steps through them; links open in its own browser.
+  pages, as printed, with its headers and footers, a book on pages the size of
+  the screen, and an island counts the pages and steps through them; a
+  spreadsheet keeps its fonts, fills, borders and column widths, as Excel
+  shows it; links open in its own browser.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold.
 - **Bin** — what you delete on the phone is kept for 30 days and can be put
@@ -47,7 +49,8 @@ The files on the screenshots are made up.
   forever. Deleting forever at once is there too. On memory cards and
   drives a delete is forever unless you turn their bin on in the settings.
 - **Copy and move** — pick in one folder, paste in another, on the phone or
-  on a server; a long copy goes on with the app closed and stops when told.
+  on a server; a long copy goes on with the app closed and stops when told,
+  and the phone answers in the hand when it is done.
 - **Search** — finds files and folders by a part of their name on the phone
   and on every drive at once, and offers what you searched for before.
 - **Backup and updates** — settings, pinned folders and the search history in
@@ -179,18 +182,21 @@ island of it: the list scrolls on under them, blurred — the viewer's pages
 too, which draw that glass in their own HTML. The accent and the
 red of deleting forever are drawn in Display P3 where the screen shows it.
 The launcher icon and the splash screen
-use the brand palette — paper `#F2F0EA`, ink `#14161A`, amber `#F5A524` — and
-turn dark with the system.
+use the brand palette — paper `#F2F0EA`, ink `#14161A`, amber `#F5A524`; the
+icon is ink in either theme, the splash turns dark with the system. Word
+documents set in Times are shown in Tinos, which is as wide, so their lines
+and pages break where Word breaks them.
 
 ## License
 
 [GNU General Public License v3.0 or later](LICENSE) © Anton Sediuk. A
 modified version you distribute has to stay open under the same licence.
 
-Arimo, Cormorant Garamond and JetBrains Mono are bundled under the SIL Open
-Font License 1.1 — see [`licenses/Arimo-OFL.txt`](licenses/Arimo-OFL.txt),
-[`licenses/CormorantGaramond-OFL.txt`](licenses/CormorantGaramond-OFL.txt) and
-[`licenses/JetBrainsMono-OFL.txt`](licenses/JetBrainsMono-OFL.txt). The icons are
+Arimo, Cormorant Garamond, JetBrains Mono and Tinos are bundled under the SIL
+Open Font License 1.1 — see [`licenses/Arimo-OFL.txt`](licenses/Arimo-OFL.txt),
+[`licenses/CormorantGaramond-OFL.txt`](licenses/CormorantGaramond-OFL.txt),
+[`licenses/JetBrainsMono-OFL.txt`](licenses/JetBrainsMono-OFL.txt) and
+[`licenses/Tinos-OFL.txt`](licenses/Tinos-OFL.txt). The icons are
 [Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme)
 and [Phosphor Icons](https://phosphoricons.com), both MIT — see
 [`licenses/MaterialIconTheme-MIT.txt`](licenses/MaterialIconTheme-MIT.txt)

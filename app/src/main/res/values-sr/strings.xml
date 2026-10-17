@@ -271,5 +271,6 @@
     <string name="settings_links">Отварај везе у апликацији</string>
     <string name="settings_links_hint">Веб странице се отварају овде уместо у прегледачу телефона</string>
     <string name="settings_code_font">Фонт кода</string>
+    <string name="settings_document_font">Фонт докумената</string>
     <string name="settings_djvu">DjVu</string>
 </resources>

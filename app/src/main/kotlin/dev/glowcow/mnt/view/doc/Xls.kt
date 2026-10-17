@@ -16,6 +16,9 @@ object Xls {
         var strings: List<String> = emptyList()
         val formats = HashMap<Int, String>()
         val xfs = ArrayList<Int>()
+        val fonts = ArrayList<ByteArray>()
+        val xfData = ArrayList<ByteArray>()
+        val palette = Colors.INDEXED.copyOf()
         var date1904 = false
         val sheets = ArrayList<Triple<String, Int, Int>>()
         var i = 0
@@ -30,7 +33,15 @@ object Xls {
                     strings = sst(parts)
                 }
                 0x041E -> formats[u16(r.data, 0)] = unicode(r.data, 2, u16(r.data, 2), 4).first
-                0x00E0 -> xfs += u16(r.data, 2)
+                0x00E0 -> {
+                    xfs += u16(r.data, 2)
+                    xfData += r.data
+                }
+                0x0031 -> fonts += r.data
+                0x0092 -> for (c in 0 until minOf(u16(r.data, 0), 56)) {
+                    val at = 2 + c * 4
+                    if (at + 2 < r.data.size) palette[8 + c] = (r.data[at].toInt() and 0xFF shl 16) or (r.data[at + 1].toInt() and 0xFF shl 8) or (r.data[at + 2].toInt() and 0xFF)
+                }
                 0x0022 -> date1904 = u16(r.data, 0) == 1
                 0x0085 -> {
                     val cch = r.data[6].toInt() and 0xFF
@@ -40,21 +51,46 @@ object Xls {
             i++
         }
         val byOffset = records.withIndex().associate { it.value.at to it.index }
+        val fontSize = fonts.firstOrNull()?.let { u16(it, 0) / 20f } ?: 10f
+        val looks = xfData.map { look(it, fonts, palette, fontSize) }
         val pages = sheets.filter { it.third == 0 }.mapNotNull { (name, offset, _) ->
             val start = byOffset[offset] ?: return@mapNotNull null
             val sheet = Sheet(name)
+            sheet.looks = looks
+            sheet.fontSize = fontSize
+            sheet.defaultHeight = 12.75f
             var k = start + 1
             var formulaCell: Pair<Int, Int>? = null
+            var formulaXf = 0
             while (k < records.size && records[k].type != 0x000A) {
                 val r = records[k]
                 val d = r.data
                 fun number(row: Int, col: Int, xf: Int, value: Double) {
                     val id = xfs.getOrElse(xf) { 0 }
-                    sheet.put(row, col, Sheets.format(value, id, formats[id], date1904), number = true)
+                    val shown = NumberFormat.format(value, id, formats[id], date1904)
+                    sheet.put(row, col, shown.text, number = true, look = xf, color = shown.color)
                 }
                 when (r.type) {
-                    0x00FD -> strings.getOrNull(u32(d, 6))?.let { sheet.put(u16(d, 0), u16(d, 2), it) }
-                    0x0204, 0x00D6 -> sheet.put(u16(d, 0), u16(d, 2), unicode(d, 6, u16(d, 6), 8).first)
+                    0x00FD -> strings.getOrNull(u32(d, 6))?.let { sheet.put(u16(d, 0), u16(d, 2), it, look = u16(d, 4)) }
+                    0x0204, 0x00D6 -> sheet.put(u16(d, 0), u16(d, 2), unicode(d, 6, u16(d, 6), 8).first, look = u16(d, 4))
+                    0x0201 -> sheet.put(u16(d, 0), u16(d, 2), "", look = u16(d, 4))
+                    0x00BE -> for (c in 0 until (d.size - 6) / 2) sheet.put(u16(d, 0), u16(d, 2) + c, "", look = u16(d, 4 + c * 2))
+                    0x007D -> {
+                        val hidden = u16(d, 8) and 0x01 != 0
+                        for (c in u16(d, 0)..minOf(u16(d, 2), Sheets.MAX_COLUMNS - 1)) {
+                            sheet.widths[c] = u16(d, 4) / 256f
+                            if (hidden) sheet.hiddenColumns += c
+                        }
+                    }
+                    0x0055 -> sheet.defaultWidth = u16(d, 0) + 0.71f
+                    0x0099 -> sheet.defaultWidth = u16(d, 0) / 256f
+                    0x0225 -> sheet.defaultHeight = u16(d, 2) / 20f
+                    0x0208 -> {
+                        val flags = u16(d, 12)
+                        if (flags and 0x20 != 0) sheet.hiddenRows += u16(d, 0)
+                        if (flags and 0x40 != 0) sheet.heights[u16(d, 0)] = (u16(d, 6) and 0x7FFF) / 20f
+                    }
+                    0x023E -> if (u16(d, 0) and 0x02 == 0) sheet.grid = false
                     0x0203 -> number(u16(d, 0), u16(d, 2), u16(d, 4), f64(d, 6))
                     0x027E -> number(u16(d, 0), u16(d, 2), u16(d, 4), rk(u32(d, 6)))
                     0x00BD -> {
@@ -65,23 +101,28 @@ object Xls {
                     }
                     0x0205 -> {
                         val value = d[6].toInt() and 0xFF
-                        sheet.put(u16(d, 0), u16(d, 2), if (d[7].toInt() == 0) (if (value != 0) "TRUE" else "FALSE") else error(value))
+                        sheet.put(u16(d, 0), u16(d, 2), if (d[7].toInt() == 0) (if (value != 0) "TRUE" else "FALSE") else error(value), look = u16(d, 4))
                     }
                     0x0006 -> {
                         val row = u16(d, 0)
                         val col = u16(d, 2)
+                        val xf = u16(d, 4)
                         if (u16(d, 12) == 0xFFFF) {
                             when (d[6].toInt()) {
-                                0 -> formulaCell = row to col
-                                1 -> sheet.put(row, col, if (d[8].toInt() != 0) "TRUE" else "FALSE")
-                                2 -> sheet.put(row, col, error(d[8].toInt() and 0xFF))
+                                0 -> {
+                                    formulaCell = row to col
+                                    formulaXf = xf
+                                }
+                                1 -> sheet.put(row, col, if (d[8].toInt() != 0) "TRUE" else "FALSE", look = xf)
+                                2 -> sheet.put(row, col, error(d[8].toInt() and 0xFF), look = xf)
+                                3 -> sheet.put(row, col, "", look = xf)
                             }
                         } else {
                             number(row, col, u16(d, 4), f64(d, 6))
                         }
                     }
                     0x0207 -> formulaCell?.let { (row, col) ->
-                        sheet.put(row, col, unicode(d, 0, u16(d, 0), 2).first)
+                        sheet.put(row, col, unicode(d, 0, u16(d, 0), 2).first, look = formulaXf)
                         formulaCell = null
                     }
                     0x00E5 -> for (m in 0 until u16(d, 0)) {
@@ -95,6 +136,55 @@ object Xls {
         }
         return Converted(pages)
     }
+
+    // A cell format (XF) as a look: its font (FONT), alignment, edges and fill, colours from the workbook's palette.
+    private fun look(x: ByteArray, fonts: List<ByteArray>, palette: IntArray, baseSize: Float): CellLook {
+        if (x.size < 20) return CellLook()
+        // There is no font 4: the numbers above it are one more than their place.
+        val ifnt = u16(x, 0).let { if (it >= 4) it - 1 else it }
+        val font = fonts.getOrNull(ifnt)
+        fun color(icv: Int): Int? = if (icv in 0..63) palette[icv] else null
+        val align = x[6].toInt() and 0xFF
+        val styles = u16(x, 10)
+        val sides = u16(x, 12)
+        val more = u32(x, 14)
+        val fill = u16(x, 18)
+        fun edge(style: Int, icv: Int) = Edge.of(EDGES.getOrNull(style), color(icv))
+        val size = font?.let { u16(it, 0) / 20f }
+        return CellLook(
+            bold = font != null && u16(font, 6) >= 600,
+            italic = font != null && u16(font, 2) and 0x02 != 0,
+            underline = font != null && (font[10].toInt() and 0xFF) != 0,
+            strike = font != null && u16(font, 2) and 0x08 != 0,
+            size = size?.takeIf { it != baseSize },
+            face = font?.let { Xlsx.face(unicode(it, 14, it[14].toInt() and 0xFF, 15).first) },
+            color = font?.let { color(u16(it, 4)) }?.takeIf { it != 0 },
+            fill = if (more ushr 26 == 0) null else color(fill and 0x7F),
+            left = edge(styles and 0xF, sides and 0x7F),
+            right = edge(styles shr 4 and 0xF, sides shr 7 and 0x7F),
+            top = edge(styles shr 8 and 0xF, more and 0x7F),
+            bottom = edge(styles shr 12 and 0xF, more shr 7 and 0x7F),
+            align = when (align and 0x7) {
+                1, 4 -> "left"
+                2, 6, 7 -> "center"
+                3 -> "right"
+                5 -> "justify"
+                else -> null
+            },
+            valign = when (align shr 4 and 0x7) {
+                0 -> "top"
+                1, 3, 4 -> "middle"
+                else -> null
+            },
+            wrap = align and 0x08 != 0,
+            indent = x[8].toInt() and 0x0F,
+        )
+    }
+
+    private val EDGES = listOf(
+        "none", "thin", "medium", "dashed", "dotted", "thick", "double", "hair",
+        "mediumDashed", "dashDot", "mediumDashDot", "dashDotDot", "mediumDashDotDot", "slantDashDot",
+    )
 
     private fun records(stream: ByteArray): List<Record> {
         val out = ArrayList<Record>()

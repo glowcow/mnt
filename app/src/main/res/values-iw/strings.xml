@@ -271,5 +271,6 @@
     <string name="settings_links">פתיחת קישורים ביישום</string>
     <string name="settings_links_hint">דפי אינטרנט נפתחים כאן ולא בדפדפן של הטלפון</string>
     <string name="settings_code_font">גופן הקוד</string>
+    <string name="settings_document_font">גופן המסמכים</string>
     <string name="settings_djvu">DjVu</string>
 </resources>

@@ -14,8 +14,8 @@ enum class TransferKind { COPY, MOVE, DELETE, ZIP }
 /** A copy, a move, a delete or an archive in the making that is running: what it works on now, how far it has got, 0–1, and for bytes how fast, a second. */
 data class TransferProgress(val kind: TransferKind, val name: String, val fraction: Float, val speed: Long? = null)
 
-/** How a transfer ended: how many items it could not do, and whether it was stopped. */
-data class TransferResult(val kind: TransferKind, val failed: Int, val stopped: Boolean)
+/** How a transfer ended: how many items it could not do, whether it was stopped, and how long it ran, ms. */
+data class TransferResult(val kind: TransferKind, val failed: Int, val stopped: Boolean, val took: Long = 0)
 
 /** Files picked in one folder to be put into another, or packed there into an archive called [zip]. */
 data class Clip(val paths: List<String>, val move: Boolean, val zip: String? = null)
@@ -65,6 +65,7 @@ class TransferManager(private val scope: CoroutineScope, private val files: File
             val speed = if (kind == TransferKind.DELETE) null else meter.at(now, done)
             _progress.value = TransferProgress(kind, name, if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else 0f, speed)
         }
+        val started = System.nanoTime()
         job = scope.launch {
             var stopped = false
             var broken = false
@@ -78,7 +79,8 @@ class TransferManager(private val scope: CoroutineScope, private val files: File
             } finally {
                 _progress.value = null
                 changes.value++
-                _results.tryEmit(TransferResult(kind, if (broken) transfer.failed.coerceAtLeast(1) else transfer.failed, stopped))
+                val failed = if (broken) transfer.failed.coerceAtLeast(1) else transfer.failed
+                _results.tryEmit(TransferResult(kind, failed, stopped, (System.nanoTime() - started) / 1_000_000))
             }
         }
         return true

@@ -42,6 +42,7 @@ class AppContainer(context: Context) {
     val transfers = TransferManager(scope, files, trash)
     val appUpdater = AppUpdater(context, scope)
     val backup = Backup(context, settings)
+    val haptics = Haptics(context.applicationContext)
 
     private var purging: Job? = null
 
@@ -72,6 +73,10 @@ class MntApp : Application() {
             container.transfers.progress.map { it != null }.distinctUntilChanged().collect { running ->
                 if (running) TransferService.start(this@MntApp)
             }
+        }
+        // A transfer the user waited for is felt when it ends, not when they stopped it themselves.
+        container.scope.launch {
+            container.transfers.results.collect { if (!it.stopped && it.took >= Haptics.WAIT_MS) container.haptics.done(it.failed == 0) }
         }
     }
 }
