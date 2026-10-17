@@ -14,7 +14,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import dev.glowcow.mnt.R
@@ -108,86 +112,102 @@ fun WebPage(
     val path by rememberUpdatedState(onPath)
     val scrolled by rememberUpdatedState(onScrolled)
     val shown = remember { Loaded() }
-    AndroidView(
-        modifier = modifier,
-        factory = { context ->
-            WebView(context).apply {
-                settings.apply {
-                    javaScriptEnabled = doc.own
-                    allowFileAccess = false
-                    allowContentAccess = false
-                    builtInZoomControls = true
-                    displayZoomControls = false
-                    setSupportZoom(true)
-                    useWideViewPort = true
-                    loadWithOverviewMode = false
-                    textZoom = 100
-                    isAlgorithmicDarkeningAllowed = false
-                }
-                isVerticalScrollBarEnabled = true
-                // A pull past the edge stretches the whole view, the glass the page draws with it, away from the bars.
-                overScrollMode = View.OVER_SCROLL_NEVER
-                setOnScrollChangeListener { _, _, y, _, _ -> scrolled(y > 0) }
-                setFindListener { active, total, _ -> finder.found(active, total) }
-                webChromeClient = object : WebChromeClient() {
-                    override fun onReceivedTitle(view: WebView, title: String?) = sheets.heard(title)
-                }
-                webViewClient = object : WebViewClient() {
-                    override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse {
-                        val url = request.url
-                        if (url.scheme != "https" || url.host != HOST) return missing()
-                        val at = url.encodedPath.orEmpty()
-                        font(context, at)?.let { return it }
-                        val served = runCatching { doc.serve(at, current) }.getOrNull() ?: return missing()
-                        val text = served.mime.startsWith("text/") || served.mime.endsWith("xml")
-                        return WebResourceResponse(served.mime, if (text) "UTF-8" else null, 200, "OK", if (text) POLICY else emptyMap(), served.stream)
+    val held = remember { arrayOfNulls<PageView>(1) }
+    var moves by remember { mutableIntStateOf(0) }
+    Box(modifier) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { context ->
+                PageView(context).apply {
+                    held[0] = this
+                    settings.apply {
+                        javaScriptEnabled = doc.own
+                        allowFileAccess = false
+                        allowContentAccess = false
+                        builtInZoomControls = true
+                        displayZoomControls = false
+                        setSupportZoom(true)
+                        useWideViewPort = true
+                        loadWithOverviewMode = false
+                        textZoom = 100
+                        isAlgorithmicDarkeningAllowed = false
                     }
-
-                    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-                        val url = request.url
-                        if (url.scheme == "https" && url.host == HOST) {
+                    // The bar is the viewer's own, between the bars, as a PDF's.
+                    isVerticalScrollBarEnabled = false
+                    // A pull past the edge stretches the whole view, the glass the page draws with it, away from the bars.
+                    overScrollMode = View.OVER_SCROLL_NEVER
+                    setOnScrollChangeListener { _, _, y, _, oldY ->
+                        scrolled(y > 0)
+                        if (y != oldY) moves++
+                    }
+                    setFindListener { active, total, _ -> finder.found(active, total) }
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onReceivedTitle(view: WebView, title: String?) = sheets.heard(title)
+                    }
+                    webViewClient = object : WebViewClient() {
+                        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse {
+                            val url = request.url
+                            if (url.scheme != "https" || url.host != HOST) return missing()
                             val at = url.encodedPath.orEmpty()
-                            if (doc.stays(at)) return false
-                            doc.file(at)?.let { file(it) }
+                            font(context, at)?.let { return it }
+                            val served = runCatching { doc.serve(at, current) }.getOrNull() ?: return missing()
+                            val text = served.mime.startsWith("text/") || served.mime.endsWith("xml")
+                            return WebResourceResponse(served.mime, if (text) "UTF-8" else null, 200, "OK", if (text) POLICY else emptyMap(), served.stream)
+                        }
+
+                        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                            val url = request.url
+                            if (url.scheme == "https" && url.host == HOST) {
+                                val at = url.encodedPath.orEmpty()
+                                if (doc.stays(at)) return false
+                                doc.file(at)?.let { file(it) }
+                                return true
+                            }
+                            link(url.toString())
                             return true
                         }
-                        link(url.toString())
-                        return true
-                    }
 
-                    override fun onPageFinished(view: WebView, url: String) {
-                        path(url.toUri().encodedPath.orEmpty())
+                        override fun onPageFinished(view: WebView, url: String) {
+                            path(url.toUri().encodedPath.orEmpty())
+                        }
                     }
+                    finder.view = this
+                    sheets.view = this
                 }
-                finder.view = this
-                sheets.view = this
-            }
-        },
-        update = { view ->
-            view.setBackgroundColor(look.ground.toInt())
-            view.settings.javaScriptEnabled = doc.own
-            // New colours lay out the page shown again; a new document or a place asked for goes there. The bars' heights
-            // and the island's place only move the page's edges and its glass.
-            val bare = look.copy(top = 0, bottom = 0, island = Spot())
-            when {
-                shown.doc !== doc || shown.start != start -> view.loadUrl(Page.ORIGIN + start.first)
-                shown.look != bare -> view.reload()
-                shown.top != look.top || shown.bottom != look.bottom || shown.island != look.island ->
-                    view.evaluateJavascript("document.documentElement.style.cssText+=';--top:${look.top}px;--bottom:${look.bottom}px;${look.island.css()}';window.mntGlass&&mntGlass()", null)
-            }
-            shown.doc = doc
-            shown.look = bare
-            shown.start = start
-            shown.top = look.top
-            shown.bottom = look.bottom
-            shown.island = look.island
-        },
-        onRelease = { view ->
-            finder.view = null
-            sheets.view = null
-            view.destroy()
-        },
-    )
+            },
+            update = { view ->
+                view.setBackgroundColor(look.ground.toInt())
+                view.settings.javaScriptEnabled = doc.own
+                // New colours lay out the page shown again; a new document or a place asked for goes there. The bars' heights
+                // and the island's place only move the page's edges and its glass.
+                val bare = look.copy(top = 0, bottom = 0, island = Spot())
+                when {
+                    shown.doc !== doc || shown.start != start -> view.loadUrl(Page.ORIGIN + start.first)
+                    shown.look != bare -> view.reload()
+                    shown.top != look.top || shown.bottom != look.bottom || shown.island != look.island ->
+                        view.evaluateJavascript("document.documentElement.style.cssText+=';--top:${look.top}px;--bottom:${look.bottom}px;${look.island.css()}';window.mntGlass&&mntGlass()", null)
+                }
+                shown.doc = doc
+                shown.look = bare
+                shown.start = start
+                shown.top = look.top
+                shown.bottom = look.bottom
+                shown.island = look.island
+            },
+            onRelease = { view ->
+                finder.view = null
+                sheets.view = null
+                held[0] = null
+                view.destroy()
+            },
+        )
+        EdgeBar(look.top.dp, look.bottom.dp, { moves }, Modifier.align(Alignment.TopEnd)) { view -> held[0]?.let { it.scrollY.toFloat() to it.range().toFloat().coerceAtLeast(view) } }
+    }
+}
+
+/** A web view that tells how tall its page is, in pixels as it is scrolled. */
+private class PageView(context: Context) : WebView(context) {
+    fun range() = computeVerticalScrollRange()
 }
 
 private class Loaded(var doc: WebDoc? = null, var look: Look? = null, var start: Pair<String, Int>? = null, var top: Int = 0, var bottom: Int = 0, var island: Spot = Spot())

@@ -10,13 +10,9 @@ import android.net.Uri
 import android.util.SparseArray
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -30,17 +26,11 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -74,9 +64,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 /** Searches a PDF: the matches of all its pages, each laid over the page, the one in sight brighter. */
@@ -250,7 +237,18 @@ fun PdfPage(
             val start = with(density) { (top + SIDE).toPx() }
             val scrolled by remember(fit) { derivedStateOf { !fit && (state.firstVisiblePage > 0 || state.firstVisiblePageOffset.y < start - 1) } }
             LaunchedEffect(scrolled) { onScrolled(scrolled) }
-            ScrollBar(state, pages, if (fit) 0.dp else top + SIDE, if (fit) 0.dp else bottom + SIDE, Modifier.align(Alignment.TopEnd))
+            val measured = pages.heights
+            if (!fit && measured != null) {
+                EdgeBar(top, bottom, { state.firstVisiblePage to state.firstVisiblePageOffset }, Modifier.align(Alignment.TopEnd)) { view ->
+                    val zoom = state.zoom
+                    val gap = GAP.toPx() * zoom / pages.fitZoom
+                    val pad = (top + bottom + SIDE * 2).toPx()
+                    var before = 0f
+                    for (i in 0 until state.firstVisiblePage.coerceIn(0, measured.size)) before += measured[i] * zoom + gap
+                    val total = measured.sum() * zoom + gap * (measured.size - 1) + pad
+                    (before - (state.firstVisiblePageOffset.y - (top + SIDE).toPx())).coerceIn(0f, maxOf(0f, total - view)) to total
+                }
+            }
         }
         if (locked && document == null) {
             Box(Modifier.fillMaxSize().padding(top = top, bottom = bottom), contentAlignment = Alignment.Center) {
@@ -349,46 +347,6 @@ private class Shadows(private val view: PdfView, private val widths: FloatArray,
  * edge, there while the pages move and a moment after. [top] and [bottom] pad the pages.
  */
 @OptIn(ExperimentalPdfApi::class)
-@Composable
-private fun ScrollBar(state: PdfViewerState, pages: PdfPages, top: Dp, bottom: Dp, modifier: Modifier) {
-    val dark = MntTheme.colors.isDark
-    var shown by remember { mutableStateOf(false) }
-    val alpha by animateFloatAsState(if (shown) 1f else 0f, tween(if (shown) 0 else BAR_FADE), label = "bar")
-    LaunchedEffect(state) {
-        snapshotFlow { Triple(state.gestureState, state.firstVisiblePage, state.firstVisiblePageOffset) }.drop(1).collectLatest { (gesture, _, _) ->
-            shown = true
-            if (gesture == PdfViewerState.GESTURE_STATE_IDLE) {
-                delay(BAR_STAYS)
-                shown = false
-            }
-        }
-    }
-    val heights = pages.heights ?: return
-    val shade = if (dark) Color.White.copy(alpha = BAR_SHADE) else Color.Black.copy(alpha = BAR_SHADE)
-    // Where the pages are is read while drawing, so scrolling does not compose the bar again.
-    Box(
-        modifier.fillMaxHeight().width(BAR_WIDTH).graphicsLayer { this.alpha = alpha }.drawBehind {
-            val view = size.height
-            val zoom = state.zoom
-            val gap = GAP.toPx() * zoom / pages.fitZoom
-            val total = heights.sum() * zoom + gap * (heights.size - 1) + (top + bottom).toPx()
-            if (total <= view + 1) return@drawBehind
-            var before = 0f
-            for (i in 0 until state.firstVisiblePage.coerceIn(0, heights.size)) before += heights[i] * zoom + gap
-            val scrolled = (before - (state.firstVisiblePageOffset.y - top.toPx())).coerceIn(0f, total - view)
-            val length = (view * view / total).coerceAtLeast(BAR_MIN.toPx())
-            drawRect(shade, Offset(0f, (view - length) * scrolled / (total - view)), Size(size.width, length))
-        },
-    )
-}
-
-// As a web view draws its bar: 4 dp at the edge, a third of black, gone half a second after the page stops.
-private val BAR_WIDTH = 4.dp
-private val BAR_MIN = 24.dp
-private const val BAR_SHADE = 0.32f
-private const val BAR_STAYS = 500L
-private const val BAR_FADE = 300
-
 // Up to this many pages are measured one by one for the bar.
 private const val MEASURED_PAGES = 2000
 
