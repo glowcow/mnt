@@ -26,11 +26,11 @@ class Archives(private val files: () -> FileStore, private val spare: () -> Long
         return stores.getOrPut(archive) { ArchiveStore(archive, files(), cache, open = ::walk) }
     }
 
-    private fun walk(archive: String, size: Long, raw: Boolean, heard: ((Float) -> Unit)?): Walk {
+    private fun walk(archive: String, size: Long, formats: Formats, heard: ((Float) -> Unit)?): Walk {
         ArchiveReader.limitMemory(spare())
         val source = if (Remote.id(archive) == null) FileSource(File(archive)) else StoreSource(files(), archive, size)
         source.heard = heard
-        return ArchiveReader(source, raw)
+        return ArchiveReader(source, formats)
     }
 
     companion object {
@@ -66,7 +66,7 @@ class Archives(private val files: () -> FileStore, private val spare: () -> Long
         fun rate(name: String): Long = when (Paths.extension(name)) {
             "zst", "tzst" -> 300L shl 20
             "xz", "txz", "lz", "tlz", "lzma" -> 60L shl 20
-            "bz2", "tbz", "tbz2" -> 25L shl 20
+            "bz2", "tbz", "tbz2" -> 15L shl 20
             else -> 150L shl 20
         }
 

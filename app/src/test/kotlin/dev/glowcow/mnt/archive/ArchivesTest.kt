@@ -50,8 +50,6 @@ class ArchivesTest {
             return n
         }
 
-        override val done: Float get() = (at + 1f) / entries.size
-
         override fun close() = Unit
     }
 
@@ -225,7 +223,7 @@ class ArchivesTest {
     }
 
     /** A store of [entries] in the archive at [path], made the way [make] says. */
-    private fun store(path: String, entries: List<Entry>, make: (FileStore, (String, Long, Boolean, ((Float) -> Unit)?) -> Walk) -> ArchiveStore): ArchiveStore {
+    private fun store(path: String, entries: List<Entry>, make: (FileStore, (String, Long, Formats, ((Float) -> Unit)?) -> Walk) -> ArchiveStore): ArchiveStore {
         lateinit var store: ArchiveStore
         val files = Stores(LocalStore()) { store }
         store = make(files) { _, _, _, _ -> opened++; ListWalk(entries) }
@@ -264,8 +262,8 @@ class ArchivesTest {
     fun asksBeforeReadingABigStreamThrough() = runBlocking {
         val tar = File(temp.root, "big.tar.gz").path
         val zip = File(temp.root, "big.zip").path
-        val streamed = store(tar, listOf(file("a.txt", "a"))) { files, open -> ArchiveStore(tar, files, slowBytes = 1, open = open) }
-        val indexed = store(zip, listOf(file("a.txt", "a"))) { files, open -> ArchiveStore(zip, files, slowBytes = 1, open = open) }
+        val streamed = store(tar, listOf(file("a.txt", "a"))) { files, open -> ArchiveStore(tar, files, slowAfter = 0, open = open) }
+        val indexed = store(zip, listOf(file("a.txt", "a"))) { files, open -> ArchiveStore(zip, files, slowAfter = 0, open = open) }
 
         assertTrue(streamed.slow()!! >= 1)
         assertNull(indexed.slow())
@@ -284,5 +282,22 @@ class ArchivesTest {
         assertEquals("/d42/s6/f19942.txt", store.stat("/d42/s6/f19942.txt")!!.path)
         assertEquals(5L, store.stat("/d42/s6/f19942.txt")!!.size)
         assertNull(store.stat("/d42/s3/f19943.txt"))
+    }
+
+    @Test
+    fun aCompressedFileNotReadAsAnArchiveIsTheOneFileItHolds() = runBlocking {
+        val path = File(temp.root, "p.7z.gz").apply { writeText("x") }.path
+        val asked = ArrayList<Formats>()
+        lateinit var store: ArchiveStore
+        val files = Stores(LocalStore()) { store }
+        store = ArchiveStore(path, files) { _, _, formats, _ ->
+            asked += formats
+            if (formats == Formats.ANY) throw ArchiveException(Reason.BROKEN, "Seek error")
+            ListWalk(listOf(Entry("data".toByteArray(), EntryKind.FILE, "7z".toByteArray())), raw = true)
+        }
+
+        assertEquals(listOf("p.7z"), store.list("/")!!.map { it.name })
+        assertEquals("7z", store.read("/p.7z").use { String(it.readBytes()) })
+        assertEquals(listOf(Formats.ANY, Formats.COMPRESSED, Formats.COMPRESSED), asked)
     }
 }

@@ -44,9 +44,6 @@ interface Walk : Closeable {
 
     /** Bytes of the current entry's data into [buffer]; -1 at its end. */
     fun read(buffer: ByteArray, offset: Int, length: Int): Int
-
-    /** How much of the archive has been gone through, 0–1. */
-    val done: Float
 }
 
 /** What an archive is read from: blocks one after another, and jumps, as the native reader asks for them. */
@@ -143,14 +140,26 @@ class StoreSource(private val files: FileStore, private val path: String, overri
     }
 }
 
-/** libarchive reading [source]; [raw] lets a file that is only compressed read as one entry. */
-class ArchiveReader(private val source: ArchiveSource, raw: Boolean) : Walk {
+/** What a source is read as. */
+enum class Formats {
+    /** An archive of entries. */
+    PACKED,
+
+    /** An archive, or else one file compressed: what it holds is told by what it begins with. */
+    ANY,
+
+    /** One file compressed, whatever it holds: an archive inside that needs a file to jump about in. */
+    COMPRESSED,
+}
+
+/** libarchive reading [source] as [formats] says. */
+class ArchiveReader(private val source: ArchiveSource, formats: Formats) : Walk {
     private var handle: Long
     private val facts = LongArray(FACTS)
 
     init {
         handle = try {
-            open(source, raw)
+            open(source, formats.ordinal)
         } catch (e: Throwable) {
             source.close()
             throw e
@@ -160,8 +169,6 @@ class ArchiveReader(private val source: ArchiveSource, raw: Boolean) : Walk {
             throw ArchiveException(Reason.MEMORY)
         }
     }
-
-    override val done: Float get() = if (source.size > 0) source.position.toFloat() / source.size else 1f
 
     override fun next(): Header? {
         val name = next(handle, facts) ?: return null
@@ -204,7 +211,7 @@ class ArchiveReader(private val source: ArchiveSource, raw: Boolean) : Walk {
 
         @JvmStatic private external fun limit(bytes: Long)
 
-        @JvmStatic private external fun open(source: ArchiveSource, raw: Boolean): Long
+        @JvmStatic private external fun open(source: ArchiveSource, formats: Int): Long
 
         @JvmStatic private external fun next(handle: Long, facts: LongArray): ByteArray?
 

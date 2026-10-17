@@ -27,18 +27,19 @@ import java.security.MessageDigest
 /**
  * The files of the archive at [archive], read from [files], as a place that is only read. What it holds is read
  * once and kept until the archive changes — in memory, and in [cache] when reading it took a while; a file is read
- * by going through the archive up to it. [open] starts a [Walk] through an archive of a size, raw when it may be
- * only compressed, telling [open]'s last argument how far it has read. More than [limit] entries is refused; a
- * stream of [slowBytes] or more is asked about before it is read through; a list that took [saveAfter] ms is kept.
+ * by going through the archive up to it. [open] starts a [Walk] through an archive of a size, read as the
+ * [Formats] say, telling [open]'s last argument how far it has read. More than [limit] entries is refused; a
+ * stream that would take [slowAfter] seconds or more is asked about before it is read through; a list that took
+ * [saveAfter] ms is kept.
  */
 class ArchiveStore(
     private val archive: String,
     private val files: FileStore,
     private val cache: File? = null,
     private val limit: Int = entriesLimit(),
-    private val slowBytes: Long = SLOW_BYTES,
+    private val slowAfter: Long = SLOW_SECONDS,
     private val saveAfter: Long = SAVE_MS,
-    private val open: (archive: String, size: Long, raw: Boolean, heard: ((Float) -> Unit)?) -> Walk,
+    private val open: (archive: String, size: Long, formats: Formats, heard: ((Float) -> Unit)?) -> Walk,
 ) : FileStore {
     private val lock = Mutex()
 
@@ -67,20 +68,24 @@ class ArchiveStore(
     var error: ArchiveException? = null
         private set
 
-    private val raw: Boolean get() = Archives.raw(Paths.name(archive))
+    // A file compressed whole that turns out not to be readable as an archive is read as the one file it holds.
+    @Volatile
+    private var formats = if (Archives.raw(Paths.name(archive))) Formats.ANY else Formats.PACKED
 
     /**
-     * About how many seconds learning what the archive holds will take, when that means reading a stream of a
-     * size worth asking about first; null when it is quick, already known or already agreed to.
+     * About how many seconds learning what the archive holds will take, when that means reading a stream through
+     * for long enough to ask first; null when it is quick, already known or already agreed to.
      */
     suspend fun slow(): Long? {
         if (agreed || !Archives.streamed(Paths.name(archive))) return null
         val node = files.stat(archive) ?: return null
-        if (node.size < slowBytes) return null
         if (index != null && known?.size == node.size && known?.modified == node.modified) return null
-        if (withContext(Dispatchers.IO) { saved(node) } != null) return null
+        // A server gives a stream more slowly than a phone unpacks it.
         val rate = Archives.rate(node.name).let { if (Remote.id(archive) != null) minOf(it, FAR_RATE) else it }
-        return node.size / rate + 1
+        val seconds = node.size / rate + 1
+        if (seconds < slowAfter) return null
+        if (withContext(Dispatchers.IO) { saved(node) } != null) return null
+        return seconds
     }
 
     /** Reading the archive through is agreed to, however long it takes. */
@@ -113,17 +118,28 @@ class ArchiveStore(
 
     private suspend fun walk(node: Node): ArchiveIndex {
         val started = System.nanoTime()
-        val read = open(archive, node.size, raw, null).use { walk ->
-            var shown = 0f
-            ArchiveIndex.read(walk, Archives.stem(node.name), node.modified, limit) { done ->
-                if (done - shown >= STEP) {
-                    shown = done
-                    _reading.value = done
-                }
-            }
+        val read = try {
+            through(node)
+        } catch (e: ArchiveException) {
+            // An archive inside a compressed file that a stream cannot give (a 7z gzipped): the file it is, then.
+            if (formats != Formats.ANY || e.reason != Reason.BROKEN && e.reason != Reason.UNKNOWN) throw e
+            formats = Formats.COMPRESSED
+            through(node)
         }
         if ((System.nanoTime() - started) / 1_000_000 >= saveAfter) save(node, read)
         return read
+    }
+
+    // How far it has got goes by the bytes of the archive read, not by its entries: one entry may be all of it.
+    private suspend fun through(node: Node): ArchiveIndex {
+        var shown = 0f
+        _reading.value = 0f
+        return open(archive, node.size, formats) { done ->
+            if (done - shown >= STEP) {
+                shown = done
+                _reading.value = done
+            }
+        }.use { walk -> ArchiveIndex.read(walk, Archives.stem(node.name), node.modified, limit) }
     }
 
     // What the archive held when it was this size and this old, as written down after a long read.
@@ -132,7 +148,9 @@ class ArchiveStore(
         if (!file.exists()) return null
         return runCatching {
             DataInputStream(file.inputStream().buffered()).use { input ->
-                if (input.readUTF() != archive || input.readLong() != node.size || input.readLong() != node.modified) null else ArchiveIndex.read(input)
+                if (input.readUTF() != SAVED || input.readUTF() != archive || input.readLong() != node.size || input.readLong() != node.modified) return@use null
+                val read = Formats.entries.getOrNull(input.readByte().toInt()) ?: return@use null
+                ArchiveIndex.read(input)?.also { formats = read }
             }
         }.getOrNull()
     }
@@ -143,9 +161,11 @@ class ArchiveStore(
             file.parentFile?.mkdirs()
             val part = File(file.path + ".part")
             DataOutputStream(part.outputStream().buffered()).use { out ->
+                out.writeUTF(SAVED)
                 out.writeUTF(archive)
                 out.writeLong(node.size)
                 out.writeLong(node.modified)
+                out.writeByte(formats.ordinal)
                 index.write(out)
             }
             part.renameTo(file)
@@ -185,7 +205,7 @@ class ArchiveStore(
         val item = file(runBlocking { index() }, path)
         var arrived = false
         var shown = -1f
-        val walk = open(archive, known?.size ?: 0, raw) { done ->
+        val walk = open(archive, known?.size ?: 0, formats) { done ->
             if (!arrived && done - shown >= STEP) {
                 shown = done
                 _reaching.value = done
@@ -211,7 +231,7 @@ class ArchiveStore(
         val wanted = paths.mapNotNull { path -> index.item(path)?.takeIf { !it.directory && !it.locked }?.let { path to it.ordinal } }
         if (wanted.isEmpty()) return
         val byEntry = wanted.groupBy({ it.second }, { it.first })
-        val walk = withContext(Dispatchers.IO) { open(archive, known?.size ?: 0, raw, null) }
+        val walk = withContext(Dispatchers.IO) { open(archive, known?.size ?: 0, formats, null) }
         // Hard links to one entry: the first takes its data, the others read it again.
         val again = ArrayList<String>()
         walk.use {
@@ -284,9 +304,10 @@ class ArchiveStore(
         private const val SAVE_MS = 500L
         private const val KEPT = 32
         private const val HASH = 16
+        private const val SAVED = "mnt archive list 2"
 
-        // A stream this large is asked about before it is read through.
-        const val SLOW_BYTES = 1L shl 30
+        // A stream that takes this many seconds to read through is asked about first.
+        const val SLOW_SECONDS = 15L
 
         // What a server gives, bytes a second, at best.
         private const val FAR_RATE = 40L shl 20

@@ -139,7 +139,10 @@ JNIEXPORT void JNICALL Java_dev_glowcow_mnt_archive_ArchiveReader_limit(JNIEnv *
     mnt_memory_limit = bytes > 0 ? (unsigned long long) bytes : ~0ULL;
 }
 
-JNIEXPORT jlong JNICALL Java_dev_glowcow_mnt_archive_ArchiveReader_open(JNIEnv *env, jclass type, jobject source, jboolean raw) {
+// How a source is read, as ArchiveReader's Formats tells it.
+enum { PACKED = 0, ANY = 1, COMPRESSED = 2 };
+
+JNIEXPORT jlong JNICALL Java_dev_glowcow_mnt_archive_ArchiveReader_open(JNIEnv *env, jclass type, jobject source, jint formats) {
     (void) type;
     struct reader *r = calloc(1, sizeof(struct reader));
     if (r == NULL) return 0;
@@ -162,19 +165,21 @@ JNIEXPORT jlong JNICALL Java_dev_glowcow_mnt_archive_ArchiveReader_open(JNIEnv *
     archive_read_support_filter_lzma(a);
     archive_read_support_filter_xz(a);
     archive_read_support_filter_zstd(a);
-    archive_read_support_format_7zip(a);
-    archive_read_support_format_ar(a);
-    archive_read_support_format_cab(a);
-    archive_read_support_format_cpio(a);
-    archive_read_support_format_empty(a);
-    archive_read_support_format_iso9660(a);
-    archive_read_support_format_lha(a);
-    archive_read_support_format_rar(a);
-    archive_read_support_format_rar5(a);
-    archive_read_support_format_tar(a);
-    archive_read_support_format_zip(a);
+    if (formats != COMPRESSED) {
+        archive_read_support_format_7zip(a);
+        archive_read_support_format_ar(a);
+        archive_read_support_format_cab(a);
+        archive_read_support_format_cpio(a);
+        archive_read_support_format_empty(a);
+        archive_read_support_format_iso9660(a);
+        archive_read_support_format_lha(a);
+        archive_read_support_format_rar(a);
+        archive_read_support_format_rar5(a);
+        archive_read_support_format_tar(a);
+        archive_read_support_format_zip(a);
+    }
     // A file that is only compressed, not packed, reads as one entry.
-    if (raw) archive_read_support_format_raw(a);
+    if (formats != PACKED) archive_read_support_format_raw(a);
     archive_read_set_read_callback(a, on_read);
     archive_read_set_seek_callback(a, on_seek);
     archive_read_set_skip_callback(a, on_skip);

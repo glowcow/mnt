@@ -192,9 +192,8 @@ class ArchiveIndex private constructor(
          * Reads [walk] through to its end. Names are made safe to unpack: no step up, no root, none of the signs a
          * card's file system refuses; the Mac's `__MACOSX` copies are left out. A file that is only compressed is
          * called [stem]; folders no entry names are dated [born]. More than [limit] entries is refused.
-         * [onProgress] hears how far it has got, 0–1.
          */
-        suspend fun read(walk: Walk, stem: String, born: Long, limit: Int = Int.MAX_VALUE, onProgress: (Float) -> Unit = {}): ArchiveIndex {
+        suspend fun read(walk: Walk, stem: String, born: Long, limit: Int = Int.MAX_VALUE): ArchiveIndex {
             val b = Builder(limit, born)
             val links = ArrayList<Pair<String, String>>()
             var ordinal = -1
@@ -232,7 +231,6 @@ class ArchiveIndex private constructor(
                 // Stepping over a large entry of a stream reads all of it: leaving lets go of it at once.
                 val header = runInterruptible { walk.next() } ?: break
                 ordinal++
-                onProgress(walk.done)
                 val path = if (header.raw) "/$stem" else clean(decode(header.name), header.zip) ?: continue
                 val time = header.modified.takeIf { it > 0 } ?: born
                 when (header.kind) {
