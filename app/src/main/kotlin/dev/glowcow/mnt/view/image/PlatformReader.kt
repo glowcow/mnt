@@ -21,8 +21,11 @@ object PlatformReader {
     /** [file] decoded about as large as [screen], the long side of the screen in pixels. Blocking. */
     fun open(file: File, screen: Int): Picture {
         if (Paths.extension(file.name) in MAY_MOVE) animated(file, screen)?.let { return it }
-        regions(file, screen)?.let { return it }
-        return whole(file, screen)
+        val picture = regions(file, screen) ?: whole(file, screen)
+        // The platform reads no gain map from a HEIF photo, an iPhone's among them.
+        if (picture.gain != null || Paths.extension(file.name) !in HEIF) return picture
+        val gain = HeifGain.read(file, GAIN_SIDE) ?: return picture
+        return picture.withGain(gain)
     }
 
     // A picture that moves is played by the platform's drawable, which shrinks it on its own.
@@ -106,4 +109,8 @@ object PlatformReader {
     private class Still : RuntimeException()
 
     private val MAY_MOVE = setOf("gif", "webp", "png", "apng", "avif", "heic", "heif")
+    private val HEIF = setOf("heic", "heif", "hif")
+
+    // A gain map is decoded no larger than this: it is smooth, and the base carries the detail.
+    private const val GAIN_SIDE = 2048
 }

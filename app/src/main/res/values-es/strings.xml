@@ -299,6 +299,8 @@
     <string name="settings_archives">Archivos comprimidos</string>
     <string name="photo_light_ground">Fondo claro</string>
     <string name="photo_dark_ground">Fondo oscuro</string>
+    <string name="photo_hdr_off">Sin HDR</string>
+    <string name="photo_hdr_on">En HDR</string>
     <string name="photo_delete_title">¿Eliminar esta imagen?</string>
     <string name="photo_dimensions">Dimensiones</string>
     <string name="photo_format">Formato</string>

@@ -36,6 +36,9 @@ class Picture(
 
     val alpha: Boolean get() = bitmap.hasAlpha()
 
+    /** The same picture lifted by [gain]. */
+    fun withGain(gain: Gain): Picture = Picture(bitmap, sample, width, height, orientation, gain, animation, regions, hdr, raw, developed)
+
     override fun close() {
         regions?.close()
     }
@@ -53,6 +56,8 @@ class Gain(
     /** At this much headroom of the screen the gain starts to show, and at [fullHdr] it shows whole. */
     val minHdr: Float,
     val fullHdr: Float,
+    /** Apple's older map: the gain grows in a straight line from none to [ratioMax], not by powers. */
+    val linear: Boolean = false,
 ) {
     companion object {
         /** The platform's gain map as the app's; null when it lifts an HDR base down, which the app does not draw. */

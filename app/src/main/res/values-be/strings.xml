@@ -303,6 +303,8 @@
     <string name="settings_archives">Архівы</string>
     <string name="photo_light_ground">Светлы фон</string>
     <string name="photo_dark_ground">Цёмны фон</string>
+    <string name="photo_hdr_off">Без HDR</string>
+    <string name="photo_hdr_on">У HDR</string>
     <string name="photo_delete_title">Выдаліць гэты малюнак?</string>
     <string name="photo_dimensions">Памер у пікселях</string>
     <string name="photo_format">Фармат</string>

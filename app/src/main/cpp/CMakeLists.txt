@@ -44,7 +44,7 @@ target_link_options(mntarchive PRIVATE -Wl,--gc-sections -Wl,--exclude-libs,ALL)
 target_link_libraries(mntarchive lzma zstd bz2 z)
 
 # Pictures the platform does not decode, one library: LibRaw for RAW photos, libjxl (with Highway) for JPEG XL, libtiff
-# for TIFF, each from its sources here; deflate is the system's zlib.
+# for TIFF, libde265 for an iPhone's gain map, each from its sources here; deflate is the system's zlib.
 file(GLOB_RECURSE LIBRAW CONFIGURE_DEPENDS libraw/src/*.cpp)
 add_library(raw STATIC ${LIBRAW})
 target_include_directories(raw PUBLIC libraw)
@@ -74,7 +74,14 @@ add_library(tiff STATIC ${TIFF})
 target_include_directories(tiff PUBLIC libtiff)
 target_compile_options(tiff PRIVATE -O2 -ffunction-sections -fdata-sections -fvisibility=hidden -w)
 
+# libde265 reads the monochrome HEVC of an iPhone's gain map, which neither of Android's HEVC decoders takes.
+file(GLOB DE265 CONFIGURE_DEPENDS libde265/libde265/*.cc)
+add_library(de265 STATIC ${DE265})
+target_include_directories(de265 PUBLIC libde265 PRIVATE libde265/libde265)
+target_compile_definitions(de265 PUBLIC LIBDE265_STATIC_BUILD PRIVATE HAVE_POSIX_MEMALIGN HAVE_MALLOC_H)
+target_compile_options(de265 PRIVATE -O2 -ffunction-sections -fdata-sections -fvisibility=hidden -w)
+
 add_library(mntpictures SHARED pictures_jni.cpp)
 target_compile_options(mntpictures PRIVATE -O2 -fexceptions -ffunction-sections -fdata-sections -fvisibility=hidden)
 target_link_options(mntpictures PRIVATE -Wl,--gc-sections -Wl,--exclude-libs,ALL)
-target_link_libraries(mntpictures raw jxl tiff z)
+target_link_libraries(mntpictures raw jxl tiff de265 z)

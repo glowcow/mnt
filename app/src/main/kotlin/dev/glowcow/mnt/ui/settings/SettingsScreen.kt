@@ -270,7 +270,7 @@ fun SettingsPageScreen(
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_raw), value = "LibRaw · LGPL-2.1")
                 GroupDivider()
-                GroupRow(stringResource(R.string.settings_pictures), value = "libjxl, Highway, libtiff, AndroidSVG · BSD, Apache-2.0")
+                GroupRow(stringResource(R.string.settings_pictures), value = "libjxl, Highway, libtiff, libde265, AndroidSVG · BSD, Apache-2.0, LGPL-3.0")
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_map_data), value = "OpenStreetMap · ODbL")
             }

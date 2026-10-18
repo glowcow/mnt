@@ -112,6 +112,8 @@ private fun Photos(vm: PhotoViewModel, settings: AppSettings, onBack: () -> Unit
     var chrome by rememberSaveable { mutableStateOf(true) }
     var sheet by rememberSaveable { mutableStateOf<PhotoSheet?>(null) }
     var light by rememberSaveable { mutableStateOf(false) }
+    // Pictures shown without their HDR for this visit, by path.
+    var plain by rememberSaveable { mutableStateOf(emptyList<String>()) }
     var pageSize by remember { mutableStateOf(IntSize.Zero) }
     val page = rememberGraphicsLayer()
     val window = LocalWindowInfo.current
@@ -130,7 +132,10 @@ private fun Photos(vm: PhotoViewModel, settings: AppSettings, onBack: () -> Unit
 
     // The screen's headroom as it is now: the panel brightens in steps once the window asks for HDR.
     val headroom = remember { mutableFloatStateOf(1f) }
-    val hdr = settings.ultraHdr && shown != null && (shown.gain != null || shown.hdr)
+    // A screen that cannot go brighter than SDR white shows HDR as SDR, and has no HDR to turn off.
+    val hdrScreen = remember(activity) { activity?.display?.isHdrSdrRatioAvailable == true }
+    val hdrShown = settings.ultraHdr && hdrScreen && shown != null && (shown.gain != null || shown.hdr)
+    val hdr = hdrShown && current?.path !in plain
     HdrWindow(activity, hdr, shown, headroom)
 
     // With the bars away the system's bars go too, until a swipe from the edge brings them back.
@@ -155,7 +160,7 @@ private fun Photos(vm: PhotoViewModel, settings: AppSettings, onBack: () -> Unit
                     is Shot.Ready -> PhotoView(
                         picture = shot.picture,
                         state = zoom,
-                        gainOn = settings.ultraHdr,
+                        gainOn = settings.ultraHdr && node.path !in plain,
                         headroom = headroom.floatValue,
                         lightGround = light && shot.picture.alpha,
                         onTap = { chrome = !chrome },
@@ -191,6 +196,12 @@ private fun Photos(vm: PhotoViewModel, settings: AppSettings, onBack: () -> Unit
                 IslandIcons {
                     IconButton48(MntIcons.Share, stringResource(R.string.action_share)) { if (!Opener.share(context, listOf(current.path))) toast(context, R.string.open_none) }
                     IconButton48(MntIcons.Info, stringResource(R.string.action_details)) { sheet = PhotoSheet.DETAILS }
+                    if (hdrShown) {
+                        val off = current.path in plain
+                        IconButton48(MntIcons.Sun, stringResource(if (off) R.string.photo_hdr_on else R.string.photo_hdr_off), tint = if (off) c.muted else c.text) {
+                            plain = if (off) plain - current.path else plain + current.path
+                        }
+                    }
                     if (shown?.alpha == true) {
                         IconButton48(MntIcons.Checkerboard, stringResource(if (light) R.string.photo_dark_ground else R.string.photo_light_ground)) { light = !light }
                     }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,6 +40,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.scale
 import androidx.core.graphics.withClip
 import dev.glowcow.mnt.view.image.Gain
 import dev.glowcow.mnt.view.image.Picture
@@ -67,8 +69,17 @@ class ZoomState {
     /** Screen pixels to a pixel of the picture when it fits the page. */
     val fit: Float get() = if (width <= 0f || height <= 0f || viewport.width == 0) 1f else min(viewport.width / width, viewport.height / height)
 
-    // At the most a pixel of the picture is drawn this many screen pixels wide, and never less than three times the fit.
-    val maxZoom: Float get() = max(3f, MAX_PIXEL / fit)
+    /** The zoom at which the picture fills the page, cut at the sides or at the top and bottom. */
+    val fill: Float get() = if (width <= 0f || height <= 0f || viewport.width == 0) 1f else max(viewport.width / width, viewport.height / height) / fit
+
+    // At the most a pixel of the picture is drawn this many screen pixels wide, and never less than three times the fit or the fill.
+    val maxZoom: Float get() = max(max(3f, MAX_PIXEL / fit), fill)
+
+    /** Where a double tap goes from here: fitting, filling the page, a pixel of the picture to a pixel of the screen, and back. */
+    fun nextStep(): Float {
+        val steps = listOf(fill, 1f / fit).filter { it > 1f + STEP_APART }.sorted()
+        return steps.firstOrNull { it > zoom * (1f + STEP_APART) } ?: 1f
+    }
 
     val zoomed: Boolean get() = zoom > 1.01f
 
@@ -159,6 +170,12 @@ fun PhotoView(
         }
     }
 
+    // Drawn smaller than half its size, the picture is drawn from a copy halved as often, made once it is needed.
+    val halves = remember(picture) { Halves(picture.bitmap) }
+    if (animation == null) LaunchedEffect(picture) {
+        snapshotFlow { halvings(picture.sample * state.fit * state.zoom) }.collectLatest { halves.make(it) }
+    }
+
     // Once the picture rests, the part in sight is decoded at the size it is drawn, if the whole is coarser than that.
     val regions = picture.regions
     if (regions != null) LaunchedEffect(picture) {
@@ -246,7 +263,7 @@ fun PhotoView(
                             if (now - lastTap < doubleTap && (last - lastAt).getDistance() < slop * 4) {
                                 pending?.cancel()
                                 lastTap = 0L
-                                val target = if (state.zoomed) 1f else min(state.maxZoom, DOUBLE_TAP_ZOOM)
+                                val target = state.nextStep()
                                 scope.launch { zoomTo(state, target, last) }
                             } else {
                                 lastTap = now
@@ -300,7 +317,14 @@ fun PhotoView(
                 setScale(picture.sample.toFloat(), picture.sample.toFloat())
                 postConcat(upright)
             }
-            draw(c, picture.bitmap, base, picture.gain.takeIf { gainOn }, headroom, shader, bitmapPaint)
+            val gain = picture.gain.takeIf { gainOn }
+            val wholeGain = gain?.let { gainOver(picture.bitmap, base, it) }
+            val shown = halves.at(halvings(picture.sample * state.fit * state.zoom))
+            val shownMatrix = Matrix().apply {
+                setScale(picture.bitmap.width.toFloat() / shown.width, picture.bitmap.height.toFloat() / shown.height)
+                postConcat(base)
+            }
+            draw(c, shown, shownMatrix, gain, wholeGain, headroom, shader, bitmapPaint)
             region?.let { part ->
                 val m = Matrix().apply {
                     setScale(part.sample.toFloat(), part.sample.toFloat())
@@ -309,24 +333,48 @@ fun PhotoView(
                 }
                 val clip = RectF(part.rect)
                 upright.mapRect(clip)
-                c.withClip(clip) { draw(c, part.bitmap, m, part.gain.takeIf { gainOn }, headroom, shader, bitmapPaint) }
+                // A part comes with its own gain map, or lies under the whole picture's.
+                val partGain = part.gain.takeIf { gainOn }
+                val (g, gm) = if (partGain != null) partGain to gainOver(part.bitmap, m, partGain) else gain to wholeGain
+                c.withClip(clip) { draw(c, part.bitmap, m, g, gm, headroom, shader, bitmapPaint) }
             }
         }
     }
 }
 
-// A bitmap placed by [matrix]; with a gain map, through the app's shader, the map stretched over the same pixels.
-private fun draw(c: android.graphics.Canvas, bitmap: android.graphics.Bitmap, matrix: Matrix, gain: Gain?, headroom: Float, shader: GainShader, plain: Paint) {
-    if (gain == null || headroom <= 1f) {
-        c.drawBitmap(bitmap, matrix, plain)
-        return
+/** Copies of a bitmap, each half the one before, made as they are asked for: shrunk more than twice by plain filtering, a fine grid beats against the screen's pixels. */
+private class Halves(private val bitmap: android.graphics.Bitmap) {
+    private val made = mutableStateListOf<android.graphics.Bitmap>()
+
+    /** The bitmap halved [times] times, or as near to that as is made so far. */
+    fun at(times: Int): android.graphics.Bitmap = if (times <= 0 || made.isEmpty()) bitmap else made[min(times, made.size) - 1]
+
+    suspend fun make(times: Int) {
+        while (made.size < times) {
+            val from = made.lastOrNull() ?: bitmap
+            if (from.width < 2 || from.height < 2) return
+            made += withContext(Dispatchers.Default) { from.scale(from.width / 2, from.height / 2) }
+        }
     }
+}
+
+// How many times a bitmap drawn at [scale] screen pixels a pixel is halved, to be drawn at no less than half its size.
+private fun halvings(scale: Float): Int = if (scale >= 1f) 0 else Integer.numberOfTrailingZeros(sampleFor(1f / scale))
+
+// The gain map of [gain] stretched over [bitmap], which [matrix] places.
+private fun gainOver(bitmap: android.graphics.Bitmap, matrix: Matrix, gain: Gain): Matrix = Matrix().apply {
     val map = gain.channels[0]
-    val gainMatrix = Matrix().apply {
-        setScale(bitmap.width.toFloat() / map.width, bitmap.height.toFloat() / map.height)
-        postConcat(matrix)
+    setScale(bitmap.width.toFloat() / map.width, bitmap.height.toFloat() / map.height)
+    postConcat(matrix)
+}
+
+// A bitmap placed by [matrix]; with a gain map, through the app's shader, the map placed by [gainMatrix].
+private fun draw(c: android.graphics.Canvas, bitmap: android.graphics.Bitmap, matrix: Matrix, gain: Gain?, gainMatrix: Matrix?, headroom: Float, shader: GainShader, plain: Paint) {
+    val paint = if (gain == null || gainMatrix == null || headroom <= 1f) {
+        plain.apply { this.shader = GainShader.bitmapShader(bitmap, matrix) }
+    } else {
+        shader.paint(bitmap, matrix, gain, gainMatrix, headroom)
     }
-    val paint = shader.paint(bitmap, matrix, gain, gainMatrix, headroom)
     val r = RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
     matrix.mapRect(r)
     c.drawRect(r, paint)
@@ -346,7 +394,9 @@ private suspend fun zoomTo(state: ZoomState, target: Float, point: Offset) {
 private enum class Mode { NONE, ZOOM, PAN, UP, PAGER }
 
 private const val MAX_PIXEL = 4f
-private const val DOUBLE_TAP_ZOOM = 2.5f
+
+// Steps of a double tap closer than this part of each other are one.
+private const val STEP_APART = 0.05f
 private const val REST_MS = 150L
 private const val MARGIN = 0.25f
 private val SWIPE_UP = 64.dp

@@ -15,6 +15,7 @@
 #include "jxl/thread_parallel_runner.h"
 #include "jxl/thread_parallel_runner_cxx.h"
 #include "tiffio.h"
+#include "libde265/de265.h"
 
 namespace {
 
@@ -323,6 +324,43 @@ JNIEXPORT jbyteArray JNICALL Java_dev_glowcow_mnt_view_image_NativePictures_tiff
     int64_t values[FACTS] = {shrink.outWidth, shrink.outHeight, w, h, orientation, extra > 0 ? 1 : 0, 0, 0};
     put(env, facts, values);
     return bytes(env, pixels.data(), pixels.size());
+}
+
+// The luma of one HEVC picture, its parameter sets and slices as a stream of start codes, cut to w×h; 8 bits a sample.
+JNIEXPORT jbyteArray JNICALL Java_dev_glowcow_mnt_view_image_NativePictures_hevcLuma(JNIEnv *env, jclass, jbyteArray stream, jint w, jint h) {
+    jsize n = env->GetArrayLength(stream);
+    std::vector<uint8_t> data(n);
+    env->GetByteArrayRegion(stream, 0, n, reinterpret_cast<jbyte *>(data.data()));
+    de265_decoder_context *ctx = de265_new_decoder();
+    if (!ctx) return nullptr;
+    std::vector<uint8_t> luma;
+    if (de265_push_data(ctx, data.data(), n, 0, nullptr) == DE265_OK) {
+        de265_flush_data(ctx);
+        int more = 1;
+        while (more) {
+            de265_error err = de265_decode(ctx, &more);
+            if (err != DE265_OK && err != DE265_ERROR_WAITING_FOR_INPUT_DATA) break;
+            const de265_image *img = de265_get_next_picture(ctx);
+            if (!img) continue;
+            int stride = 0;
+            const uint8_t *plane = de265_get_image_plane(img, 0, &stride);
+            int iw = de265_get_image_width(img, 0), ih = de265_get_image_height(img, 0);
+            int depth = de265_get_bits_per_pixel(img, 0);
+            if (plane && iw >= w && ih >= h) {
+                luma.resize(static_cast<size_t>(w) * h);
+                for (int y = 0; y < h; y++) {
+                    const uint8_t *row = plane + static_cast<size_t>(y) * stride;
+                    uint8_t *out = luma.data() + static_cast<size_t>(y) * w;
+                    if (depth <= 8) memcpy(out, row, w);
+                    else for (int x = 0; x < w; x++) out[x] = static_cast<uint8_t>(reinterpret_cast<const uint16_t *>(row)[x] >> (depth - 8));
+                }
+            }
+            break;
+        }
+    }
+    de265_free_decoder(ctx);
+    if (luma.empty()) return nullptr;
+    return bytes(env, luma.data(), luma.size());
 }
 
 }  // extern "C"

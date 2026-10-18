@@ -46,6 +46,22 @@ class PicturesTest {
         assertEquals(1f, GainShader.weight(sharp, 2f), 1e-6f)
     }
 
+    @Test fun isoGainMetadata() {
+        // An iPhone's tone-mapped item: one channel, the base SDR, its alternate 2^1.892 times as bright.
+        val hex = "000000000040000000000000000100f2373f00800000ffd273d58000000000f2373f008000000064bffd00800000000029f140000000000029f140000000"
+        val m = HeifGain.Metadata.parse(hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray())!!
+        assertEquals(1, m.channels)
+        assertEquals(0f, m.baseHeadroom, 1e-6f)
+        assertEquals(1.8923f, m.alternateHeadroom, 1e-3f)
+        assertEquals(-0.0014f, m.min[0], 1e-4f)
+        assertEquals(0.7871f, m.gamma[0], 1e-3f)
+        assertEquals(1e-5f, m.baseOffset[0], 1e-6f)
+    }
+
+    @Test fun isoGainMetadataOfAnotherVersion() {
+        assertNull(HeifGain.Metadata.parse(byteArrayOf(1, 0, 0, 0, 0, 0)))
+    }
+
     @Test fun psdRgbWithRunsAndAlpha() {
         // 4×3, red, green, blue and alpha planes; packed by runs.
         val w = 4

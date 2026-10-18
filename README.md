@@ -54,8 +54,10 @@ The files on the screenshots are made up.
   that would need more memory than the phone has to spare, says so and
   offers the app that can.
 - **Pictures** — the photos of a folder swiped through and grown with two
-  fingers, RAW and HDR ones too, the details of a shot and where it was
-  taken pushed up from below, and small pictures in place of icons.
+  fingers or a double tap (to fill the screen, then one pixel to one), RAW
+  and HDR ones too — an iPhone's HEIC among them, its HDR turned off for a
+  photo with one tap — the details of a shot and where it was taken pushed
+  up from below, and small pictures in place of icons.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold;
   inside an archive, extract them.
@@ -87,7 +89,7 @@ The files on the screenshots are made up.
 | Network | `HttpURLConnection`, kotlinx.serialization for JSON |
 | Viewer | pages of the app's own HTML in a `WebView`; its own readers for Office, OpenDocument, RTF and EPUB files and its own syntax colouring; commonmark for Markdown, androidx.pdf for PDF, DjVuLibre 3.5 for DjVu |
 | Archives | libarchive 3.8 (read only) with XZ Utils 5.8, Zstandard 1.5 and bzip2 1.0, zlib of the system |
-| Pictures | the platform's decoders and its region decoder, the app's own drawing of HDR gain maps; LibRaw 0.22 for RAW, libjxl 0.12 with Highway 1.4, libtiff 4.7, AndroidSVG 1.4, AndroidX ExifInterface; OpenStreetMap tiles for the map of a photo |
+| Pictures | the platform's decoders and its region decoder, the app's own drawing of HDR gain maps; LibRaw 0.22 for RAW, libjxl 0.12 with Highway 1.4, libtiff 4.7, libde265 1.1 for an iPhone's HDR gain map, AndroidSVG 1.4, AndroidX ExifInterface; OpenStreetMap tiles for the map of a photo |
 
 All versions live in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
@@ -129,8 +131,8 @@ app/src/main/kotlin/dev/glowcow/mnt/
                 with the frosted bars, grouped rows and sheets, the row of a
                 file, the all files access gate), navigation root
 app/src/main/cpp/  DjVuLibre, libarchive (with liblzma, zstd and bzip2), and
-                LibRaw, libjxl (with Highway) and libtiff, each with its JNI
-                bridge
+                LibRaw, libjxl (with Highway), libtiff and libde265, each
+                with its JNI bridge
 app/src/main/assets/material-icons.json  the shapes of the file icons
 app/src/test/   unit tests of the plain JVM code in files, archive, backup,
                 update and view, the readers checked on sample documents
@@ -257,7 +259,11 @@ License 2.0 or BSD 3-Clause) and [libtiff](https://libtiff.gitlab.io/libtiff/)
 4.7.2 (its own BSD-style licence) are built in from their sources beside it —
 see [`licenses/libjxl-BSD-3-Clause.txt`](licenses/libjxl-BSD-3-Clause.txt),
 [`licenses/Highway-Apache-2.0-or-BSD-3-Clause.txt`](licenses/Highway-Apache-2.0-or-BSD-3-Clause.txt)
-and [`licenses/libtiff.txt`](licenses/libtiff.txt). The map of where a photo
+and [`licenses/libtiff.txt`](licenses/libtiff.txt).
+[libde265](https://github.com/strukturag/libde265) 1.1.3, which decodes the
+monochrome HEVC of an iPhone's gain map, is built in from
+`app/src/main/cpp/libde265` under the GNU Lesser General Public License 3.0 —
+see [`licenses/libde265-LGPL-3.0.txt`](licenses/libde265-LGPL-3.0.txt). The map of where a photo
 was taken, when it is turned on, is © OpenStreetMap contributors, under the
 Open Database License.
 

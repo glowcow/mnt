@@ -31,4 +31,7 @@ object NativePictures {
 
     /** The first picture of a TIFF file, its long side at most [maxSide], as stored, as RGBA. */
     @JvmStatic external fun tiff(path: String, maxSide: Int, facts: LongArray): ByteArray?
+
+    /** The luma of one HEVC picture by libde265, given as a stream with start codes, its top left [w]×[h]. */
+    @JvmStatic external fun hevcLuma(stream: ByteArray, w: Int, h: Int): ByteArray?
 }

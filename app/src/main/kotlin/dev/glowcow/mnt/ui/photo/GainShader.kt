@@ -34,15 +34,17 @@ internal class GainShader {
         shader.setFloatUniform("epsSdr", gain.epsilonSdr[0], gain.epsilonSdr[1], gain.epsilonSdr[2])
         shader.setFloatUniform("epsHdr", gain.epsilonHdr[0], gain.epsilonHdr[1], gain.epsilonHdr[2])
         shader.setFloatUniform("weight", weight(gain, headroom))
+        shader.setFloatUniform("linear", if (gain.linear) 1f else 0f)
         return paint
     }
 
-    private fun bitmapShader(bitmap: Bitmap, matrix: Matrix) = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply {
-        filterMode = BitmapShader.FILTER_MODE_LINEAR
-        setLocalMatrix(matrix)
-    }
-
     companion object {
+        /** [bitmap] placed by [matrix], filtered. */
+        fun bitmapShader(bitmap: Bitmap, matrix: Matrix) = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply {
+            filterMode = BitmapShader.FILTER_MODE_LINEAR
+            setLocalMatrix(matrix)
+        }
+
         /** How much of the gain shows at [headroom]: none below the map's start, all from where it is whole. */
         fun weight(gain: Gain, headroom: Float): Float {
             if (headroom <= 1f) return 0f
@@ -63,13 +65,21 @@ internal class GainShader {
             uniform float3 epsSdr;
             uniform float3 epsHdr;
             uniform float weight;
+            uniform float linear;
+
+            float3 decodeSrgb(float3 v) {
+                return mix(v / 12.92, pow((v + 0.055) / 1.055, float3(2.4)), step(float3(0.04045), v));
+            }
 
             half4 main(float2 p) {
                 half4 c = base.eval(p);
                 if (c.a <= 0.0) return c;
                 float3 sdr = toLinearSrgb(c.rgb / c.a);
                 float3 g = float3(gainR.eval(p).a, gainG.eval(p).a, gainB.eval(p).a);
-                float3 boost = exp(mix(logMin, logMax, pow(g, invGamma)) * weight);
+                // Apple's older map lifts by a straight line in linear light, ISO's by powers of the ratio.
+                float3 boost = linear > 0.5
+                    ? 1.0 + (exp(logMax * weight) - 1.0) * decodeSrgb(g)
+                    : exp(mix(logMin, logMax, pow(g, invGamma)) * weight);
                 float3 hdr = (sdr + epsSdr) * boost - epsHdr;
                 return half4(fromLinearSrgb(max(hdr, float3(0.0))) * c.a, c.a);
             }
