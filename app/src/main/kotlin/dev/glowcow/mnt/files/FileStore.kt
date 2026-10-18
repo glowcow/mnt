@@ -38,6 +38,9 @@ interface FileStore {
     /** False where nothing can be written, renamed or removed: inside an archive. */
     fun writes(path: String): Boolean = true
 
+    /** Blocking: a small picture of the file the place itself keeps, as JPEG; null when it keeps none. */
+    fun thumbnail(path: String): ByteArray? = null
+
     /** Bytes free where [path] lies; null when that is not known. */
     fun free(path: String): Long? = null
 

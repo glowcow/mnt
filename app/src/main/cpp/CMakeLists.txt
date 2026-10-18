@@ -42,3 +42,39 @@ target_compile_definitions(mntarchive PRIVATE HAVE_CONFIG_H=1 LIBARCHIVE_STATIC)
 target_compile_options(mntarchive PRIVATE -O2 -ffunction-sections -fdata-sections -fvisibility=hidden -w)
 target_link_options(mntarchive PRIVATE -Wl,--gc-sections -Wl,--exclude-libs,ALL)
 target_link_libraries(mntarchive lzma zstd bz2 z)
+
+# Pictures the platform does not decode, one library: LibRaw for RAW photos, libjxl (with Highway) for JPEG XL, libtiff
+# for TIFF, each from its sources here; deflate is the system's zlib.
+file(GLOB_RECURSE LIBRAW CONFIGURE_DEPENDS libraw/src/*.cpp)
+add_library(raw STATIC ${LIBRAW})
+target_include_directories(raw PUBLIC libraw)
+target_compile_definitions(raw PUBLIC LIBRAW_NODLL PRIVATE USE_ZLIB=1)
+target_compile_options(raw PRIVATE -O2 -fexceptions -ffunction-sections -fdata-sections -fvisibility=hidden -w)
+
+add_library(hwy STATIC highway/hwy/abort.cc highway/hwy/aligned_allocator.cc highway/hwy/nanobenchmark.cc highway/hwy/per_target.cc
+    highway/hwy/perf_counters.cc highway/hwy/print.cc highway/hwy/profiler.cc highway/hwy/targets.cc highway/hwy/timer.cc)
+target_include_directories(hwy PUBLIC highway)
+target_compile_definitions(hwy PUBLIC HWY_STATIC_DEFINE)
+target_compile_options(hwy PRIVATE -O2 -ffunction-sections -fdata-sections -fvisibility=hidden -w)
+
+# The decoder alone, as libjxl's own lists name it: no boxes, no JPEG reconstruction, so no Brotli.
+include(libjxl/lib/jxl_lists.cmake)
+set(JXL ${JPEGXL_INTERNAL_DEC_SOURCES} ${JPEGXL_INTERNAL_THREADS_SOURCES})
+list(FILTER JXL INCLUDE REGEX "\\.cc$")
+list(TRANSFORM JXL PREPEND libjxl/lib/)
+add_library(jxl STATIC ${JXL})
+target_include_directories(jxl PUBLIC libjxl/lib/include libjxl/gen PRIVATE libjxl)
+target_compile_definitions(jxl PUBLIC JXL_STATIC_DEFINE JXL_THREADS_STATIC_DEFINE PRIVATE JXL_INTERNAL_LIBRARY_BUILD
+    JPEGXL_ENABLE_TRANSCODE_JPEG=0 JPEGXL_ENABLE_BOXES=0)
+target_compile_options(jxl PRIVATE -O2 -fno-exceptions -ffunction-sections -fdata-sections -fvisibility=hidden -w)
+target_link_libraries(jxl PUBLIC hwy)
+
+file(GLOB TIFF CONFIGURE_DEPENDS libtiff/tif_*.c)
+add_library(tiff STATIC ${TIFF})
+target_include_directories(tiff PUBLIC libtiff)
+target_compile_options(tiff PRIVATE -O2 -ffunction-sections -fdata-sections -fvisibility=hidden -w)
+
+add_library(mntpictures SHARED pictures_jni.cpp)
+target_compile_options(mntpictures PRIVATE -O2 -fexceptions -ffunction-sections -fdata-sections -fvisibility=hidden)
+target_link_options(mntpictures PRIVATE -Wl,--gc-sections -Wl,--exclude-libs,ALL)
+target_link_libraries(mntpictures raw jxl tiff z)

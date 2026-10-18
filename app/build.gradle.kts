@@ -122,6 +122,8 @@ dependencies {
     implementation(libs.nfs.client)
 
     // The viewer: Markdown, and PDF through the system's sandboxed renderer.
+    implementation(libs.exifinterface)
+    implementation(libs.androidsvg)
     implementation(libs.commonmark)
     implementation(libs.commonmark.tables)
     implementation(libs.commonmark.strikethrough)

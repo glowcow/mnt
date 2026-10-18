@@ -53,6 +53,7 @@ import dev.glowcow.mnt.files.Opener
 import dev.glowcow.mnt.files.Paths
 import dev.glowcow.mnt.ui.components.EmptyState
 import dev.glowcow.mnt.ui.components.NodeRow
+import dev.glowcow.mnt.ui.components.rememberThumbnail
 import dev.glowcow.mnt.ui.components.StorageGate
 import dev.glowcow.mnt.ui.components.TabScreen
 import dev.glowcow.mnt.ui.components.TopTab
@@ -60,6 +61,7 @@ import dev.glowcow.mnt.ui.theme.AppFont
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.view.Format
+import dev.glowcow.mnt.view.image.Readers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -100,6 +102,10 @@ class SearchViewModel(private val c: AppContainer) : ViewModel() {
         }
     }
 
+    /** Whether rows show thumbnails, and of the pictures on servers too. */
+    val thumbnails: StateFlow<Pair<Boolean, Boolean>> = c.settings.settings.map { it.thumbnails to it.thumbnailsFar }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false to false)
+
     /** What was searched for before, the latest first. */
     val recent: StateFlow<List<String>> = c.settings.settings.map { it.searches }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -131,6 +137,7 @@ fun SearchScreen(
     val query by vm.query.collectAsStateWithLifecycle()
     val state by vm.state.collectAsStateWithLifecycle()
     val recent by vm.recent.collectAsStateWithLifecycle()
+    val thumbnails by vm.thumbnails.collectAsStateWithLifecycle()
     val none = stringResource(R.string.open_none)
     val focus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -189,12 +196,12 @@ fun SearchScreen(
                 else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = top, bottom = bottom)) {
                     items(state.found, key = { it.path }) { node ->
                         // A long press on a file leads to the folder it lies in.
-                        NodeRow(node, vm.display(Paths.parent(node.path)), onLongClick = { onOpen(Paths.parent(node.path)) }) {
+                        NodeRow(node, vm.display(Paths.parent(node.path)), thumbnail = rememberThumbnail(node, thumbnails.first, thumbnails.second), onLongClick = { onOpen(Paths.parent(node.path)) }) {
                             vm.remember()
                             when {
                                 node.directory -> onOpen(node.path)
                                 Archives.opens(node.name) -> onOpen(Archives.root(node.path))
-                                Format.of(node.name) != null -> onView(node.path)
+                                Readers.shows(node.name) || Format.of(node.name) != null -> onView(node.path)
                                 !Opener.open(context, node.path) -> Toast.makeText(context, none, Toast.LENGTH_SHORT).show()
                             }
                         }

@@ -14,6 +14,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -30,6 +31,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import dev.glowcow.mnt.R
 import dev.glowcow.mnt.container
+import dev.glowcow.mnt.files.Paths
 import dev.glowcow.mnt.files.TransferKind
 import dev.glowcow.mnt.ui.components.LocalDirection
 import dev.glowcow.mnt.ui.components.LocalPageDark
@@ -45,9 +47,11 @@ import dev.glowcow.mnt.ui.settings.SettingsPage
 import dev.glowcow.mnt.ui.settings.SettingsPageScreen
 import dev.glowcow.mnt.ui.settings.SettingsScreen
 import dev.glowcow.mnt.ui.theme.MntTheme
+import dev.glowcow.mnt.ui.photo.PhotoScreen
 import dev.glowcow.mnt.ui.view.BrowserScreen
 import dev.glowcow.mnt.ui.view.ViewerScreen
 import dev.glowcow.mnt.ui.view.outside
+import dev.glowcow.mnt.view.image.Readers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
@@ -59,6 +63,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object BinRoute : NavKey
 @Serializable data class ServerRoute(val id: String?) : NavKey
 @Serializable data class ViewerRoute(val path: String) : NavKey
+@Serializable data class PhotoRoute(val path: String) : NavKey
 @Serializable data class BrowserRoute(val url: String) : NavKey
 @Serializable data class SettingsPageRoute(val page: SettingsPage) : NavKey
 
@@ -93,7 +98,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
     val settings by context.container.settings.settings.collectAsStateWithLifecycle(null)
 
     fun openFile(path: String) {
-        backStack.add(ViewerRoute(path))
+        backStack.add(if (Readers.shows(Paths.name(path))) PhotoRoute(path) else ViewerRoute(path))
     }
 
     // A page of the web opens in the app's own browser while the settings say so; anything else goes to the app that takes it.
@@ -130,7 +135,12 @@ fun MntRoot(openTab: Flow<TopTab>) {
     val pageDark = remember { mutableStateOf<Boolean?>(null) }
     val lightIcons = !(pageDark.value ?: c.isDark)
     // Lists lie on the plain ground, the pages of blocks on the grouped one.
-    val ground = if (backStack.lastOrNull().let { it is FolderRoute || it == SearchRoute || it == BinRoute }) c.bg else c.groupBg
+    val ground = when (backStack.lastOrNull()) {
+        is FolderRoute, SearchRoute, BinRoute -> c.bg
+        // Pictures are shown on black in any theme.
+        is PhotoRoute -> Color.Black
+        else -> c.groupBg
+    }
     val view = LocalView.current
     SideEffect {
         val window = (view.context as? Activity)?.window ?: return@SideEffect
@@ -178,6 +188,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
                 entry<SettingsRoute> { SettingsScreen(onTab = ::selectTab, onPage = { backStack.add(SettingsPageRoute(it)) }) }
                 entry<SettingsPageRoute> { route -> SettingsPageScreen(route.page, onBack = { backStack.remove(route) }) }
                 entry<ViewerRoute> { route -> ViewerScreen(route.path, onBack = { backStack.remove(route) }, onLink = ::openLink, onFile = ::openFile) }
+                entry<PhotoRoute> { route -> PhotoScreen(route.path, onBack = { backStack.remove(route) }) }
                 entry<BrowserRoute> { route -> BrowserScreen(route.url, onClose = { backStack.remove(route) }) }
             },
         )

@@ -43,6 +43,14 @@ data class AppSettings(
     val pages: Boolean = true,
     /** A link opens in the app's own browser page instead of the phone's browser. */
     val linksInApp: Boolean = true,
+    /** HDR photos are shown with their bright parts as bright as the screen can, by the app's own drawing. */
+    val ultraHdr: Boolean = true,
+    /** Pictures in a folder show themselves small in place of their icons. */
+    val thumbnails: Boolean = true,
+    /** Thumbnails of pictures on servers and USB devices too, which fetches them. */
+    val thumbnailsFar: Boolean = true,
+    /** A photo's details show a map of where it was taken, downloaded from OpenStreetMap. */
+    val photoMap: Boolean = false,
 )
 
 private val Context.dataStore by preferencesDataStore("settings")
@@ -64,6 +72,10 @@ class SettingsStore(private val context: Context) {
     private val lineNumbersKey = booleanPreferencesKey("line_numbers")
     private val linksInAppKey = booleanPreferencesKey("links_in_app")
     private val pagesKey = booleanPreferencesKey("pages")
+    private val ultraHdrKey = booleanPreferencesKey("ultra_hdr")
+    private val thumbnailsKey = booleanPreferencesKey("thumbnails")
+    private val thumbnailsFarKey = booleanPreferencesKey("thumbnails_far")
+    private val photoMapKey = booleanPreferencesKey("photo_map")
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { p ->
         AppSettings(
@@ -83,6 +95,10 @@ class SettingsStore(private val context: Context) {
             lineNumbers = p[lineNumbersKey] ?: true,
             linksInApp = p[linksInAppKey] ?: true,
             pages = p[pagesKey] ?: true,
+            ultraHdr = p[ultraHdrKey] ?: true,
+            thumbnails = p[thumbnailsKey] ?: true,
+            thumbnailsFar = p[thumbnailsFarKey] ?: true,
+            photoMap = p[photoMapKey] ?: false,
         )
     }
 
@@ -104,6 +120,10 @@ class SettingsStore(private val context: Context) {
         it[lineNumbersKey] = s.lineNumbers
         it[linksInAppKey] = s.linksInApp
         it[pagesKey] = s.pages
+        it[ultraHdrKey] = s.ultraHdr
+        it[thumbnailsKey] = s.thumbnails
+        it[thumbnailsFarKey] = s.thumbnailsFar
+        it[photoMapKey] = s.photoMap
     }
 
     /** Adds pinned folders and searches to the ones kept, those already here staying where they are. */
@@ -128,6 +148,14 @@ class SettingsStore(private val context: Context) {
     suspend fun setPages(on: Boolean) = context.dataStore.edit { it[pagesKey] = on }
 
     suspend fun setLinksInApp(on: Boolean) = context.dataStore.edit { it[linksInAppKey] = on }
+
+    suspend fun setUltraHdr(on: Boolean) = context.dataStore.edit { it[ultraHdrKey] = on }
+
+    suspend fun setThumbnails(on: Boolean) = context.dataStore.edit { it[thumbnailsKey] = on }
+
+    suspend fun setThumbnailsFar(on: Boolean) = context.dataStore.edit { it[thumbnailsFarKey] = on }
+
+    suspend fun setPhotoMap(on: Boolean) = context.dataStore.edit { it[photoMapKey] = on }
 
     suspend fun setShowHidden(on: Boolean) = context.dataStore.edit { it[showHiddenKey] = on }
 

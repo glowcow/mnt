@@ -55,6 +55,9 @@ class MtpStore(private val device: MtpDevice, private val spool: File) : RemoteS
 
     override fun renames(path: String): Boolean = false
 
+    // A camera keeps a small JPEG of each of its pictures.
+    override fun thumbnail(path: String): ByteArray? = spot(path)?.handle?.takeIf { it != TOP }?.let { runCatching { device.getThumbnail(it) }.getOrNull() }
+
     override fun listing(path: String): List<Node> {
         if (path == ROOT) return storages().map { (name, _) -> Node(child(ROOT, name), name, true, 0, 0) }
         val spot = spot(path) ?: throw IOException("No such folder")

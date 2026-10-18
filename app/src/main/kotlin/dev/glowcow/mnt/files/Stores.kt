@@ -64,6 +64,8 @@ class Stores(private val local: FileStore, private val remote: (id: String) -> F
 
     override fun free(path: String): Long? = find(path)?.run { store.free(this.path) }
 
+    override fun thumbnail(path: String): ByteArray? = find(path)?.run { store.thumbnail(this.path) }
+
     override suspend fun readEach(paths: List<String>, each: suspend (path: String, input: InputStream) -> Unit) {
         // Each place reads its own files, in its own order.
         for ((id, group) in paths.groupBy { Remote.id(it) }) {

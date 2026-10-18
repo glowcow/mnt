@@ -63,6 +63,7 @@ import dev.glowcow.mnt.ui.components.IconButton48
 import dev.glowcow.mnt.ui.components.IslandIcons
 import dev.glowcow.mnt.ui.components.LocalOrigins
 import dev.glowcow.mnt.ui.components.NodeRow
+import dev.glowcow.mnt.ui.components.rememberThumbnail
 import dev.glowcow.mnt.ui.components.PillButton
 import dev.glowcow.mnt.ui.components.ProgressLine
 import dev.glowcow.mnt.ui.components.folderKey
@@ -70,6 +71,7 @@ import dev.glowcow.mnt.ui.components.nodeMeta
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.view.Format
+import dev.glowcow.mnt.view.image.Readers
 
 /** The sheet a folder's page has open. */
 enum class FolderSheet { SORT, NEW_FOLDER, RENAME, DELETE, MORE, DETAILS, ZIP, CONFLICT }
@@ -117,7 +119,7 @@ fun FolderScreen(
             selection.isNotEmpty() -> vm.toggle(node.path)
             node.directory -> onOpen(node.path)
             Archives.opens(node.name) -> onOpen(Archives.root(node.path))
-            Format.of(node.name) != null -> onView(node.path)
+            Readers.shows(node.name) || Format.of(node.name) != null -> onView(node.path)
             // Another app reads a file of an archive from a copy: it may jump about in it, an archive cannot.
             vm.archive != null -> vm.openOutside(node) { copy, refused ->
                 when {
@@ -234,7 +236,7 @@ fun FolderScreen(
             } else {
                 LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(top = top, bottom = bottom)) {
                     items(shown.nodes, key = { it.path }) { node ->
-                        NodeRow(node, nodeMeta(node, holds[node.path]), selected = node.path in selection, onLongClick = { vm.toggle(node.path) }) { open(node) }
+                        NodeRow(node, nodeMeta(node, holds[node.path]), selected = node.path in selection, thumbnail = rememberThumbnail(node, settings.thumbnails, settings.thumbnailsFar), onLongClick = { vm.toggle(node.path) }) { open(node) }
                     }
                 }
             }

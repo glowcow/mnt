@@ -60,6 +60,7 @@ import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.ui.theme.colorsOf
 import dev.glowcow.mnt.ui.view.CodePreview
+import dev.glowcow.mnt.maps.TileStore
 import dev.glowcow.mnt.update.AppRelease
 import dev.glowcow.mnt.update.AppUpdateState
 import dev.glowcow.mnt.update.AppUpdater
@@ -70,7 +71,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val store: SettingsStore, val updater: AppUpdater, private val backup: Backup) : ViewModel() {
+class SettingsViewModel(private val store: SettingsStore, val updater: AppUpdater, private val backup: Backup, private val tiles: TileStore) : ViewModel() {
+    /** Bytes of downloaded map on the phone; null until counted. */
+    var mapCache by mutableStateOf<Long?>(null)
+        private set
+
+    init {
+        viewModelScope.launch { mapCache = tiles.size() }
+    }
+
+    fun setPhotoMap(on: Boolean) = viewModelScope.launch { store.setPhotoMap(on) }
+
+    fun clearMapCache() = viewModelScope.launch {
+        tiles.clear()
+        mapCache = tiles.size()
+    }
+
     /** A backup is being written or read. */
     var busy by mutableStateOf(false)
         private set
@@ -108,6 +124,12 @@ class SettingsViewModel(private val store: SettingsStore, val updater: AppUpdate
     fun setLineNumbers(on: Boolean) = viewModelScope.launch { store.setLineNumbers(on) }
     fun setLinksInApp(on: Boolean) = viewModelScope.launch { store.setLinksInApp(on) }
 
+    fun setUltraHdr(on: Boolean) = viewModelScope.launch { store.setUltraHdr(on) }
+
+    fun setThumbnails(on: Boolean) = viewModelScope.launch { store.setThumbnails(on) }
+
+    fun setThumbnailsFar(on: Boolean) = viewModelScope.launch { store.setThumbnailsFar(on) }
+
     fun setBinExternal(on: Boolean) = viewModelScope.launch { store.setBinExternal(on) }
     fun setAppUpdate(on: Boolean) = viewModelScope.launch { store.setAppUpdate(on) }
     fun clearSearches() = viewModelScope.launch { store.clearSearches() }
@@ -121,7 +143,7 @@ enum class SettingsPage { APPEARANCE, FILES, VIEWER, BACKUP, CREDITS }
 fun SettingsScreen(
     onTab: (TopTab) -> Unit,
     onPage: (SettingsPage) -> Unit,
-    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup) } },
+    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles) } },
 ) {
     val c = MntTheme.colors
     val stored by vm.settings.collectAsStateWithLifecycle()
@@ -210,7 +232,7 @@ fun SettingsScreen(
 fun SettingsPageScreen(
     page: SettingsPage,
     onBack: () -> Unit,
-    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup) } },
+    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles) } },
 ) {
     val stored by vm.settings.collectAsStateWithLifecycle()
     val title = stringResource(
@@ -245,6 +267,12 @@ fun SettingsPageScreen(
                 GroupRow(stringResource(R.string.settings_djvu), value = "DjVuLibre · GPL-2.0-or-later")
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_archives), value = "libarchive, XZ Utils, Zstandard, bzip2 · BSD")
+                GroupDivider()
+                GroupRow(stringResource(R.string.settings_raw), value = "LibRaw · LGPL-2.1")
+                GroupDivider()
+                GroupRow(stringResource(R.string.settings_pictures), value = "libjxl, Highway, libtiff, AndroidSVG · BSD, Apache-2.0")
+                GroupDivider()
+                GroupRow(stringResource(R.string.settings_map_data), value = "OpenStreetMap · ODbL")
             }
         }
     }
@@ -315,6 +343,12 @@ private fun ColumnScope.Files(settings: AppSettings, vm: SettingsViewModel) {
         GroupDivider()
         SwitchRow(stringResource(R.string.settings_bin_external), stringResource(R.string.settings_bin_external_hint), settings.binExternal, vm::setBinExternal)
         GroupDivider()
+        SwitchRow(stringResource(R.string.settings_thumbnails), stringResource(R.string.settings_thumbnails_hint), settings.thumbnails, vm::setThumbnails)
+        if (settings.thumbnails) {
+            GroupDivider()
+            SwitchRow(stringResource(R.string.settings_thumbnails_far), stringResource(R.string.settings_thumbnails_far_hint), settings.thumbnailsFar, vm::setThumbnailsFar)
+        }
+        GroupDivider()
         // The value is how many searches are kept; with none there is nothing to tap for.
         GroupRow(
             stringResource(R.string.settings_search_clear),
@@ -354,6 +388,20 @@ private fun Viewer(title: String, settings: AppSettings?, vm: SettingsViewModel,
         }
         Group {
             SwitchRow(stringResource(R.string.settings_pages), stringResource(R.string.settings_pages_hint), settings.pages, vm::setPages)
+        }
+        Group {
+            SwitchRow(stringResource(R.string.settings_ultra_hdr), stringResource(R.string.settings_ultra_hdr_hint), settings.ultraHdr, vm::setUltraHdr)
+        }
+        Group {
+            SwitchRow(stringResource(R.string.settings_photo_map), stringResource(R.string.settings_photo_map_hint), settings.photoMap, vm::setPhotoMap)
+            GroupDivider()
+            // With nothing downloaded there is nothing to clear.
+            GroupRow(
+                stringResource(R.string.settings_map_clear),
+                value = vm.mapCache?.let { android.text.format.Formatter.formatShortFileSize(LocalContext.current, it) },
+                onClick = if ((vm.mapCache ?: 0L) > 0L) ({ vm.clearMapCache() }) else null,
+                trailing = {},
+            )
         }
         Group {
             SwitchRow(stringResource(R.string.settings_links), stringResource(R.string.settings_links_hint), settings.linksInApp, vm::setLinksInApp)

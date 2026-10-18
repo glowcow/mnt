@@ -1,8 +1,10 @@
 package dev.glowcow.mnt.ui.components
 
+import android.graphics.Bitmap
 import android.text.format.DateUtils
 import android.text.format.Formatter
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,17 +17,25 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,6 +43,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.glowcow.mnt.R
+import dev.glowcow.mnt.archive.Archives
+import dev.glowcow.mnt.container
+import dev.glowcow.mnt.files.Remote
+import dev.glowcow.mnt.view.image.Readers
 import dev.glowcow.mnt.files.Holds
 import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.ui.theme.FileIcons
@@ -73,7 +87,7 @@ fun nodeMeta(node: Node, holds: Holds? = null): String {
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NodeRow(node: Node, subtitle: String, selected: Boolean = false, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
+fun NodeRow(node: Node, subtitle: String, selected: Boolean = false, thumbnail: Bitmap? = null, onLongClick: (() -> Unit)? = null, onClick: () -> Unit) {
     val c = MntTheme.colors
     Column(Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)) {
         Row(
@@ -87,6 +101,9 @@ fun NodeRow(node: Node, subtitle: String, selected: Boolean = false, onLongClick
                     Box(Modifier.size(TICK).clip(CircleShape).background(c.accent), contentAlignment = Alignment.Center) {
                         Icon(MntIcons.Check, null, tint = c.onAccent, modifier = Modifier.size(16.dp))
                     }
+                } else if (thumbnail != null) {
+                    val image = remember(thumbnail) { thumbnail.asImageBitmap() }
+                    Image(image, null, contentScale = ContentScale.Crop, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)))
                 } else {
                     Icon(nodeIcon(node), null, tint = Color.Unspecified, modifier = Modifier.size(36.dp))
                 }
@@ -106,3 +123,18 @@ private const val HIDDEN = 0.45f
 
 // The mark of a ticked row: a disc smaller than the picture it stands in for.
 private val TICK = 28.dp
+
+/**
+ * The thumbnail of [node] once it is made, when [settings] want thumbnails and it is a picture: on the phone and its
+ * drives, on servers and devices too when [far] allows; never inside an archive, where each one is a read through it.
+ */
+@Composable
+fun rememberThumbnail(node: Node, on: Boolean, far: Boolean): Bitmap? {
+    if (!on || node.directory || !Readers.shows(node.name) || Archives.of(node.path) != null) return null
+    if (Remote.id(node.path) != null && !far) return null
+    val thumbnails = LocalContext.current.container.thumbnails
+    val size = with(LocalDensity.current) { 40.dp.roundToPx() }
+    var bitmap by remember(node.path, node.size, node.modified) { mutableStateOf(thumbnails.cached(node)) }
+    if (bitmap == null) LaunchedEffect(node.path, node.size, node.modified) { bitmap = thumbnails.of(node, size) }
+    return bitmap
+}

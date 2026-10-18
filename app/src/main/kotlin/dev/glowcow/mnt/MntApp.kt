@@ -6,6 +6,8 @@ import android.content.Context
 import dev.glowcow.mnt.archive.Archives
 import dev.glowcow.mnt.backup.Backup
 import dev.glowcow.mnt.data.SettingsStore
+import dev.glowcow.mnt.maps.TileStore
+import dev.glowcow.mnt.view.image.Thumbnails
 import dev.glowcow.mnt.files.FileStore
 import dev.glowcow.mnt.files.LocalStore
 import dev.glowcow.mnt.files.MediaIndex
@@ -47,9 +49,12 @@ class AppContainer(context: Context) {
     val trash = Trash(files, { volumes.list.map { it.path } })
     val transfers = TransferManager(scope, files, trash)
     val appUpdater = AppUpdater(context, scope)
+    /** OpenStreetMap's tiles for the map of where a photo was taken, kept once downloaded. */
+    val tiles = TileStore(File(context.cacheDir, "tiles/osm"), "Mnt/${appUpdater.current} (+https://github.com/glowcow/mnt)")
     val backup = Backup(context, settings)
     val haptics = Haptics(context.applicationContext)
     val cache: File = context.cacheDir
+    val thumbnails = Thumbnails(files, File(context.cacheDir, "thumbs"), File(context.cacheDir, "thumbs-fetch"))
 
     private var purging: Job? = null
 
@@ -80,7 +85,12 @@ class MntApp : Application() {
         }
         TrashScheduler.apply(this)
         // What was copied out of archives for other apps is theirs only while they show it.
-        thread(name = "opened-clear") { File(cacheDir, FolderViewModel.OPENED).deleteRecursively() }
+        // So are the pictures fetched from servers to be shown or made small: a page that was left keeps none.
+        thread(name = "opened-clear") {
+            File(cacheDir, FolderViewModel.OPENED).deleteRecursively()
+            File(cacheDir, "photo").deleteRecursively()
+            File(cacheDir, "thumbs-fetch").deleteRecursively()
+        }
         // A transfer starts from a screen, so the app is in front and may start the service that keeps it going.
         container.scope.launch {
             container.transfers.progress.map { it != null }.distinctUntilChanged().collect { running ->

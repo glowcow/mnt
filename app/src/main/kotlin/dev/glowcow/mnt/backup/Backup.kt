@@ -35,6 +35,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                             s.theme.name, s.palette.name, s.appUpdate, s.showHidden, s.sortBy.name, s.sortDescending,
                             s.pinned, s.hiddenPlaces.toList(), s.searches, s.binExternal,
                             s.codeLight.name, s.codeDark.name, s.wrapLines, s.lineNumbers, s.linksInApp, s.pages,
+                            s.ultraHdr, s.thumbnails, s.thumbnailsFar, s.photoMap,
                         ),
                     ),
                 )
@@ -98,6 +99,10 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                 lineNumbers = b.lineNumbers,
                 linksInApp = b.linksInApp,
                 pages = b.pages,
+                ultraHdr = b.ultraHdr,
+                thumbnails = b.thumbnails,
+                thumbnailsFar = b.thumbnailsFar,
+                photoMap = b.photoMap,
             )
         }
     }

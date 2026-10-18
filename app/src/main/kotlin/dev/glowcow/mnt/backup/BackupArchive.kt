@@ -28,6 +28,10 @@ data class BackupSettings(
     val lineNumbers: Boolean = true,
     val linksInApp: Boolean = true,
     val pages: Boolean = true,
+    val ultraHdr: Boolean = true,
+    val thumbnails: Boolean = true,
+    val thumbnailsFar: Boolean = true,
+    val photoMap: Boolean = false,
 )
 
 /** `backup.json` of an archive. */
