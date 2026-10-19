@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
@@ -76,21 +77,27 @@ fun Modifier.pageMotion(from: Rect? = null): Modifier {
         }
     }
     if (from == null) return graphicsLayer { alpha = open }
-    return graphicsLayer {
-        val width = lerp(from.width, size.width, open)
-        val height = lerp(from.height, size.height, open)
-        val scale = width / size.width
-        transformOrigin = TransformOrigin(0f, 0f)
-        scaleX = scale
-        scaleY = scale
-        translationX = lerp(from.left, 0f, open)
-        translationY = lerp(from.top, 0f, open)
-        // The page shows through the row for the first part of the way only.
-        alpha = (open / SHOWN_BY).coerceIn(0f, 1f)
-        clip = true
-        // Measured on the page before it is scaled: the frame's height there, and corners that straighten out.
-        shape = Frame(height / scale, CORNER.toPx() * (1f - open) / scale)
-    }
+    return grown(from) { open }
+}
+
+/**
+ * A page grown out of the place [from] by [open], 0 to 1: held by its top in a frame as wide as itself, scaled from
+ * that place's width to its own, its corners straightening out and showing through for the first part of the way.
+ */
+fun Modifier.grown(from: Rect, corner: Dp = CORNER, open: () -> Float): Modifier = graphicsLayer {
+    val t = open()
+    val width = lerp(from.width, size.width, t)
+    val height = lerp(from.height, size.height, t)
+    val scale = width / size.width
+    transformOrigin = TransformOrigin(0f, 0f)
+    scaleX = scale
+    scaleY = scale
+    translationX = lerp(from.left, 0f, t)
+    translationY = lerp(from.top, 0f, t)
+    alpha = (t / SHOWN_BY).coerceIn(0f, 1f)
+    clip = true
+    // Measured on the page before it is scaled: the frame's height there, and corners that straighten out.
+    shape = Frame(height / scale, corner.toPx() * (1f - t) / scale)
 }
 
 private class Frame(private val height: Float, private val corner: Float) : Shape {

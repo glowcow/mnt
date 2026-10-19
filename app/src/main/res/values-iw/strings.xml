@@ -359,9 +359,11 @@
     <string name="player_cast">השמעה ב־</string>
     <string name="player_this_phone">הטלפון הזה</string>
     <string name="player_looking">מחפש רמקולים…</string>
+    <string name="player_volume">עוצמת קול: %1$d</string>
     <string name="player_none_found">לא נמצאו רמקולים ברשת הזו</string>
     <string name="player_no_lyrics">לרצועה הזו אין מילים</string>
     <string name="player_unreachable">לא ניתן להתחבר אל %s</string>
+    <string name="player_refused">לא ניתן לשלוט ב־%s</string>
     <string name="player_title">שם</string>
     <string name="player_artist">אמן</string>
     <string name="player_album">אלבום</string>

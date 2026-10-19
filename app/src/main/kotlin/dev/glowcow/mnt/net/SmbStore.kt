@@ -1,5 +1,6 @@
 package dev.glowcow.mnt.net
 
+import android.os.SystemClock
 import com.hierynomus.msdtyp.AccessMask
 import com.hierynomus.msdtyp.FileTime
 import com.hierynomus.mserref.NtStatus
@@ -9,7 +10,9 @@ import com.hierynomus.msfscc.fileinformation.FileStandardInformation
 import com.hierynomus.mssmb2.SMB2CreateDisposition
 import com.hierynomus.mssmb2.SMB2ShareAccess
 import com.hierynomus.mssmb2.SMBApiException
+import com.hierynomus.mssmb2.messages.SMB2Echo
 import com.hierynomus.protocol.commons.EnumWithValue
+import com.hierynomus.protocol.transport.TransportException
 import com.hierynomus.security.AEADBlockCipher
 import com.hierynomus.security.Mac
 import com.hierynomus.security.SecurityException
@@ -20,32 +23,44 @@ import com.hierynomus.smbj.SMBClient
 import com.hierynomus.smbj.SmbConfig
 import com.hierynomus.smbj.auth.AuthenticationContext
 import com.hierynomus.smbj.auth.NtlmAuthenticator
+import com.hierynomus.smbj.connection.Connection as SmbConnection
 import com.hierynomus.smbj.share.DiskShare
 import com.hierynomus.smbj.share.File
 import dev.glowcow.mnt.files.Node
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.SocketException
+import java.net.SocketTimeoutException
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.math.min
 
 /** A share of an SMB 2 or 3 server — Windows, Samba, a NAS. */
 class SmbStore(private val c: Connection) : RemoteStore() {
     private var client: SMBClient? = null
+    private var connection: SmbConnection? = null
     private var share: DiskShare? = null
+    private var usedAt = 0L
 
+    // A connection left alone a while is asked whether it is still there before it is trusted: a phone that slept, or
+    // a server that let go, leaves one that takes questions and never answers them.
     @Synchronized
     private fun share(): DiskShare {
-        share?.takeIf { it.isConnected }?.let { return it }
+        val now = SystemClock.elapsedRealtime()
+        share?.takeIf { it.isConnected && connection?.isConnected == true && (now - usedAt < IDLE_MS || answers()) }?.let {
+            usedAt = now
+            return it
+        }
         close()
-        // NTLM alone: the Kerberos way in leans on classes Android does not have.
+        // NTLM alone: the Kerberos way in leans on classes Android does not have. No timeout on the socket: one there
+        // drops a connection idle that long, and smbj's reader then waits on itself to say goodbye.
         val config = SmbConfig.builder()
             .withTimeout(TIMEOUT_S, TimeUnit.SECONDS)
-            .withSoTimeout(TIMEOUT_S, TimeUnit.SECONDS)
             .withAuthenticators(NtlmAuthenticator.Factory())
             .withSecurityProvider(Crypto())
             // Says the phone can seal what it sends; a server that asks for that lets nobody else in.
@@ -59,25 +74,48 @@ class SmbStore(private val c: Connection) : RemoteStore() {
         } else {
             AuthenticationContext(c.user.substringAfter('\\'), c.password.toCharArray(), c.user.substringBefore('\\', "").ifEmpty { null })
         }
-        val session = opened.connect(c.host.trim(), c.port.takeIf { it > 0 } ?: c.protocol.port).authenticate(auth)
-        val disk = session.connectShare(c.share.trim('/', '\\')) as? DiskShare ?: throw IOException("Not a share of files")
+        val link = opened.connect(c.host.trim(), c.port.takeIf { it > 0 } ?: c.protocol.port)
+        connection = link
+        val disk = link.authenticate(auth).connectShare(c.share.trim('/', '\\')) as? DiskShare ?: throw IOException("Not a share of files")
+        usedAt = now
         return disk.also { share = it }
     }
+
+    private fun answers(): Boolean = runCatching {
+        val link = connection ?: return false
+        link.send<SMB2Echo>(SMB2Echo(link.negotiatedProtocol.dialect)).get(ECHO_MS, TimeUnit.MILLISECONDS)
+        true
+    }.getOrDefault(false)
 
     @Synchronized
     override fun close() {
         runCatching { client?.close() }
         client = null
+        connection = null
         share = null
     }
 
-    override fun listing(path: String): List<Node> = share().list(inner(path)).filter { it.fileName != "." && it.fileName != ".." }.map {
+    // Asked once more over a new connection when the one there broke under the question, or could not be made:
+    // the first after a long sleep often finds the network not yet awake. What the server refused is not asked again.
+    private fun <T> again(work: (DiskShare) -> T): T = try {
+        work(share())
+    } catch (e: Exception) {
+        if (e is SMBApiException || !broken(e)) throw e
+        close()
+        work(share())
+    }
+
+    private fun broken(e: Throwable): Boolean = generateSequence(e) { it.cause }.take(8).any {
+        it is TransportException || it is SocketException || it is SocketTimeoutException || it is TimeoutException
+    }
+
+    override fun listing(path: String): List<Node> = again { it.list(inner(path)) }.filter { it.fileName != "." && it.fileName != ".." }.map {
         val folder = EnumWithValue.EnumUtils.isSet(it.fileAttributes, FileAttributes.FILE_ATTRIBUTE_DIRECTORY)
         Node(child(path, it.fileName), it.fileName, folder, if (folder) 0 else it.endOfFile, it.lastWriteTime.toEpochMillis())
     }
 
     override fun node(path: String): Node? = try {
-        val known = share().getFileInformation(inner(path))
+        val known = again { it.getFileInformation(inner(path)) }
         val folder = known.standardInformation.isDirectory
         Node(path, name(path), folder, if (folder) 0 else known.standardInformation.endOfFile, known.basicInformation.lastWriteTime.toEpochMillis())
     } catch (e: SMBApiException) {
@@ -103,7 +141,7 @@ class SmbStore(private val c: Connection) : RemoteStore() {
     }
 
     override fun input(path: String, offset: Long): InputStream {
-        val file = share().openFile(inner(path), setOf(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null)
+        val file = again { it.openFile(inner(path), setOf(AccessMask.GENERIC_READ), null, SMB2ShareAccess.ALL, SMB2CreateDisposition.FILE_OPEN, null) }
         return Ahead(file, offset, file.getFileInformation(FileStandardInformation::class.java).endOfFile)
     }
 
@@ -256,6 +294,10 @@ class SmbStore(private val c: Connection) : RemoteStore() {
 
     private companion object {
         const val TIMEOUT_S = 20L
+
+        // How long a connection may be left alone and still be trusted, and how long it has to answer when asked.
+        const val IDLE_MS = 30_000L
+        const val ECHO_MS = 3_000L
 
         // How much one question asks for, and how many are on their way at once.
         const val PIECE = 1024 * 1024

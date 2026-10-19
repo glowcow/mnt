@@ -358,9 +358,11 @@
     <string name="player_cast">Play on</string>
     <string name="player_this_phone">This phone</string>
     <string name="player_looking">Looking for speakers…</string>
+    <string name="player_volume">Volume: %1$d</string>
     <string name="player_none_found">No speakers found on this network</string>
     <string name="player_no_lyrics">This track has no lyrics</string>
     <string name="player_unreachable">Can’t reach %s</string>
+    <string name="player_refused">Couldn’t control %s</string>
     <string name="player_title">Title</string>
     <string name="player_artist">Artist</string>
     <string name="player_album">Album</string>

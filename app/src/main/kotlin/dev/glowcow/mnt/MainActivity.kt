@@ -2,6 +2,7 @@ package dev.glowcow.mnt
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -40,6 +41,25 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         container.haptics.show(null)
         super.onPause()
+    }
+
+    // While a speaker plays, the volume keys turn it up and down and the app shows how loud, as Symfonium does.
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        val step = volumeStep(keyCode) ?: return super.onKeyDown(keyCode, event)
+        container.playback.volumeBy(step)
+        return true
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean = volumeStep(keyCode) != null || super.onKeyUp(keyCode, event)
+
+    private fun volumeStep(keyCode: Int): Int? = if (container.casting.target == null) {
+        null
+    } else {
+        when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> 1
+            KeyEvent.KEYCODE_VOLUME_DOWN -> -1
+            else -> null
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

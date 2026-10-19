@@ -38,7 +38,7 @@ class Waves(private val files: FileStore, private val dir: File) {
             known[id]?.let { return@withLock it }
             withContext(Dispatchers.Default) {
                 val node = files.stat(id) ?: return@withContext null
-                val kept = File(dir, key("$id\u0000${node.size}\u0000${node.modified}"))
+                val kept = File(dir, key("$KIND\u0000$id\u0000${node.size}\u0000${node.modified}"))
                 val wave = runCatching { kept.readBytes() }.getOrNull()?.takeIf { it.size == BINS }?.let { b -> FloatArray(BINS) { (b[it].toInt() and 0xFF) / 255f } }
                     ?: measure(id, node.size)?.also { w ->
                         dir.mkdirs()
@@ -122,8 +122,9 @@ class Waves(private val files: FileStore, private val dir: File) {
             val rms = FloatArray(BINS) { if (counts[it] > 0) sqrt(sums[it] / counts[it]).toFloat() else 0f }
             // Bins that heard nothing take their neighbour's level.
             for (i in 1 until BINS) if (counts[i] == 0) rms[i] = rms[i - 1]
-            val top = rms.max().takeIf { it > 0f } ?: return FloatArray(BINS)
-            return FloatArray(BINS) { sqrt(rms[it] / top) }
+            // Loudness as heard, to the loudest part but for a stray peak: a quiet verse stands well below a chorus.
+            val top = rms.sorted()[(BINS * TOP_AT).toInt()].takeIf { it > 0f } ?: return FloatArray(BINS)
+            return FloatArray(BINS) { (rms[it] / top).coerceAtMost(1f) }
         } catch (_: Exception) {
             return null
         } finally {
@@ -160,6 +161,10 @@ class Waves(private val files: FileStore, private val dir: File) {
 
     companion object {
         const val BINS = 160
+
+        // What a kept wave was measured by, for one measured another way to be made again; and the part of the bins below the top.
+        private const val KIND = "rms"
+        private const val TOP_AT = 0.98f
         private const val TIMEOUT_US = 10_000L
 
         // Up to this long a track is decoded whole; past it, a moment at each bar.

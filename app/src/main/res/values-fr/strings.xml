@@ -359,9 +359,11 @@
     <string name="player_cast">Lire sur</string>
     <string name="player_this_phone">Ce téléphone</string>
     <string name="player_looking">Recherche d’enceintes…</string>
+    <string name="player_volume">Volume : %1$d</string>
     <string name="player_none_found">Aucune enceinte trouvée sur ce réseau</string>
     <string name="player_no_lyrics">Cette piste n’a pas de paroles</string>
     <string name="player_unreachable">Impossible de joindre %s</string>
+    <string name="player_refused">Impossible de commander %s</string>
     <string name="player_title">Titre</string>
     <string name="player_artist">Artiste</string>
     <string name="player_album">Album</string>

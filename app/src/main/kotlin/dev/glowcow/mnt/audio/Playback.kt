@@ -2,6 +2,7 @@ package dev.glowcow.mnt.audio
 
 import android.content.ComponentName
 import android.content.Context
+import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -87,6 +88,15 @@ class Playback(private val context: Context, private val files: FileStore, priva
         private set
     var repeat by mutableIntStateOf(Player.REPEAT_MODE_OFF)
         private set
+
+    /** How loud the speaker plays, of [volumeMax]; and a count of the times it was changed here, for the panel that shows it. */
+    var volume by mutableIntStateOf(0)
+        private set
+    var volumeMax by mutableIntStateOf(0)
+        private set
+    var volumeAsked by mutableIntStateOf(0)
+        private set
+    private var volumeSetAt = 0L
 
     /** The full player shows the words of the track where the cover is; kept while it is down. */
     var wordsShown by mutableStateOf(false)
@@ -181,6 +191,18 @@ class Playback(private val context: Context, private val files: FileStore, priva
         it.clearMediaItems()
     }
 
+    /** Turns the speaker up or down by [steps] of [VOLUME_STEP], as the phone's volume keys do while it plays. */
+    fun volumeBy(steps: Int) = turnTo(volume + steps * VOLUME_STEP)
+
+    fun turnTo(to: Int) {
+        val v = to.coerceIn(0, volumeMax.coerceAtLeast(0))
+        // Shown at once; the player's own word, a moment late, would pull the slider back.
+        volume = v
+        volumeSetAt = SystemClock.elapsedRealtime()
+        volumeAsked++
+        use { it.setDeviceVolume(v, 0) }
+    }
+
     fun show() {
         opens.trySend(Unit)
     }
@@ -243,10 +265,14 @@ class Playback(private val context: Context, private val files: FileStore, priva
         duration = player?.duration ?: C.TIME_UNSET
         shuffle = player?.shuffleModeEnabled == true
         repeat = player?.repeatMode ?: Player.REPEAT_MODE_OFF
+        volumeMax = player?.deviceInfo?.maxVolume ?: 0
+        if (SystemClock.elapsedRealtime() - volumeSetAt > VOLUME_HELD_MS) volume = player?.deviceVolume ?: 0
     }
 
     private companion object {
         const val MAX_LIST = 4 shl 20
         const val MAX_COVER_FOLDERS = 16
+        const val VOLUME_STEP = 2
+        const val VOLUME_HELD_MS = 1500L
     }
 }

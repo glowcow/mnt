@@ -93,7 +93,7 @@ class PlayerService : MediaSessionService() {
         val session = session ?: return
         val from = session.player
         if (renderer?.id == container.casting.target?.id && (renderer == null) == (from === exo)) return
-        val to: Player = if (renderer == null) exo else UpnpPlayer(renderer, server, { container.playback.tags.read(it) }, ::unreachable)
+        val to: Player = if (renderer == null) exo else UpnpPlayer(renderer, server, { container.playback.tags.read(it) }, ::unreachable, ::refused)
         val items = (0 until from.mediaItemCount).map { from.getMediaItemAt(it) }
         from.removeListener(listener)
         to.addListener(listener)
@@ -115,6 +115,10 @@ class PlayerService : MediaSessionService() {
     private fun unreachable(name: String) {
         Toast.makeText(this, getString(R.string.player_unreachable, name), Toast.LENGTH_SHORT).show()
         move(null)
+    }
+
+    private fun refused(name: String) {
+        Toast.makeText(this, getString(R.string.player_refused, name), Toast.LENGTH_SHORT).show()
     }
 
     // A renderer reads from the phone while it plays: Wi-Fi and the processor stay up for it.

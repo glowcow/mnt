@@ -16,11 +16,11 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dev.glowcow.mnt.audio.Sounds
 import dev.glowcow.mnt.audio.Tag
-import java.io.IOException
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.URI
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The queue played by a [renderer] on the network: it is handed a link to each track in turn, served by [server],
@@ -32,9 +32,14 @@ class UpnpPlayer(
     private val server: FileServer,
     private val tags: suspend (String) -> Tag?,
     private val onFailed: (String) -> Unit,
+    private val onRefused: (String) -> Unit,
 ) : SimpleBasePlayer(Looper.getMainLooper()) {
     private val main = Handler(Looper.getMainLooper())
     private val net = Executors.newSingleThreadExecutor()
+
+    // The volume has a line of its own: a turn of the knob is not kept waiting behind a question about the track.
+    private val loudness = Executors.newSingleThreadExecutor()
+    private val volumeQueued = AtomicBoolean(false)
 
     private var items: List<MediaItem> = emptyList()
     private val metadata = HashMap<String, MediaMetadata>()
@@ -46,13 +51,18 @@ class UpnpPlayer(
     private var duration = C.TIME_UNSET
     private var repeat = Player.REPEAT_MODE_OFF
     private var shuffle = false
+    @Volatile
     private var volume = 50
+    private var volumeSetAt = 0L
     private var error: PlaybackException? = null
     private var released = false
 
     // What the renderer was last told and has shown since: an end it reports is believed only after it played.
     private var loaded = -1
     private var heardPlaying = false
+
+    // Play was asked of the loaded track: before it a renderer has nothing to pause, and Sonos answers 701.
+    private var started = false
     private var quietUntil = 0L
 
     private val local: InetAddress by lazy {
@@ -127,7 +137,17 @@ class UpnpPlayer(
         this.playWhenReady = playWhenReady
         moveTo(currentAt())
         hush()
-        if (loaded == index) net.execute { act(if (playWhenReady) "Play" else "Pause", *(if (playWhenReady) arrayOf("Speed" to "1") else emptyArray())) }
+        if (loaded == index) {
+            if (playWhenReady) {
+                started = true
+                send("Play", "Speed" to "1") {
+                    this.playWhenReady = false
+                    invalidateState()
+                }
+            } else if (started) {
+                send("Pause", told = false)
+            }
+        }
         return done()
     }
 
@@ -144,7 +164,7 @@ class UpnpPlayer(
         } else {
             moveTo(to)
             hush()
-            net.execute { act("Seek", "Unit" to "REL_TIME", "Target" to Soap.time(to)) }
+            send("Seek", "Unit" to "REL_TIME", "Target" to Soap.time(to))
         }
         return done()
     }
@@ -153,7 +173,7 @@ class UpnpPlayer(
         state = Player.STATE_IDLE
         moveTo(currentAt())
         loaded = -1
-        net.execute { act("Stop") }
+        send("Stop", told = false)
         return done()
     }
 
@@ -162,6 +182,7 @@ class UpnpPlayer(
         main.removeCallbacks(poll)
         net.execute { runCatching { Soap.call(renderer.transport, renderer.transportType, "Stop", "InstanceID" to "0") } }
         net.shutdown()
+        loudness.shutdown()
         return done()
     }
 
@@ -177,8 +198,15 @@ class UpnpPlayer(
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {
         volume = deviceVolume.coerceIn(0, 100)
-        val v = volume
-        net.execute { runCatching { renderer.rendering?.let { Soap.call(it, renderer.renderingType!!, "SetVolume", "InstanceID" to "0", "Channel" to "Master", "DesiredVolume" to v.toString()) } } }
+        volumeSetAt = SystemClock.elapsedRealtime()
+        // Turns that come faster than the renderer answers are sent as the last of them.
+        if (volumeQueued.compareAndSet(false, true)) {
+            loudness.execute {
+                volumeQueued.set(false)
+                val v = volume
+                runCatching { renderer.rendering?.let { Soap.call(it, renderer.renderingType!!, "SetVolume", "InstanceID" to "0", "Channel" to "Master", "DesiredVolume" to v.toString()) } }
+            }
+        }
         return done()
     }
 
@@ -200,7 +228,7 @@ class UpnpPlayer(
                 index = 0
                 state = Player.STATE_IDLE
                 loaded = -1
-                net.execute { act("Stop") }
+                send("Stop", told = false)
             }
             playingGone -> {
                 index = fromIndex.coerceAtMost(items.size - 1)
@@ -258,6 +286,7 @@ class UpnpPlayer(
         val start = position
         loaded = at
         heardPlaying = false
+        started = playWhenReady
         hush()
         net.execute {
             try {
@@ -275,7 +304,7 @@ class UpnpPlayer(
                     if (tag?.duration != null && index == at) duration = tag.duration
                     invalidateState()
                 }
-                if (runCatching { act("Stop") }.isFailure) Unit
+                runCatching { act("Stop") }
                 act("SetAVTransportURI", "CurrentURI" to url, "CurrentURIMetaData" to didl(url, item.mediaId, meta, tag, cover))
                 if (start > SEEK_FROM_MS) runCatching { act("Seek", "Unit" to "REL_TIME", "Target" to Soap.time(start)) }
                 val play = playWhenReady
@@ -287,7 +316,7 @@ class UpnpPlayer(
                         invalidateState()
                     }
                 }
-            } catch (e: IOException) {
+            } catch (e: Exception) {
                 main.post {
                     error = PlaybackException(e.message, e, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED)
                     state = Player.STATE_IDLE
@@ -299,14 +328,36 @@ class UpnpPlayer(
         }
     }
 
+    // Off the main thread, and never thrown: a renderer that will not do [action] says so ([told]) and [refused] puts
+    // the player back; the next poll tells where the renderer really is.
+    private fun send(action: String, vararg args: Pair<String, String>, told: Boolean = true, refused: (() -> Unit)? = null) {
+        net.execute {
+            try {
+                act(action, *args)
+            } catch (_: Exception) {
+                main.post {
+                    if (released) return@post
+                    refused?.invoke()
+                    if (told) onRefused(renderer.name)
+                }
+            }
+        }
+    }
+
     private fun act(action: String, vararg args: Pair<String, String>): Map<String, String> =
         Soap.call(renderer.transport, renderer.transportType, action, "InstanceID" to "0", *args)
 
-    // Where the renderer is and what it does; the end of a track it played moves the queue on.
+    // Where the renderer is, what it does and how loud; the end of a track it played moves the queue on.
     private fun ask() {
         val transport = runCatching { act("GetTransportInfo")["CurrentTransportState"] }.getOrNull() ?: return
         val info = runCatching { act("GetPositionInfo") }.getOrNull()
+        val loud = runCatching { renderer.rendering?.let { Soap.call(it, renderer.renderingType!!, "GetVolume", "InstanceID" to "0", "Channel" to "Master") }?.get("CurrentVolume")?.toIntOrNull() }.getOrNull()
         main.post {
+            // Turned up or down elsewhere, as by the speaker's own buttons; what was just set here stands a moment.
+            if (loud != null && loud != volume && SystemClock.elapsedRealtime() - volumeSetAt > QUIET_MS) {
+                volume = loud
+                invalidateState()
+            }
             if (released || loaded != index || SystemClock.elapsedRealtime() < quietUntil) return@post
             val rel = Soap.millis(info?.get("RelTime"))
             Soap.millis(info?.get("TrackDuration"))?.takeIf { it > 0 }?.let { duration = it }
@@ -374,7 +425,7 @@ class UpnpPlayer(
         const val POLL_MS = 1000L
         const val QUIET_MS = 2500L
         const val SEEK_FROM_MS = 1000L
-        const val VOLUME_STEP = 5
+        const val VOLUME_STEP = 2
 
         val COMMANDS: Player.Commands = Player.Commands.Builder().addAll(
             Player.COMMAND_PLAY_PAUSE, Player.COMMAND_PREPARE, Player.COMMAND_STOP,

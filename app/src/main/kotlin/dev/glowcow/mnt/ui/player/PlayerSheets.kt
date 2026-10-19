@@ -1,14 +1,19 @@
 package dev.glowcow.mnt.ui.player
 
 import android.content.pm.ActivityInfo
+import android.os.Build
+import android.provider.Settings
 import android.text.format.DateUtils
 import android.text.format.Formatter
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -28,14 +33,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -136,29 +145,33 @@ internal fun DetailsSheet(playback: Playback, onDismiss: () -> Unit) {
     }
 }
 
-/** Where the queue plays: the phone, or a speaker of the network found as the sheet opens. */
+/**
+ * Where the queue plays, after Symfonium's *Play on*: a card for the phone and one for each speaker of the network
+ * found as the sheet opens, its picture, its name with what it is, and who made it; the one playing is tinted.
+ */
 @Composable
 internal fun CastSheet(onDismiss: () -> Unit) {
     val c = MntTheme.colors
-    val casting = LocalContext.current.container.casting
+    val context = LocalContext.current
+    val casting = context.container.casting
     LaunchedEffect(Unit) { casting.search() }
     GroupSheet(stringResource(R.string.player_cast), onDismiss) { pick ->
         val target = casting.target
-        Group {
-            GroupRow(
-                stringResource(R.string.player_this_phone),
-                icon = MntIcons.Phone,
-                onClick = { pick { casting.use(null) } },
-                trailing = { if (target == null) Check() },
-            )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val phone = remember { Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME) ?: Build.MODEL }
+            Place(stringResource(R.string.player_this_phone), phone, chosen = target == null, onClick = { pick { casting.use(null) } }) {
+                Icon(MntIcons.Phone, null, tint = c.text, modifier = Modifier.size(24.dp))
+            }
             for (renderer in casting.renderers) {
-                GroupDivider()
-                GroupRow(
-                    renderer.name,
-                    icon = MntIcons.Speaker,
-                    onClick = { pick { casting.use(renderer) } },
-                    trailing = { if (target?.id == renderer.id) Check() },
-                )
+                Place(renderer.title, renderer.maker, chosen = target?.id == renderer.id, onClick = { pick { casting.use(renderer) } }) {
+                    val picture by produceState(casting.knownPicture(renderer), renderer.icon) { value = casting.picture(renderer) }
+                    val shown = picture
+                    if (shown != null) {
+                        Image(shown, null, Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)), contentScale = ContentScale.Fit)
+                    } else {
+                        Icon(MntIcons.Speaker, null, tint = c.text, modifier = Modifier.size(24.dp))
+                    }
+                }
             }
         }
         val note = when {
@@ -169,6 +182,32 @@ internal fun CastSheet(onDismiss: () -> Unit) {
         note?.let { Text(stringResource(it), color = c.muted, fontSize = 13.sp, modifier = Modifier.padding(start = 4.dp, top = 10.dp)) }
     }
 }
+
+// A card of a place to play on: a 40 dp picture, the name, who made it; the one playing on the accent's tint, with the check.
+@Composable
+private fun Place(title: String, subtitle: String?, chosen: Boolean, onClick: () -> Unit, picture: @Composable () -> Unit) {
+    val c = MntTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (chosen) c.accent.copy(alpha = CHOSEN).compositeOver(c.group) else c.group)
+            .clickable(role = Role.Button, onClick = onClick)
+            .heightIn(min = 64.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) { picture() }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, color = c.text, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            subtitle?.let { Text(it, color = c.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+        }
+        if (chosen) Check()
+    }
+}
+
+private const val CHOSEN = 0.16f
 
 @Composable
 private fun Check() {

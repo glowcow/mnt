@@ -363,9 +363,11 @@
     <string name="player_cast">Odtwarzaj na</string>
     <string name="player_this_phone">Ten telefon</string>
     <string name="player_looking">Szukam głośników…</string>
+    <string name="player_volume">Głośność: %1$d</string>
     <string name="player_none_found">Nie znaleziono głośników w tej sieci</string>
     <string name="player_no_lyrics">Ten utwór nie ma tekstu</string>
     <string name="player_unreachable">Nie można połączyć się z %s</string>
+    <string name="player_refused">Nie udało się sterować %s</string>
     <string name="player_title">Tytuł</string>
     <string name="player_artist">Wykonawca</string>
     <string name="player_album">Album</string>

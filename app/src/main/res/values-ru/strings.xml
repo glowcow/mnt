@@ -363,9 +363,11 @@
     <string name="player_cast">Где играть</string>
     <string name="player_this_phone">Этот телефон</string>
     <string name="player_looking">Ищу колонки…</string>
+    <string name="player_volume">Громкость: %1$d</string>
     <string name="player_none_found">В этой сети колонок не нашлось</string>
     <string name="player_no_lyrics">У этого трека нет текста</string>
     <string name="player_unreachable">Не удаётся связаться с %s</string>
+    <string name="player_refused">Не удалось управлять %s</string>
     <string name="player_title">Название</string>
     <string name="player_artist">Исполнитель</string>
     <string name="player_album">Альбом</string>

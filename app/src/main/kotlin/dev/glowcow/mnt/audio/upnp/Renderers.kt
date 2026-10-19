@@ -24,7 +24,14 @@ data class Renderer(
     val transportType: String,
     val rendering: String?,
     val renderingType: String?,
-)
+    /** What it is and who made it, as `Era 300` and `Sonos`; the address of its picture. */
+    val model: String? = null,
+    val maker: String? = null,
+    val icon: String? = null,
+) {
+    /** Its name with what it is, `era • Era 300`, as a list of speakers shows it. */
+    val title: String get() = model?.takeUnless { it.equals(name, ignoreCase = true) }?.let { "$name • $it" } ?: name
+}
 
 /** Finds the renderers of the network the phone is on: asks by SSDP, then reads each one's description. */
 object Renderers {
@@ -90,6 +97,7 @@ object Renderers {
                 val devices = ArrayList<Device>()
                 val stack = ArrayList<Device>()
                 var service: MutableMap<String, String>? = null
+                var icon: MutableMap<String, String>? = null
                 var text = StringBuilder()
                 while (parser.next() != XmlPullParser.END_DOCUMENT) {
                     val name = parser.name?.substringAfter(':')
@@ -99,6 +107,7 @@ object Renderers {
                             when (name) {
                                 "device" -> stack += Device()
                                 "service" -> service = HashMap()
+                                "icon" -> icon = HashMap()
                             }
                         }
                         XmlPullParser.TEXT -> text.append(parser.text)
@@ -113,8 +122,13 @@ object Renderers {
                                     service?.let { device?.services?.add(it) }
                                     service = null
                                 }
+                                name == "icon" -> {
+                                    icon?.let { device?.icons?.add(it) }
+                                    icon = null
+                                }
                                 service != null && name != null -> service!![name] = value
-                                device != null && name in setOf("deviceType", "friendlyName", "UDN") -> device.fields[name!!] = value
+                                icon != null && name != null -> icon!![name] = value
+                                device != null && name in FIELDS -> device.fields[name!!] = value
                             }
                             text = StringBuilder()
                         }
@@ -123,6 +137,14 @@ object Renderers {
                 val renderer = devices.firstOrNull { d -> d.services.any { it["serviceType"]?.contains(":AVTransport:") == true } } ?: return null
                 val transport = renderer.services.first { it["serviceType"]?.contains(":AVTransport:") == true }
                 val rendering = renderer.services.firstOrNull { it["serviceType"]?.contains(":RenderingControl:") == true }
+                // The device that holds the renderer says what it is when the renderer itself does not; it is the last to close.
+                val root = devices.last()
+                fun field(name: String) = renderer.fields[name] ?: root.fields[name]
+                val maker = field("manufacturer")?.let(::maker)
+                val model = (field("displayName") ?: field("modelName"))?.let { m -> maker?.let { m.removePrefix(it).trim() } ?: m }?.ifBlank { null }
+                // A PNG the size of a row's picture or larger, else the largest there is.
+                val icons = renderer.icons.ifEmpty { root.icons }.sortedBy { it["width"]?.toIntOrNull() ?: 0 }
+                val picture = (icons.firstOrNull { it["mimetype"] == "image/png" && (it["width"]?.toIntOrNull() ?: 0) >= ICON_PX } ?: icons.lastOrNull())?.get("url")
                 return Renderer(
                     id = renderer.fields["UDN"] ?: location,
                     name = room ?: renderer.fields["friendlyName"]?.let(::clean)?.ifBlank { null } ?: URI(location).host,
@@ -131,6 +153,9 @@ object Renderers {
                     transportType = transport["serviceType"]!!,
                     rendering = rendering?.get("controlURL")?.let { URI(base).resolve(it).toString() },
                     renderingType = rendering?.get("serviceType"),
+                    model = model,
+                    maker = maker,
+                    icon = picture?.let { runCatching { URI(base).resolve(it).toString() }.getOrNull() },
                 )
             }
         } finally {
@@ -145,10 +170,19 @@ object Renderers {
         .replace(Regex("""\s+Media\s*Renderer$""", RegexOption.IGNORE_CASE), "")
         .trim()
 
+    // A maker as people call it: `Sonos, Inc.` is Sonos.
+    internal fun maker(name: String): String? = name.substringBefore(',').trim()
+        .replace(Regex("""\s+(Inc|Corp|Corporation|Ltd|GmbH|AG|LLC|Co)\.?$""", RegexOption.IGNORE_CASE), "")
+        .trim().ifBlank { null }
+
     private class Device {
         val fields = HashMap<String, String>()
         val services = ArrayList<Map<String, String>>()
+        val icons = ArrayList<Map<String, String>>()
     }
+
+    private val FIELDS = setOf("deviceType", "friendlyName", "UDN", "manufacturer", "modelName", "displayName")
+    private const val ICON_PX = 96
 
     private const val SSDP_HOST = "239.255.255.250"
     private const val SSDP_PORT = 1900

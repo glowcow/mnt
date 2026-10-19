@@ -355,9 +355,11 @@
     <string name="player_cast">Wiedergabe auf</string>
     <string name="player_this_phone">Dieses Telefon</string>
     <string name="player_looking">Lautsprecher werden gesucht…</string>
+    <string name="player_volume">Lautstärke: %1$d</string>
     <string name="player_none_found">Keine Lautsprecher in diesem Netzwerk gefunden</string>
     <string name="player_no_lyrics">Dieser Titel hat keinen Songtext</string>
     <string name="player_unreachable">%s ist nicht erreichbar</string>
+    <string name="player_refused">%s ließ sich nicht steuern</string>
     <string name="player_title">Titel</string>
     <string name="player_artist">Interpret</string>
     <string name="player_album">Album</string>

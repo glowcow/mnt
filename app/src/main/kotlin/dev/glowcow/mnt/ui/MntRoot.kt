@@ -15,13 +15,20 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.IntSize
+import dev.glowcow.mnt.ui.components.grown
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import dev.glowcow.mnt.audio.Sounds
 import dev.glowcow.mnt.ui.components.LocalMiniPlayer
 import dev.glowcow.mnt.ui.player.FullPlayer
 import dev.glowcow.mnt.ui.player.MiniPlayer
+import dev.glowcow.mnt.ui.player.VolumePanel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -193,7 +200,13 @@ fun MntRoot(openTab: Flow<TopTab>) {
     val playerShown = playback.shown
     LaunchedEffect(playerShown) { if (!playerShown) open.snapTo(0f) }
     val covering by remember { derivedStateOf { playback.shown && open.value > 0f } }
-    val mini = remember { movableContentOf { MiniPlayer(playback, { expand() }, { drag(it) }, { settle(it) }) } }
+    // Where the mini player stands, for the full player to grow out of it and to shrink back into it.
+    var miniAt by remember { mutableStateOf<Rect?>(null) }
+    val mini = remember {
+        movableContentOf {
+            Box(Modifier.onGloballyPositioned { miniAt = it.boundsInRoot() }) { MiniPlayer(playback, { expand() }, { drag(it) }, { settle(it) }) }
+        }
+    }
     val lightIcons = if (covering && open.value > 0.5f) !c.isDark else !(pageDark.value ?: c.isDark)
     // Lists lie on the plain ground, the pages of blocks on the grouped one.
     val ground = when (backStack.lastOrNull()) {
@@ -219,7 +232,13 @@ fun MntRoot(openTab: Flow<TopTab>) {
     val stay = fadeIn(snap()) togetherWith fadeOut(snap(delayMillis = MOVE_MS))
     val stayBelow = ContentTransform(fadeIn(snap()), fadeOut(snap(delayMillis = MOVE_MS)), targetContentZIndex = -1f)
     // A page dark in any theme says so, for the bar icons to stay light over it.
-    Box(Modifier.fillMaxSize().onSizeChanged { screen = it.height.toFloat().coerceAtLeast(1f) }) {
+    var rootSize by remember { mutableStateOf(IntSize.Zero) }
+    Box(
+        Modifier.fillMaxSize().onSizeChanged {
+            rootSize = it
+            screen = it.height.toFloat().coerceAtLeast(1f)
+        },
+    ) {
     // Under the full player the pages are out of reach, of touch and of the screen reader alike.
     val hidden by remember { derivedStateOf { playback.shown && open.value == 1f } }
     CompositionLocalProvider(LocalPageDark provides pageDark, LocalMiniPlayer provides if (playerShown) mini else null) {
@@ -259,10 +278,27 @@ fun MntRoot(openTab: Flow<TopTab>) {
         )
     }
     if (covering) {
-        Box(Modifier.fillMaxSize().graphicsLayer { translationY = (1f - open.value) * size.height }) {
-            FullPlayer(playback, { drag(it) }, { settle(it) })
+        // Where the mini player would stand when none is laid out: a page without one, or the first track played.
+        val density = LocalDensity.current
+        val below = WindowInsets.navigationBars.getBottom(density)
+        val from = miniAt ?: with(density) {
+            val side = 16.dp.toPx()
+            val bottom = rootSize.height - below - 8.dp.toPx()
+            Rect(side, bottom - 56.dp.toPx(), rootSize.width - side, bottom)
+        }
+        Box(Modifier.fillMaxSize().grown(from, MINI_CORNER) { open.value }) {
+            FullPlayer(
+                playback,
+                onDrag = { drag(it) },
+                onDragStop = { settle(it) },
+                onFolder = {
+                    collapse()
+                    openFolder(it)
+                },
+            )
         }
     }
+    VolumePanel(playback)
     }
     // Back takes the full player down as the gesture goes, before it leaves any page.
     PredictiveBackHandler(enabled = covering && open.targetValue == 1f) { progress ->
@@ -276,7 +312,10 @@ fun MntRoot(openTab: Flow<TopTab>) {
     }
 }
 
-private const val PLAYER_MS = 260
+private const val PLAYER_MS = 300
+
+// The mini player's corners, which the full player's start from.
+private val MINI_CORNER = 28.dp
 
 // How fast a let-go drag must be, a second, to be a fling, and how far one must go to be more than a slip.
 private val FLING = 400.dp

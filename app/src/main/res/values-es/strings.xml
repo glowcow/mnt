@@ -359,9 +359,11 @@
     <string name="player_cast">Reproducir en</string>
     <string name="player_this_phone">Este teléfono</string>
     <string name="player_looking">Buscando altavoces…</string>
+    <string name="player_volume">Volumen: %1$d</string>
     <string name="player_none_found">No se encontraron altavoces en esta red</string>
     <string name="player_no_lyrics">Esta pista no tiene letra</string>
     <string name="player_unreachable">No se puede conectar con %s</string>
+    <string name="player_refused">No se pudo controlar %s</string>
     <string name="player_title">Título</string>
     <string name="player_artist">Artista</string>
     <string name="player_album">Álbum</string>

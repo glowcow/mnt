@@ -359,9 +359,11 @@
     <string name="player_cast">Пусти на</string>
     <string name="player_this_phone">Овај телефон</string>
     <string name="player_looking">Тражим звучнике…</string>
+    <string name="player_volume">Јачина звука: %1$d</string>
     <string name="player_none_found">У овој мрежи нема звучника</string>
     <string name="player_no_lyrics">Ова нумера нема текст</string>
     <string name="player_unreachable">Није могуће повезати се са %s</string>
+    <string name="player_refused">Није успело управљање са %s</string>
     <string name="player_title">Назив</string>
     <string name="player_artist">Извођач</string>
     <string name="player_album">Албум</string>

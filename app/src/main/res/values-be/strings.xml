@@ -363,9 +363,11 @@
     <string name="player_cast">Дзе іграць</string>
     <string name="player_this_phone">Гэты тэлефон</string>
     <string name="player_looking">Шукаю калонкі…</string>
+    <string name="player_volume">Гучнасць: %1$d</string>
     <string name="player_none_found">У гэтай сетцы калонак не знайшлося</string>
     <string name="player_no_lyrics">У гэтага трэка няма тэксту</string>
     <string name="player_unreachable">Не атрымліваецца звязацца з %s</string>
+    <string name="player_refused">Не атрымалася кіраваць %s</string>
     <string name="player_title">Назва</string>
     <string name="player_artist">Выканаўца</string>
     <string name="player_album">Альбом</string>

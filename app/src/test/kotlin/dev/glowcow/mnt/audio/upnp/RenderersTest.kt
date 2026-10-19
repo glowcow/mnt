@@ -10,6 +10,20 @@ class RenderersTest {
         assertEquals("Kitchen", Renderers.clean("Kitchen"))
     }
 
+    @Test fun makersShortened() {
+        assertEquals("Sonos", Renderers.maker("Sonos, Inc."))
+        assertEquals("Denon", Renderers.maker("Denon Inc"))
+        assertEquals("Yamaha Corporation x", Renderers.maker("Yamaha Corporation x"))
+        assertEquals(null, Renderers.maker(" , Inc."))
+    }
+
+    @Test fun titles() {
+        val era = Renderer("u", "era", "h", "t", "tt", null, null, model = "Era 300", maker = "Sonos")
+        assertEquals("era • Era 300", era.title)
+        assertEquals("Kitchen", era.copy(name = "Kitchen", model = "kitchen").title)
+        assertEquals("Kitchen", era.copy(name = "Kitchen", model = null).title)
+    }
+
     @Test fun times() {
         assertEquals("0:03:20", Soap.time(200_000))
         assertEquals(200_500L, Soap.millis("0:03:20.500"))

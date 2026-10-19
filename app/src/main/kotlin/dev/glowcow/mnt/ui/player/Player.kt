@@ -117,6 +117,7 @@ fun MiniPlayer(playback: Playback, onOpen: () -> Unit, onDrag: (Float) -> Unit, 
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onOpen)
             .draggable(rememberDraggableState(onDrag), Orientation.Vertical, onDragStopped = { onDragStop(it) })
+            .heightIn(min = 56.dp)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -145,10 +146,10 @@ internal enum class PlayerSheet { QUEUE, DETAILS, CAST }
 /**
  * The player over the whole screen, after Symfonium's: the cover, what plays, the wave of the track to go along,
  * the controls, and a row of what more there is — about the track, the queue, its words, where it plays. It follows
- * a drag down ([onDrag], [onDragStop]); back takes it down too.
+ * a drag down ([onDrag], [onDragStop]); back takes it down too. The artist and the album lead to the track's folder.
  */
 @Composable
-fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) -> Unit) {
+fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) -> Unit, onFolder: (String) -> Unit) {
     val c = MntTheme.colors
     var sheet by rememberSaveable { mutableStateOf<PlayerSheet?>(null) }
     BoxWithConstraints(
@@ -168,7 +169,7 @@ fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) 
             Row(Modifier.fillMaxSize().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Box(Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true)) { top() }
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
-                    Titles(playback)
+                    Titles(playback, onFolder)
                     Middle(playback)
                     actions(Modifier)
                 }
@@ -178,7 +179,7 @@ fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) 
             Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f, fill = false).padding(top = 16.dp)) {
                     Box(Modifier.weight(1f, fill = false).aspectRatio(1f).align(Alignment.CenterHorizontally)) { top() }
-                    Titles(playback, Modifier.padding(top = 20.dp))
+                    Titles(playback, onFolder, Modifier.padding(top = 16.dp))
                 }
                 Middle(playback, Modifier.padding(top = 12.dp, bottom = 8.dp))
                 actions(Modifier.padding(bottom = 8.dp))
@@ -250,18 +251,31 @@ private fun Words(playback: Playback) {
     }
 }
 
+/**
+ * The title, and under it the artist and the album: a tap on those two goes to the track's folder ([onFolder]). Each
+ * line keeps its room while the tags are read, so nothing below it moves as they come.
+ */
 @Composable
-private fun Titles(playback: Playback, modifier: Modifier = Modifier) {
+private fun Titles(playback: Playback, onFolder: (String) -> Unit, modifier: Modifier = Modifier) {
     val c = MntTheme.colors
     val meta = shownMetadata(playback)
+    val id = playback.current?.mediaId
     Column(modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
         ProvideTextStyle(TextStyle(fontSize = 24.sp, fontWeight = FontWeight.SemiBold)) {
-            RunningText(title(meta, playback.current?.mediaId), c.text, Modifier.fillMaxWidth())
+            RunningText(title(meta, id), c.text, Modifier.fillMaxWidth())
         }
-        artist(meta)?.let {
-            Text(it, color = c.accent, fontSize = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp).inked(c.accent))
+        val folder = id?.takeUnless(Sounds::web)?.let(Paths::parent)
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 2.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .then(if (folder != null) Modifier.clickable(role = Role.Button) { onFolder(folder) } else Modifier)
+                .padding(vertical = 4.dp),
+        ) {
+            Text(artist(meta).orEmpty(), color = c.accent, fontSize = 17.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.inked(c.accent))
+            Text(meta.albumTitle?.toString().orEmpty(), color = c.muted, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
         }
-        meta.albumTitle?.let { Text(it.toString(), color = c.muted, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp)) }
     }
 }
 
@@ -331,14 +345,14 @@ private fun Seek(playback: Playback, modifier: Modifier = Modifier) {
     }
 }
 
-// How loud the wave is at bar [i] of [count]: the loudest of its bins, a low line while the wave is not known.
+// How loud the wave is at bar [i] of [count]: the mean of its bins, a low line while the wave is not known.
 private fun level(wave: FloatArray?, i: Int, count: Int): Float {
     if (wave == null) return QUIET
     val from = i * Waves.BINS / count
     val to = ((i + 1) * Waves.BINS / count).coerceAtLeast(from + 1).coerceAtMost(Waves.BINS)
-    var top = 0f
-    for (b in from until to) top = maxOf(top, wave[b])
-    return top.coerceAtLeast(QUIET)
+    var sum = 0f
+    for (b in from until to) sum += wave[b]
+    return (sum / (to - from)).coerceAtLeast(QUIET)
 }
 
 /**
@@ -478,7 +492,7 @@ private val PLAY = 76.dp
 private val MIDDLE_GAP = 56.dp
 
 // The bars of the wave: how wide, how far apart, where their line runs, and the part not played yet.
-private val BAR = 3.dp
+private val BAR = 5.dp
 private val GAP = 2.dp
 private const val BASE = 0.74f
 private const val REST = 0.3f
