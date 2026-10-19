@@ -4,8 +4,8 @@ Android file manager for the phone's own storage, memory cards and drives
 plugged into the USB port, for servers on the network — SMB, FTP, S3, NFS —
 and for cameras and phones that speak MTP: browse, search, copy, move, rename
 and delete, with long jobs running on in the background, open archives as
-folders, look through photos — RAW and HDR ones too — and open documents,
-books, tables and code right inside it. Android 16+ only; the interface
+folders, look through photos — RAW and HDR ones too — play music and open
+documents, books, tables and code right inside it. Android 16+ only; the interface
 speaks ten languages.
 
 <p>
@@ -58,6 +58,9 @@ The files on the screenshots are made up.
   and HDR ones too — an iPhone's HEIC among them, its HDR turned off for a
   photo with one tap — the details of a shot and where it was taken pushed
   up from below, and small pictures in place of icons.
+- **Music** — a tap on a track plays its folder, a playlist what it lists, from
+  the phone or a server, with its wave, its words and a speaker of the network
+  to play on; it goes on with the app closed and picks up where it stopped.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold;
   inside an archive, extract them.
@@ -90,6 +93,7 @@ The files on the screenshots are made up.
 | Viewer | pages of the app's own HTML in a `WebView`; its own readers for Office, OpenDocument, RTF and EPUB files and its own syntax colouring; commonmark for Markdown, androidx.pdf for PDF, DjVuLibre 3.5 for DjVu |
 | Archives | libarchive 3.8 (read only) with XZ Utils 5.8, Zstandard 1.5 and bzip2 1.0, zlib of the system |
 | Pictures | the platform's decoders and its region decoder, the app's own drawing of HDR gain maps; LibRaw 0.22 for RAW, libjxl 0.12 with Highway 1.4, libtiff 4.7, libde265 1.1 for an iPhone's HDR gain map, AndroidSVG 1.4, AndroidX ExifInterface; OpenStreetMap tiles for the map of a photo |
+| Sound | Media3 1.11: ExoPlayer reading files of every place through the app's own source, a media session for the system's controls; UPnP/DLNA speakers spoken to by the app itself |
 
 All versions live in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
@@ -117,6 +121,12 @@ app/src/main/kotlin/dev/glowcow/mnt/
                 view/image: which reader a picture takes, the platform's and
                 the app's own (RAW, JPEG XL, TIFF, SVG, Photoshop), what a
                 photo tells of itself, the thumbnails of a folder
+  audio/        the player: what it plays and how playlists are read, the
+                source it reads files of any place through, the media
+                session's service, the queue kept between runs, the tags,
+                words and waves of tracks;
+                audio/upnp: speakers of the network found, told what to play
+                and handed the files by the app's own small web server
   maps/         OpenStreetMap's tiles, kept once downloaded
   backup/       the backup file, its password encryption, save and restore
   update/       check for a new release, download, the weekly job
@@ -126,6 +136,7 @@ app/src/main/kotlin/dev/glowcow/mnt/
   ui/search/    the Search tab
   ui/view/      the viewer's page, the PDF page and the in-app browser
   ui/photo/     the pictures' page: swiping, growing, the HDR drawing, details
+  ui/player/    the full player and the mini player over every page
   ui/settings/  the Settings tab and its pages
   ui/           theme + icons, shared components (tab page and detail page
                 with the frosted bars, grouped rows and sheets, the row of a
@@ -134,8 +145,8 @@ app/src/main/cpp/  DjVuLibre, libarchive (with liblzma, zstd and bzip2), and
                 LibRaw, libjxl (with Highway), libtiff and libde265, each
                 with its JNI bridge
 app/src/main/assets/material-icons.json  the shapes of the file icons
-app/src/test/   unit tests of the plain JVM code in files, archive, backup,
-                update and view, the readers checked on sample documents
+app/src/test/   unit tests of the plain JVM code in files, archive, audio,
+                backup, update and view, the readers checked on sample documents
 ```
 
 ## Build

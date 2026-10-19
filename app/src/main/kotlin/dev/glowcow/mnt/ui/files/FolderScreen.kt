@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.glowcow.mnt.MntApp
 import dev.glowcow.mnt.R
+import dev.glowcow.mnt.audio.Sounds
 import dev.glowcow.mnt.archive.Archives
 import dev.glowcow.mnt.archive.Reason
 import dev.glowcow.mnt.files.Clip
@@ -119,7 +120,7 @@ fun FolderScreen(
             selection.isNotEmpty() -> vm.toggle(node.path)
             node.directory -> onOpen(node.path)
             Archives.opens(node.name) -> onOpen(Archives.root(node.path))
-            Readers.shows(node.name) || Format.of(node.name) != null -> onView(node.path)
+            Readers.shows(node.name) || Sounds.plays(node.name) || Format.of(node.name) != null -> onView(node.path)
             // Another app reads a file of an archive from a copy: it may jump about in it, an archive cannot.
             vm.archive != null -> vm.openOutside(node) { copy, refused ->
                 when {

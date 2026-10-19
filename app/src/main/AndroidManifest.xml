@@ -16,6 +16,12 @@
     <!-- Copying, moving and deleting go on with the app closed: a foreground service that shows the progress. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Sound plays on with the app closed and the screen off, from a server too. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Speakers of the network are found by SSDP, and the phone hands them files over Wi-Fi with the screen off. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- The app can download its own update, and open an APK the user taps, in the system installer. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
@@ -57,6 +63,27 @@
             android:name=".files.TransferService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <!-- The player's media session, for the app's screens, the system's controls and headphones; any controller may connect, as to every player. -->
+        <service
+            android:name=".audio.PlayerService"
+            android:exported="true"
+            tools:ignore="ExportedService"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
+        <!-- Play pressed on headphones while nothing plays brings back the last queue. -->
+        <receiver
+            android:name="androidx.media3.session.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

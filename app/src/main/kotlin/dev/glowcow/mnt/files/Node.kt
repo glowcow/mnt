@@ -37,7 +37,7 @@ enum class Kind {
             fun put(kind: Kind, vararg extensions: String) = extensions.forEach { put(it, kind) }
             put(IMAGE, "jpg", "jpeg", "png", "gif", "webp", "heic", "heif", "avif", "bmp", "svg", "tif", "tiff", "dng", "raw", "ico", "arw", "cr2", "cr3", "nef", "raf", "orf", "rw2", "pef", "srw")
             put(VIDEO, "mp4", "mkv", "webm", "mov", "avi", "m4v", "3gp", "ts", "mpg", "mpeg", "wmv", "flv")
-            put(AUDIO, "mp3", "flac", "ogg", "opus", "m4a", "aac", "wav", "wma", "aiff", "ape", "mid", "amr")
+            put(AUDIO, "mp3", "flac", "ogg", "oga", "opus", "m4a", "m4b", "aac", "wav", "wma", "aiff", "ape", "mid", "amr", "awb", "mka", "weba", "m3u", "m3u8", "pls")
             put(TEXT, "txt", "md", "pdf", "doc", "docx", "odt", "rtf", "xls", "xlsx", "ods", "csv", "ppt", "pptx", "odp", "epub", "fb2", "json", "xml", "html", "htm", "log", "ini", "yaml", "yml")
             put(ARCHIVE, "zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "tbz", "tbz2", "xz", "txz", "zst", "tzst", "lz", "tlz", "lzma", "z", "iso", "jar", "cab", "cpio", "lzh", "lha")
             put(PACKAGE, "apk", "apks", "xapk", "apkm")

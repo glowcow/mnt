@@ -48,14 +48,16 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    // A tap on a notification leads to where it can be acted on: the settings for a new version, the files for a transfer.
+    // A tap on a notification leads to where it can be acted on: the settings for a new version, the files for a transfer, the player.
     private fun handleIntent(intent: Intent?) {
         if (intent?.hasExtra(EXTRA_APP_UPDATE) == true) openTab.trySend(TopTab.SETTINGS)
         if (intent?.hasExtra(EXTRA_TRANSFER) == true) openTab.trySend(TopTab.FILES)
+        if (intent?.hasExtra(EXTRA_PLAYER) == true) container.playback.show()
     }
 
     companion object {
         const val EXTRA_APP_UPDATE = "app_update"
         const val EXTRA_TRANSFER = "transfer"
+        const val EXTRA_PLAYER = "player"
     }
 }

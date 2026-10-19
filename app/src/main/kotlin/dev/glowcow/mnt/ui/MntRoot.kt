@@ -1,6 +1,31 @@
 package dev.glowcow.mnt.ui
 
 import android.app.Activity
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import dev.glowcow.mnt.audio.Sounds
+import dev.glowcow.mnt.ui.components.LocalMiniPlayer
+import dev.glowcow.mnt.ui.player.FullPlayer
+import dev.glowcow.mnt.ui.player.MiniPlayer
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import kotlin.math.abs
 import android.widget.Toast
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.snap
@@ -19,6 +44,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
@@ -97,8 +124,15 @@ fun MntRoot(openTab: Flow<TopTab>) {
     val resources = LocalResources.current
     val settings by context.container.settings.settings.collectAsStateWithLifecycle(null)
 
+    // A track plays its folder and a playlist what it lists, in the app's own player.
+    val playback = context.container.playback
     fun openFile(path: String) {
-        backStack.add(if (Readers.shows(Paths.name(path))) PhotoRoute(path) else ViewerRoute(path))
+        val name = Paths.name(path)
+        when {
+            Sounds.plays(name) -> playback.playFolder(path)
+            Sounds.lists(name) -> playback.playList(path)
+            else -> backStack.add(if (Readers.shows(name)) PhotoRoute(path) else ViewerRoute(path))
+        }
     }
 
     // A page of the web opens in the app's own browser while the settings say so; anything else goes to the app that takes it.
@@ -133,7 +167,34 @@ fun MntRoot(openTab: Flow<TopTab>) {
 
     val c = MntTheme.colors
     val pageDark = remember { mutableStateOf<Boolean?>(null) }
-    val lightIcons = !(pageDark.value ?: c.isDark)
+
+    // The full player comes up from below over every page: 0 down, 1 over the whole screen.
+    val scope = rememberCoroutineScope()
+    val open = remember { Animatable(0f) }
+    val fling = with(LocalDensity.current) { FLING.toPx() }
+    var screen by remember { mutableFloatStateOf(1f) }
+    fun expand() = scope.launch { open.animateTo(1f, tween(PLAYER_MS, easing = FastOutSlowInEasing)) }
+    fun collapse() = scope.launch { open.animateTo(0f, tween(PLAYER_MS, easing = FastOutSlowInEasing)) }
+    // A drag goes on from the end it started at: a small pull either way is enough to go to the other.
+    var from by remember { mutableFloatStateOf(-1f) }
+    fun drag(by: Float) = scope.launch {
+        if (from < 0f) from = open.targetValue
+        open.snapTo((open.value - by / screen).coerceIn(0f, 1f))
+    }
+    // Let go, it goes the way it was flung, or on to the other end once pulled far enough.
+    fun settle(speed: Float) = scope.launch {
+        val start = if (from < 0f) open.targetValue else from
+        from = -1f
+        val pulled = abs(open.value - start) > PULL
+        val up = if (abs(speed) > fling) speed < 0 else if (pulled) start < 0.5f else start >= 0.5f
+        open.animateTo(if (up) 1f else 0f, spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow), -speed / screen)
+    }
+    LaunchedEffect(playback) { playback.opens.receiveAsFlow().collect { expand() } }
+    val playerShown = playback.shown
+    LaunchedEffect(playerShown) { if (!playerShown) open.snapTo(0f) }
+    val covering by remember { derivedStateOf { playback.shown && open.value > 0f } }
+    val mini = remember { movableContentOf { MiniPlayer(playback, { expand() }, { drag(it) }, { settle(it) }) } }
+    val lightIcons = if (covering && open.value > 0.5f) !c.isDark else !(pageDark.value ?: c.isDark)
     // Lists lie on the plain ground, the pages of blocks on the grouped one.
     val ground = when (backStack.lastOrNull()) {
         is FolderRoute, SearchRoute, BinRoute -> c.bg
@@ -158,8 +219,12 @@ fun MntRoot(openTab: Flow<TopTab>) {
     val stay = fadeIn(snap()) togetherWith fadeOut(snap(delayMillis = MOVE_MS))
     val stayBelow = ContentTransform(fadeIn(snap()), fadeOut(snap(delayMillis = MOVE_MS)), targetContentZIndex = -1f)
     // A page dark in any theme says so, for the bar icons to stay light over it.
-    CompositionLocalProvider(LocalPageDark provides pageDark) {
+    Box(Modifier.fillMaxSize().onSizeChanged { screen = it.height.toFloat().coerceAtLeast(1f) }) {
+    // Under the full player the pages are out of reach, of touch and of the screen reader alike.
+    val hidden by remember { derivedStateOf { playback.shown && open.value == 1f } }
+    CompositionLocalProvider(LocalPageDark provides pageDark, LocalMiniPlayer provides if (playerShown) mini else null) {
         NavDisplay(
+            modifier = if (hidden) Modifier.clearAndSetSemantics {} else Modifier,
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
             entryDecorators = listOf(
@@ -193,4 +258,26 @@ fun MntRoot(openTab: Flow<TopTab>) {
             },
         )
     }
+    if (covering) {
+        Box(Modifier.fillMaxSize().graphicsLayer { translationY = (1f - open.value) * size.height }) {
+            FullPlayer(playback, { drag(it) }, { settle(it) })
+        }
+    }
+    }
+    // Back takes the full player down as the gesture goes, before it leaves any page.
+    PredictiveBackHandler(enabled = covering && open.targetValue == 1f) { progress ->
+        try {
+            progress.collect { open.snapTo(1f - it.progress) }
+            collapse()
+        } catch (e: CancellationException) {
+            expand()
+            throw e
+        }
+    }
 }
+
+private const val PLAYER_MS = 260
+
+// How fast a let-go drag must be, a second, to be a fling, and how far one must go to be more than a slip.
+private val FLING = 400.dp
+private const val PULL = 0.15f

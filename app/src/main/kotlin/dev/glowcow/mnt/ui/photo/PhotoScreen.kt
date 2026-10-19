@@ -192,7 +192,7 @@ private fun Photos(vm: PhotoViewModel, settings: AppSettings, onBack: () -> Unit
             }
         }
         if (chrome && current != null) {
-            Island(page, Color.Black, { pageSize }, {}) {
+            Island(page, Color.Black, { pageSize }, {}, player = false) {
                 IslandIcons {
                     IconButton48(MntIcons.Share, stringResource(R.string.action_share)) { if (!Opener.share(context, listOf(current.path))) toast(context, R.string.open_none) }
                     IconButton48(MntIcons.Info, stringResource(R.string.action_details)) { sheet = PhotoSheet.DETAILS }

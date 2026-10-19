@@ -7,13 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -74,7 +71,6 @@ fun DetailPage(
     val barHeight = remember { mutableIntStateOf(0) }
     val spot = remember { mutableStateOf<Rect?>(null) }
     if (bar == null) spot.value = null
-    val inset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize().pageMotion(from).background(ground).imePadding().onSizeChanged { pageSize = it }) {
         Box(
             if (!glass) Modifier.fillMaxSize() else Modifier.fillMaxSize().drawWithContent {
@@ -83,7 +79,7 @@ fun DetailPage(
             },
         ) {
             CompositionLocalProvider(LocalIsland provides spot) {
-                content(with(density) { headerHeight.toDp() }, if (bar != null) with(density) { barHeight.intValue.toDp() } else inset)
+                content(with(density) { headerHeight.toDp() }, with(density) { barHeight.intValue.toDp() })
             }
         }
         Column(
@@ -103,7 +99,7 @@ fun DetailPage(
             header()
             HeaderLine(shown = scrolled)
         }
-        if (bar != null) Island(page, ground, { pageSize }, { barHeight.intValue = it }, glass, clear, { spot.value = it }, bar)
+        Island(page, ground, { pageSize }, { barHeight.intValue = it }, glass, clear, { spot.value = it }, content = bar)
     }
 }
 

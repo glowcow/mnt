@@ -132,6 +132,10 @@ dependencies {
     implementation(libs.pdf.compose)
     implementation(libs.pdf.document.service)
 
+    // The player of sound, kept going by a media session.
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.session)
+
     testImplementation(libs.junit)
     // The XML parser Android carries, for the tests of the document readers on the JVM.
     testImplementation(libs.kxml2)
