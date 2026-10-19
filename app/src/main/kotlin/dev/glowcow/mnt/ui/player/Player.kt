@@ -175,13 +175,14 @@ fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) 
                 }
             }
         } else {
-            // The cover is as wide as the screen while there is room; what is left goes between the parts below it.
+            // The cover is as wide as the screen while there is room; the wave and the buttons keep close under the titles,
+            // and what is left goes above the row at the bottom.
             Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f, fill = false).padding(top = 16.dp)) {
                     Box(Modifier.weight(1f, fill = false).aspectRatio(1f).align(Alignment.CenterHorizontally)) { top() }
                     Titles(playback, onFolder, Modifier.padding(top = 16.dp))
+                    Middle(playback, Modifier.padding(top = 24.dp, bottom = 8.dp))
                 }
-                Middle(playback, Modifier.padding(top = 12.dp, bottom = 8.dp))
                 actions(Modifier.padding(bottom = 8.dp))
             }
         }

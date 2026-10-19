@@ -98,6 +98,9 @@ class Playback(private val context: Context, private val files: FileStore, priva
         private set
     private var volumeSetAt = 0L
 
+    /** The player's service, while it runs: sets the volume of the renderer it plays on. */
+    internal var turner: ((Int) -> Unit)? = null
+
     /** The full player shows the words of the track where the cover is; kept while it is down. */
     var wordsShown by mutableStateOf(false)
 
@@ -200,7 +203,8 @@ class Playback(private val context: Context, private val files: FileStore, priva
         volume = v
         volumeSetAt = SystemClock.elapsedRealtime()
         volumeAsked++
-        use { it.setDeviceVolume(v, 0) }
+        // Straight to the player: a controller that connected while the phone played drops volume commands for good.
+        turner?.invoke(v)
     }
 
     fun show() {

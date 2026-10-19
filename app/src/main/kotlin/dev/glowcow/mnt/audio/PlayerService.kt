@@ -86,6 +86,7 @@ class PlayerService : MediaSessionService() {
         // A queue only put back after a restart is no reason for a notification until it plays.
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_NEVER)
         container.casting.mover = ::move
+        container.playback.turner = ::turn
     }
 
     /** Moves the queue to [renderer], or back to the phone: where it was, playing on a renderer, paused on the phone. */
@@ -121,6 +122,10 @@ class PlayerService : MediaSessionService() {
         Toast.makeText(this, getString(R.string.player_refused, name), Toast.LENGTH_SHORT).show()
     }
 
+    private fun turn(volume: Int) {
+        (session?.player as? UpnpPlayer)?.setDeviceVolume(volume, 0)
+    }
+
     // A renderer reads from the phone while it plays: Wi-Fi and the processor stay up for it.
     private fun stayAwake() {
         val player = session?.player
@@ -140,6 +145,7 @@ class PlayerService : MediaSessionService() {
     override fun onDestroy() {
         handler.removeCallbacks(saveLater)
         container.casting.mover = null
+        container.playback.turner = null
         container.casting.target = null
         session?.run {
             save()

@@ -38,6 +38,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
 
 /** A share of an SMB 2 or 3 server — Windows, Samba, a NAS. */
@@ -45,14 +46,18 @@ class SmbStore(private val c: Connection) : RemoteStore() {
     private var client: SMBClient? = null
     private var connection: SmbConnection? = null
     private var share: DiskShare? = null
+
+    // When the server last answered, and how many files are being read: a connection busy with them is never asked.
+    @Volatile
     private var usedAt = 0L
+    private val reading = AtomicInteger()
 
     // A connection left alone a while is asked whether it is still there before it is trusted: a phone that slept, or
     // a server that let go, leaves one that takes questions and never answers them.
     @Synchronized
     private fun share(): DiskShare {
         val now = SystemClock.elapsedRealtime()
-        share?.takeIf { it.isConnected && connection?.isConnected == true && (now - usedAt < IDLE_MS || answers()) }?.let {
+        share?.takeIf { it.isConnected && connection?.isConnected == true && (reading.get() > 0 || now - usedAt < IDLE_MS || answers()) }?.let {
             usedAt = now
             return it
         }
@@ -152,8 +157,11 @@ class SmbStore(private val c: Connection) : RemoteStore() {
     // The server names a path with backslashes and from the share's root, which is the empty one.
     private fun inner(path: String): String = path.trim('/').replace('/', '\\')
 
-    /** Reads a file by several pieces asked for at once: the wire is never idle while one of them is on its way. */
-    private class Ahead(private val file: File, private var next: Long, private val end: Long) : InputStream() {
+    /**
+     * Reads a file by several pieces asked for at once: the wire is never idle while one of them is on its way. The
+     * pieces start small and grow while the file is read on: a reader after a few bytes here and there costs few.
+     */
+    private inner class Ahead(private val file: File, private var next: Long, private val end: Long) : InputStream() {
         private val asked = ArrayDeque<Future<Int>>()
         private val pieces = ArrayDeque<ByteArray>()
         private val spare = ArrayDeque<ByteArray>()
@@ -161,6 +169,13 @@ class SmbStore(private val c: Connection) : RemoteStore() {
         private var size = 0
         private var at = 0
         private var over = false
+        private var stride = FIRST
+        private var ahead = 1
+        private var closed = false
+
+        init {
+            reading.incrementAndGet()
+        }
 
         override fun read(): Int = ByteArray(1).let { if (read(it, 0, 1) < 0) -1 else it[0].toInt() and 0xFF }
 
@@ -178,7 +193,8 @@ class SmbStore(private val c: Connection) : RemoteStore() {
             piece?.let { spare += it }
             piece = null
             if (over) return false
-            while (asked.size < AHEAD && next < end) ask()
+            while (asked.size < ahead && next < end) ask()
+            ahead = min(ahead + 1, AHEAD)
             val first = asked.removeFirstOrNull() ?: return false
             val bytes = pieces.removeFirst()
             size = try {
@@ -195,7 +211,8 @@ class SmbStore(private val c: Connection) : RemoteStore() {
 
         private fun ask() {
             val from = next
-            val want = min(PIECE.toLong(), end - from).toInt()
+            val want = min(stride.toLong(), end - from).toInt()
+            stride = min(stride * 2, PIECE)
             val bytes = spare.removeFirstOrNull()?.takeIf { it.size == want } ?: ByteArray(want)
             next += want
             pieces += bytes
@@ -208,12 +225,16 @@ class SmbStore(private val c: Connection) : RemoteStore() {
                         if (n <= 0) break
                         got += n
                     }
+                    usedAt = SystemClock.elapsedRealtime()
                     got
                 },
             )
         }
 
         override fun close() {
+            if (closed) return
+            closed = true
+            reading.decrementAndGet()
             asked.forEach { it.cancel(false) }
             file.close()
         }
@@ -299,7 +320,8 @@ class SmbStore(private val c: Connection) : RemoteStore() {
         const val IDLE_MS = 30_000L
         const val ECHO_MS = 3_000L
 
-        // How much one question asks for, and how many are on their way at once.
+        // How much the first question asks for and the most one asks for, and how many are on their way at once.
+        const val FIRST = 64 * 1024
         const val PIECE = 1024 * 1024
         const val AHEAD = 4
 
