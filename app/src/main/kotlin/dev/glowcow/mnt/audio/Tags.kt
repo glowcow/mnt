@@ -6,8 +6,6 @@ import android.media.MediaMetadataRetriever
 import android.util.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import dev.glowcow.mnt.archive.ArchiveSource
-import dev.glowcow.mnt.archive.StoreSource
 import dev.glowcow.mnt.files.FileStore
 import dev.glowcow.mnt.files.Remote
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +28,7 @@ data class Tag(
 )
 
 /** Reads the tags of tracks that are not playing yet, and the pictures of the one that is. */
-class Tags(private val files: FileStore) {
+class Tags(private val files: FileStore, private val cache: AudioCache) {
     private val known = LruCache<String, Tag>(KNOWN)
     private val covers = LruCache<Any, ImageBitmap>(COVERS)
     private val gate = Semaphore(2)
@@ -45,14 +43,14 @@ class Tags(private val files: FileStore) {
 
     private fun retrieve(path: String): Tag? {
         val retriever = MediaMetadataRetriever()
-        var source: ArchiveSource? = null
+        var source: MediaDataSource? = null
         return try {
             if (Remote.id(path) == null) {
                 retriever.setDataSource(path)
             } else {
                 val size = runBlocking { files.stat(path) }?.size ?: return null
-                source = StoreSource(files, path, size)
-                retriever.setDataSource(SourceMedia(source))
+                source = cache.media(path, size)
+                retriever.setDataSource(source)
             }
             Tag(
                 retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)?.trim()?.ifEmpty { null },
@@ -98,24 +96,4 @@ class Tags(private val files: FileStore) {
         const val COVERS = 6
         const val MAX_COVER = 16 shl 20
     }
-}
-
-// A file of another place for the platform's readers, which ask for bytes here and there in it.
-internal class SourceMedia(private val source: ArchiveSource) : MediaDataSource() {
-    override fun readAt(position: Long, buffer: ByteArray, offset: Int, size: Int): Int = try {
-        if (position >= source.size || size <= 0) {
-            -1
-        } else {
-            source.seek(position, 0)
-            val block = ByteArray(minOf(size.toLong(), source.size - position).toInt())
-            val n = source.read(block)
-            if (n <= 0) -1 else n.also { block.copyInto(buffer, offset, 0, n) }
-        }
-    } catch (_: Exception) {
-        -1
-    }
-
-    override fun getSize(): Long = source.size
-
-    override fun close() = Unit
 }

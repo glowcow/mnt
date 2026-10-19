@@ -36,6 +36,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.glowcow.mnt.MntApp
 import dev.glowcow.mnt.R
+import dev.glowcow.mnt.audio.AudioCache
 import dev.glowcow.mnt.backup.Backup
 import dev.glowcow.mnt.backup.RestoreOutcome
 import dev.glowcow.mnt.data.AppSettings
@@ -71,16 +72,34 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val store: SettingsStore, val updater: AppUpdater, private val backup: Backup, private val tiles: TileStore) : ViewModel() {
+class SettingsViewModel(
+    private val store: SettingsStore,
+    val updater: AppUpdater,
+    private val backup: Backup,
+    private val tiles: TileStore,
+    private val audio: AudioCache,
+) : ViewModel() {
     /** Bytes of downloaded map on the phone; null until counted. */
     var mapCache by mutableStateOf<Long?>(null)
         private set
 
+    /** Bytes of tracks of the servers kept on the phone; null until counted. */
+    var audioCache by mutableStateOf<Long?>(null)
+        private set
+
     init {
         viewModelScope.launch { mapCache = tiles.size() }
+        viewModelScope.launch { audioCache = audio.size() }
+    }
+
+    fun clearAudioCache() = viewModelScope.launch {
+        audio.clear()
+        audioCache = audio.size()
     }
 
     fun setPhotoMap(on: Boolean) = viewModelScope.launch { store.setPhotoMap(on) }
+
+    fun setWaves(on: Boolean) = viewModelScope.launch { store.setWaves(on) }
 
     fun clearMapCache() = viewModelScope.launch {
         tiles.clear()
@@ -143,7 +162,7 @@ enum class SettingsPage { APPEARANCE, FILES, VIEWER, BACKUP, CREDITS }
 fun SettingsScreen(
     onTab: (TopTab) -> Unit,
     onPage: (SettingsPage) -> Unit,
-    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles) } },
+    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles, it.audioCache) } },
 ) {
     val c = MntTheme.colors
     val stored by vm.settings.collectAsStateWithLifecycle()
@@ -232,7 +251,7 @@ fun SettingsScreen(
 fun SettingsPageScreen(
     page: SettingsPage,
     onBack: () -> Unit,
-    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles) } },
+    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles, it.audioCache) } },
 ) {
     val stored by vm.settings.collectAsStateWithLifecycle()
     val title = stringResource(
@@ -400,6 +419,18 @@ private fun Viewer(title: String, settings: AppSettings?, vm: SettingsViewModel,
                 stringResource(R.string.settings_map_clear),
                 value = vm.mapCache?.let { android.text.format.Formatter.formatShortFileSize(LocalContext.current, it) },
                 onClick = if ((vm.mapCache ?: 0L) > 0L) ({ vm.clearMapCache() }) else null,
+                trailing = {},
+            )
+        }
+        Group {
+            SwitchRow(stringResource(R.string.settings_waves), stringResource(R.string.settings_waves_hint), settings.waves, vm::setWaves)
+            GroupDivider()
+            // With nothing kept there is nothing to clear.
+            GroupRow(
+                stringResource(R.string.settings_audio_clear),
+                subtitle = stringResource(R.string.settings_audio_clear_hint),
+                value = vm.audioCache?.let { android.text.format.Formatter.formatShortFileSize(LocalContext.current, it) },
+                onClick = if ((vm.audioCache ?: 0L) > 0L) ({ vm.clearAudioCache() }) else null,
                 trailing = {},
             )
         }

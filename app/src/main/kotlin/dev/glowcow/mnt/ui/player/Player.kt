@@ -1,5 +1,11 @@
 package dev.glowcow.mnt.ui.player
 
+import android.content.Context
+import android.media.AudioDeviceCallback
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -38,6 +44,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -87,6 +95,7 @@ import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.ui.theme.inked
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import java.util.Locale
 
 /** The title a track goes by: its tag, else its file name. */
@@ -127,6 +136,18 @@ fun MiniPlayer(playback: Playback, onOpen: () -> Unit, onDrag: (Float) -> Unit, 
             Text(title(meta, playback.current?.mediaId), color = c.text, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             artist(meta)?.let { Text(it, color = c.muted, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
+        // Sound going elsewhere than the phone's own speaker shows where by its glyph before the cross.
+        val casting = LocalContext.current.container.casting.target != null
+        val headphones = rememberLocalOutput().headphones
+        if (casting || headphones) {
+            val tint = if (casting) c.accent else c.muted
+            Icon(
+                if (casting) MntIcons.CastFilled else MntIcons.Headphones,
+                null,
+                tint = tint,
+                modifier = Modifier.padding(horizontal = 4.dp).size(20.dp).then(if (casting) Modifier.inked(c.accent) else Modifier),
+            )
+        }
         IconButton48(MntIcons.Close, stringResource(R.string.player_close), tint = c.muted, size = 24.dp) { playback.close() }
     }
 }
@@ -161,6 +182,8 @@ fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) 
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
+        val store = LocalContext.current.container.settings
+        val waves by remember(store) { store.settings.map { it.waves } }.collectAsState(false)
         val top: @Composable () -> Unit = { if (playback.wordsShown) Words(playback) else Cover(playback) }
         val actions: @Composable (Modifier) -> Unit = { modifier ->
             Actions(playback, playback.wordsShown, modifier, onLyrics = { playback.wordsShown = !playback.wordsShown }) { sheet = it }
@@ -170,7 +193,7 @@ fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) 
                 Box(Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true)) { top() }
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
                     Titles(playback, onFolder)
-                    Middle(playback)
+                    Middle(playback, waves, onOutput = { sheet = PlayerSheet.CAST })
                     actions(Modifier)
                 }
             }
@@ -181,7 +204,7 @@ fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) 
                 Column(Modifier.weight(1f, fill = false).padding(top = 16.dp)) {
                     Box(Modifier.weight(1f, fill = false).aspectRatio(1f).align(Alignment.CenterHorizontally)) { top() }
                     Titles(playback, onFolder, Modifier.padding(top = 16.dp))
-                    Middle(playback, Modifier.padding(top = 24.dp, bottom = 8.dp))
+                    Middle(playback, waves, onOutput = { sheet = PlayerSheet.CAST }, Modifier.padding(top = 24.dp, bottom = 8.dp))
                 }
                 actions(Modifier.padding(bottom = 8.dp))
             }
@@ -294,12 +317,13 @@ private fun rememberPosition(playback: Playback): androidx.compose.runtime.State
  * how the track is coded — or the renderer it plays on — and the time left.
  */
 @Composable
-private fun Seek(playback: Playback, modifier: Modifier = Modifier) {
+private fun Seek(playback: Playback, waves: Boolean, modifier: Modifier = Modifier) {
     val c = MntTheme.colors
     val now by rememberPosition(playback)
     var held by remember { mutableFloatStateOf(-1f) }
     val id = playback.current?.mediaId
-    val wave by produceState(id?.let(playback.waves::known), id) { value = id?.let { playback.waves.of(it) } }
+    // Without the wave the file is not read for it.
+    val wave by produceState(id?.takeIf { waves }?.let(playback.waves::known), id, waves) { value = if (waves) id?.let { playback.waves.of(it) } else null }
     val tag by produceState(id?.let(playback.tags::known), id) { value = id?.let { playback.tags.read(it) } }
     val length = playback.duration.takeIf { it != C.TIME_UNSET && it > 0 } ?: tag?.duration ?: 0L
     val fraction = if (held >= 0f) held else if (length > 0) (now.toFloat() / length).coerceIn(0f, 1f) else 0f
@@ -307,7 +331,7 @@ private fun Seek(playback: Playback, modifier: Modifier = Modifier) {
         Canvas(
             Modifier
                 .fillMaxWidth()
-                .height(WAVE)
+                .height(if (waves) WAVE else LINE)
                 .pointerInput(length) { detectTapGestures { if (length > 0) playback.seek((it.x / size.width * length).toLong()) } }
                 .pointerInput(length) {
                     detectHorizontalDragGestures(
@@ -320,6 +344,17 @@ private fun Seek(playback: Playback, modifier: Modifier = Modifier) {
                     ) { change, _ -> held = (change.position.x / size.width).coerceIn(0f, 1f) }
                 },
         ) {
+            if (!waves) {
+                // A plain line: played in the accent, the rest faint, a dot where it is.
+                val y = size.height / 2
+                val thick = TRACK.toPx()
+                val r = THUMB.toPx() / 2
+                val at = (size.width * fraction).coerceIn(r, size.width - r)
+                drawRoundRect(c.accent.copy(alpha = REST), Offset(0f, y - thick / 2), Size(size.width, thick), CornerRadius(thick / 2))
+                drawRoundRect(c.accent, Offset(0f, y - thick / 2), Size(at, thick), CornerRadius(thick / 2))
+                drawCircle(c.accent, r, Offset(at, y))
+                return@Canvas
+            }
             val bar = BAR.toPx()
             val step = bar + GAP.toPx()
             val count = ((size.width + GAP.toPx()) / step).toInt().coerceAtLeast(1)
@@ -357,49 +392,114 @@ private fun level(wave: FloatArray?, i: Int, count: Int): Float {
 }
 
 /**
- * The wave with its times, the controls under it, and between them, half way from the foot of the wave to the top of
- * the play button, the pill of how the track is coded or where it plays.
+ * The seek bar with its times, the controls under it, and between them, half way from the foot of the bar to the top
+ * of the play button, the pill of how the track is coded; under the controls, where the sound goes ([onOutput]).
  */
 @Composable
-private fun Middle(playback: Playback, modifier: Modifier = Modifier) {
+private fun Middle(playback: Playback, waves: Boolean, onOutput: () -> Unit, modifier: Modifier = Modifier) {
     Layout(
         content = {
-            Seek(playback)
+            Seek(playback, waves)
             Transport(playback)
-            Badge(playback)
+            // Each in a box of its own, which is there with nothing to show too.
+            Box { Badge(playback) }
+            Box { Output(onOutput) }
         },
         modifier = modifier.fillMaxWidth(),
     ) { measurables, constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val seek = measurables[0].measure(loose.copy(minWidth = constraints.maxWidth))
         val transport = measurables[1].measure(loose.copy(minWidth = constraints.maxWidth))
-        val badge = measurables.getOrNull(2)?.measure(loose)
+        val badge = measurables[2].measure(loose)
+        val output = measurables[3].measure(loose)
         val gap = MIDDLE_GAP.roundToPx()
         val play = seek.height + gap + (transport.height - PLAY.roundToPx()) / 2
-        layout(constraints.maxWidth, seek.height + gap + transport.height) {
+        val under = seek.height + gap + transport.height + OUTPUT_GAP.roundToPx()
+        layout(constraints.maxWidth, under + output.height) {
             seek.place(0, 0)
             transport.place(0, seek.height + gap)
-            badge?.place((constraints.maxWidth - badge.width) / 2, (WAVE.roundToPx() + play) / 2 - badge.height / 2)
+            badge.place((constraints.maxWidth - badge.width) / 2, ((if (waves) WAVE else LINE).roundToPx() + play) / 2 - badge.height / 2)
+            output.place((constraints.maxWidth - output.width) / 2, under)
         }
     }
 }
 
-/** A pill: the renderer the queue plays on, else how the track is coded. */
+/** A pill of how the track is coded. */
 @Composable
 private fun Badge(playback: Playback) {
     val c = MntTheme.colors
-    val device = LocalContext.current.container.casting.target?.name
     val id = playback.current?.mediaId
     val tag by produceState(id?.let(playback.tags::known), id) { value = id?.let { playback.tags.read(it) } }
-    val text = device ?: coding(tag, id) ?: return
+    val text = coding(tag, id) ?: return
+    Text(
+        text,
+        color = c.muted,
+        fontSize = 12.sp,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.clip(CircleShape).background(c.group).padding(horizontal = 10.dp, vertical = 3.dp),
+    )
+}
+
+/**
+ * Where the sound goes: in the accent the speaker it plays on, else the headphones the phone plays to or the phone
+ * itself; a tap ([onPick]) chooses another.
+ */
+@Composable
+private fun Output(onPick: () -> Unit) {
+    val c = MntTheme.colors
+    val target = LocalContext.current.container.casting.target
+    val local = rememberLocalOutput()
+    val tint = if (target != null) c.accent else c.muted
+    val ink = if (target != null) Modifier.inked(c.accent) else Modifier
     Row(
-        Modifier.clip(CircleShape).background(c.group).padding(horizontal = 10.dp, vertical = 3.dp),
+        Modifier.clip(CircleShape).clickable(role = Role.Button, onClick = onPick).padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        if (device != null) Icon(MntIcons.CastFilled, null, tint = c.accent, modifier = Modifier.size(14.dp).inked(c.accent))
-        Text(text, color = if (device != null) c.accent else c.muted, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = if (device != null) Modifier.widthIn(max = 180.dp).inked(c.accent) else Modifier)
+        val glyph = when {
+            target != null -> MntIcons.CastFilled
+            local.headphones -> MntIcons.Headphones
+            else -> MntIcons.Phone
+        }
+        Icon(glyph, null, tint = tint, modifier = Modifier.size(16.dp).then(ink))
+        Text(target?.name ?: local.name, color = tint, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 220.dp).then(ink))
     }
+}
+
+private class LocalOutput(val name: String, val headphones: Boolean)
+
+/** Where the phone plays music now, as Android picks it: Bluetooth, else USB, else a wire, else its own speaker. */
+@Composable
+private fun rememberLocalOutput(): LocalOutput {
+    val context = LocalContext.current
+    val audio = remember { context.getSystemService(AudioManager::class.java) }
+    val wired = stringResource(R.string.player_wired)
+    var output by remember(wired) { mutableStateOf(localOutput(context, audio, wired)) }
+    DisposableEffect(audio, wired) {
+        val callback = object : AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
+                output = localOutput(context, audio, wired)
+            }
+
+            override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
+                output = localOutput(context, audio, wired)
+            }
+        }
+        audio.registerAudioDeviceCallback(callback, Handler(Looper.getMainLooper()))
+        onDispose { audio.unregisterAudioDeviceCallback(callback) }
+    }
+    return output
+}
+
+private fun localOutput(context: Context, audio: AudioManager, wired: String): LocalOutput {
+    val outputs = audio.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+    fun first(vararg types: Int) = outputs.firstOrNull { it.type in types }
+    first(AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLE_SPEAKER, AudioDeviceInfo.TYPE_BLE_BROADCAST)
+        ?.let { return LocalOutput(it.productName.toString(), true) }
+    first(AudioDeviceInfo.TYPE_USB_HEADSET, AudioDeviceInfo.TYPE_USB_DEVICE)?.let { return LocalOutput(it.productName.toString().ifBlank { wired }, true) }
+    first(AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_WIRED_HEADSET)?.let { return LocalOutput(wired, true) }
+    return LocalOutput(phoneName(context), false)
 }
 
 /** `FLAC · 24 bit · 96 kHz` for what keeps every bit, `MP3 · 320 kbps` for what does not. */
@@ -489,8 +589,14 @@ private const val TICK_MS = 250L
 
 // The wave's height, the play button's, and the room between the times under the wave and the controls.
 private val WAVE = 56.dp
+
+// The seek bar without the wave: its height, the line's and the dot's.
+private val LINE = 24.dp
+private val TRACK = 4.dp
+private val THUMB = 12.dp
 private val PLAY = 76.dp
 private val MIDDLE_GAP = 56.dp
+private val OUTPUT_GAP = 8.dp
 
 // The bars of the wave: how wide, how far apart, where their line runs, and the part not played yet.
 private val BAR = 5.dp

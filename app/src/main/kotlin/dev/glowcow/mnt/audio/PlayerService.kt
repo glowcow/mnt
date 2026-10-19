@@ -54,7 +54,7 @@ class PlayerService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        val sources = Sources(this, container.files)
+        val sources = Sources(this, container.files, container.audioCache)
         exo = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(sources, DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)))
             .setAudioAttributes(AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(), true)

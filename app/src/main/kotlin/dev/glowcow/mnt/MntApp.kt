@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
 import dev.glowcow.mnt.archive.Archives
+import dev.glowcow.mnt.audio.AudioCache
 import dev.glowcow.mnt.audio.Playback
 import dev.glowcow.mnt.audio.upnp.Casting
 import dev.glowcow.mnt.backup.Backup
@@ -53,10 +54,12 @@ class AppContainer(context: Context) {
     val appUpdater = AppUpdater(context, scope)
     /** OpenStreetMap's tiles for the map of where a photo was taken, kept once downloaded. */
     val tiles = TileStore(File(context.cacheDir, "tiles/osm"), "Mnt/${appUpdater.current} (+https://github.com/glowcow/mnt)")
-    val backup = Backup(context, settings)
+    val backup = Backup(context, settings, connections)
     val haptics = Haptics(context.applicationContext)
     val cache: File = context.cacheDir
-    val playback = Playback(context, files, settings, scope)
+    /** Tracks of the servers, kept as they are read. */
+    val audioCache = AudioCache(context, files)
+    val playback = Playback(context, files, settings, scope, audioCache)
     val casting = Casting(context, scope)
     val thumbnails = Thumbnails(files, File(context.cacheDir, "thumbs"), File(context.cacheDir, "thumbs-fetch"))
 

@@ -73,8 +73,9 @@ The files on the screenshots are made up.
   and the phone answers in the hand when it is done.
 - **Search** — finds files and folders by a part of their name on the phone
   and on every drive at once, and offers what you searched for before.
-- **Backup and updates** — settings, pinned folders and the search history in
-  one file, encrypted with a password if you like; new versions from GitHub.
+- **Backup and updates** — settings, servers, pinned folders and the search
+  history in one file, encrypted with a password if you like (only then with
+  the servers' passwords); new versions from GitHub.
 - **Private by default** — no accounts or analytics; the network is used only
   for the servers you add and for the version check you turn on.
 

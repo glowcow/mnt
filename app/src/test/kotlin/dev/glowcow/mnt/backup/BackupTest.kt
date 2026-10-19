@@ -1,5 +1,7 @@
 package dev.glowcow.mnt.backup
 
+import dev.glowcow.mnt.net.Connection
+import dev.glowcow.mnt.net.Protocol
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,6 +34,21 @@ class BackupTest {
         assertEquals(settings, manifest.settings)
         assertEquals("0.1.1", manifest.app)
         assertEquals(99, manifest.createdAt)
+    }
+
+    @Test
+    fun archiveKeepsTheServersAndTheirIds() {
+        val servers = listOf(
+            Connection("a1", Protocol.SMB, host = "nas.lan", share = "hdd", user = "me", password = "secret"),
+            Connection("b2", Protocol.FTP, name = "Backup", host = "10.0.0.2", port = 2121),
+        )
+        val out = ByteArrayOutputStream().also { BackupArchive.write(it, BackupManifest(createdAt = 1, app = "0.8.5", settings = settings, servers = servers)) }
+        assertEquals(servers, BackupArchive.read(ByteArrayInputStream(out.toByteArray())).servers)
+    }
+
+    @Test
+    fun anOlderBackupHasNoServers() {
+        assertEquals(emptyList<Connection>(), BackupArchive.read(ByteArrayInputStream(archive())).servers)
     }
 
     @Test

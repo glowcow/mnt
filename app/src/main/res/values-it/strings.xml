@@ -187,10 +187,10 @@
     <string name="backup_restore">Ripristina</string>
     <string name="backup_overwrite">Sostituisci ciò che c’è già</string>
     <string name="backup_wrong_password">Password errata</string>
-    <string name="settings_backup_save_hint">Impostazioni, cartelle fissate e cronologia delle ricerche in un file</string>
+    <string name="settings_backup_save_hint">Impostazioni, server, cartelle fissate e cronologia delle ricerche in un file</string>
     <string name="settings_backup_restore_hint">Aggiunge le cartelle fissate e le ricerche del file a quelle presenti</string>
-    <string name="backup_password_note">Con una password il file viene cifrato. Senza, chiunque ottenga il file vede i nomi delle tue cartelle e ciò che hai cercato.</string>
-    <string name="backup_overwrite_hint">Le impostazioni, le cartelle fissate e la cronologia delle ricerche</string>
+    <string name="backup_password_note">Con una password il file viene cifrato e conserva anche le password dei server. Senza, i server vengono salvati senza password e chiunque ottenga il file vede i loro indirizzi, i nomi delle tue cartelle e ciò che hai cercato.</string>
+    <string name="backup_overwrite_hint">Le impostazioni, i server, le cartelle fissate e la cronologia delle ricerche</string>
     <string name="backup_restored">Backup ripristinato</string>
     <string name="backup_invalid">Questo non è un backup di Mnt</string>
 
@@ -275,7 +275,7 @@
     <string name="settings_files">File</string>
     <string name="settings_files_hint">Cartelle nella scheda File, file nascosti, cestino, miniature, ricerche</string>
     <string name="settings_viewer">Visualizzatore</string>
-    <string name="settings_viewer_hint">Colori del codice, righe lunghe, pagine, HDR, mappe, link</string>
+    <string name="settings_viewer_hint">Colori del codice, righe lunghe, pagine, HDR, mappe, link, musica</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_credits">Licenza e riconoscimenti</string>
     <string name="settings_code_light">Codice nel tema chiaro</string>
@@ -338,6 +338,10 @@
     <string name="settings_photo_map">Mappa del luogo dello scatto</string>
     <string name="settings_photo_map_hint">OpenStreetMap, scaricata all’apertura dei dettagli di una foto; la richiesta dice al server delle mappe dove è stata scattata</string>
     <string name="settings_map_clear">Svuota la cache delle mappe</string>
+    <string name="settings_waves">Onda del brano</string>
+    <string name="settings_waves_hint">Il volume lungo la barra di avanzamento; per un brano da un server legge l’intero file</string>
+    <string name="settings_audio_clear">Svuota la cache della musica</string>
+    <string name="settings_audio_clear_hint">I brani dei server vengono conservati qui mentre suonano, così ognuno viene letto dalla rete una sola volta</string>
     <string name="settings_map_data">Dati della mappa</string>
     <string name="settings_pictures">Immagini</string>
     <string name="settings_raw">Foto RAW</string>
@@ -358,6 +362,7 @@
     <string name="player_lyrics">Testo</string>
     <string name="player_cast">Riproduci su</string>
     <string name="player_this_phone">Questo telefono</string>
+    <string name="player_wired">Cuffie con filo</string>
     <string name="player_looking">Ricerca degli altoparlanti…</string>
     <string name="player_volume">Volume: %1$d</string>
     <string name="player_none_found">Nessun altoparlante trovato in questa rete</string>

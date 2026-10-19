@@ -191,10 +191,10 @@
     <string name="backup_restore">Аднавіць</string>
     <string name="backup_overwrite">Замяняць тое, што ўжо ёсць</string>
     <string name="backup_wrong_password">Няправільны пароль</string>
-    <string name="settings_backup_save_hint">Налады, замацаваныя папкі і гісторыя пошуку ў адным файле</string>
+    <string name="settings_backup_save_hint">Налады, серверы, замацаваныя папкі і гісторыя пошуку ў адным файле</string>
     <string name="settings_backup_restore_hint">Дадае замацаваныя папкі і пошукі з файла да тых, што ёсць тут</string>
-    <string name="backup_password_note">З паролем файл шыфруецца. Без пароля кожны, хто атрымае файл, убачыць назвы вашых папак і тое, што вы шукалі.</string>
-    <string name="backup_overwrite_hint">Налады, замацаваныя папкі і гісторыя пошуку</string>
+    <string name="backup_password_note">З паролем файл шыфруецца і захоўвае паролі сервераў. Без пароля серверы захоўваюцца без пароляў, а кожны, хто атрымае файл, убачыць іх адрасы, назвы вашых папак і тое, што вы шукалі.</string>
+    <string name="backup_overwrite_hint">Налады, серверы, замацаваныя папкі і гісторыя пошуку</string>
     <string name="backup_restored">Копія адноўлена</string>
     <string name="backup_invalid">Гэта не рэзервовая копія Mnt</string>
 
@@ -279,7 +279,7 @@
     <string name="settings_files">Файлы</string>
     <string name="settings_files_hint">Папкі на ўкладцы «Файлы», схаваныя файлы, сметніца, мініяцюры, пошук</string>
     <string name="settings_viewer">Прагляд</string>
-    <string name="settings_viewer_hint">Колеры кода, доўгія радкі, старонкі, HDR, карты, спасылкі</string>
+    <string name="settings_viewer_hint">Колеры кода, доўгія радкі, старонкі, HDR, карты, спасылкі, музыка</string>
     <string name="settings_backup">Рэзервовая копія</string>
     <string name="settings_credits">Ліцэнзія і падзякі</string>
     <string name="settings_code_light">Код у светлай тэме</string>
@@ -342,6 +342,10 @@
     <string name="settings_photo_map">Карта месца здымкі</string>
     <string name="settings_photo_map_hint">OpenStreetMap, загружаецца пры адкрыцці звестак пра фота; запыт паведамляе серверу карт, дзе яно знята</string>
     <string name="settings_map_clear">Ачысціць кэш карт</string>
+    <string name="settings_waves">Хваля трэка</string>
+    <string name="settings_waves_hint">Гучнасць уздоўж паласы перамоткі; для трэка з сервера чытае ўвесь файл</string>
+    <string name="settings_audio_clear">Ачысціць кэш музыкі</string>
+    <string name="settings_audio_clear_hint">Трэкі з сервераў захоўваюцца тут падчас прайгравання, каб кожны чытаўся з сеткі адзін раз</string>
     <string name="settings_map_data">Даныя карты</string>
     <string name="settings_pictures">Малюнкі</string>
     <string name="settings_raw">RAW-фота</string>
@@ -362,6 +366,7 @@
     <string name="player_lyrics">Тэкст песні</string>
     <string name="player_cast">Дзе іграць</string>
     <string name="player_this_phone">Гэты тэлефон</string>
+    <string name="player_wired">Правадныя навушнікі</string>
     <string name="player_looking">Шукаю калонкі…</string>
     <string name="player_volume">Гучнасць: %1$d</string>
     <string name="player_none_found">У гэтай сетцы калонак не знайшлося</string>

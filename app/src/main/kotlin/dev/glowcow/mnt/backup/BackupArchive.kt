@@ -7,6 +7,7 @@ import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import dev.glowcow.mnt.net.Connection
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -32,13 +33,20 @@ data class BackupSettings(
     val thumbnails: Boolean = true,
     val thumbnailsFar: Boolean = true,
     val photoMap: Boolean = false,
+    val waves: Boolean = false,
 )
 
-/** `backup.json` of an archive. */
+/** `backup.json` of an archive; [servers] keep their ids, which pinned folders on them are named by. */
 @Serializable
-data class BackupManifest(val version: Int = 1, val createdAt: Long, val app: String, val settings: BackupSettings)
+data class BackupManifest(
+    val version: Int = 1,
+    val createdAt: Long,
+    val app: String,
+    val settings: BackupSettings,
+    val servers: List<Connection> = emptyList(),
+)
 
-/** A backup is a zip that holds `backup.json`: the settings, the pinned folders and the search history. */
+/** A backup is a zip that holds `backup.json`: the settings, the servers, the pinned folders and the search history. */
 object BackupArchive {
     const val MANIFEST = "backup.json"
 

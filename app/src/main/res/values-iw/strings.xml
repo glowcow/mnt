@@ -187,10 +187,10 @@
     <string name="backup_restore">שחזור</string>
     <string name="backup_overwrite">החלפת מה שכבר קיים</string>
     <string name="backup_wrong_password">סיסמה שגויה</string>
-    <string name="settings_backup_save_hint">הגדרות, תיקיות מוצמדות והיסטוריית החיפוש בקובץ אחד</string>
+    <string name="settings_backup_save_hint">הגדרות, שרתים, תיקיות מוצמדות והיסטוריית החיפוש בקובץ אחד</string>
     <string name="settings_backup_restore_hint">מוסיף את התיקיות המוצמדות והחיפושים מהקובץ לאלה שכאן</string>
-    <string name="backup_password_note">עם סיסמה הקובץ מוצפן. בלי סיסמה, כל מי שיקבל את הקובץ יראה את שמות התיקיות שלך ואת מה שחיפשת.</string>
-    <string name="backup_overwrite_hint">ההגדרות, התיקיות המוצמדות והיסטוריית החיפוש</string>
+    <string name="backup_password_note">עם סיסמה הקובץ מוצפן ושומר גם את סיסמאות השרתים. בלי סיסמה השרתים נשמרים בלי סיסמאות, וכל מי שיקבל את הקובץ יראה את הכתובות שלהם, את שמות התיקיות שלך ואת מה שחיפשת.</string>
+    <string name="backup_overwrite_hint">ההגדרות, השרתים, התיקיות המוצמדות והיסטוריית החיפוש</string>
     <string name="backup_restored">הגיבוי שוחזר</string>
     <string name="backup_invalid">זה אינו גיבוי של Mnt</string>
 
@@ -275,7 +275,7 @@
     <string name="settings_files">קבצים</string>
     <string name="settings_files_hint">תיקיות בכרטיסייה קבצים, קבצים מוסתרים, סל המחזור, תמונות ממוזערות, חיפושים</string>
     <string name="settings_viewer">תצוגה</string>
-    <string name="settings_viewer_hint">צבעי קוד, שורות ארוכות, עמודים, HDR, מפות, קישורים</string>
+    <string name="settings_viewer_hint">צבעי קוד, שורות ארוכות, עמודים, HDR, מפות, קישורים, מוזיקה</string>
     <string name="settings_backup">גיבוי</string>
     <string name="settings_credits">רישיון ותודות</string>
     <string name="settings_code_light">קוד בערכת הנושא הבהירה</string>
@@ -338,6 +338,10 @@
     <string name="settings_photo_map">מפת מקום הצילום</string>
     <string name="settings_photo_map_hint">OpenStreetMap, נטענת בפתיחת פרטי תמונה; הבקשה מגלה לשרת המפות היכן צולמה</string>
     <string name="settings_map_clear">ניקוי מטמון המפות</string>
+    <string name="settings_waves">גל הרצועה</string>
+    <string name="settings_waves_hint">עוצמת הקול לאורך פס ההתקדמות; לרצועה משרת נקרא הקובץ כולו</string>
+    <string name="settings_audio_clear">ניקוי מטמון המוזיקה</string>
+    <string name="settings_audio_clear_hint">רצועות משרתים נשמרות כאן בזמן ההשמעה, כדי שכל אחת תיקרא מהרשת פעם אחת בלבד</string>
     <string name="settings_map_data">נתוני מפה</string>
     <string name="settings_pictures">תמונות</string>
     <string name="settings_raw">תמונות RAW</string>
@@ -358,6 +362,7 @@
     <string name="player_lyrics">מילים</string>
     <string name="player_cast">השמעה ב־</string>
     <string name="player_this_phone">הטלפון הזה</string>
+    <string name="player_wired">אוזניות חוטיות</string>
     <string name="player_looking">מחפש רמקולים…</string>
     <string name="player_volume">עוצמת קול: %1$d</string>
     <string name="player_none_found">לא נמצאו רמקולים ברשת הזו</string>

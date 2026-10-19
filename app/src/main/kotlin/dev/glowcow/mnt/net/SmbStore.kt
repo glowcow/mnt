@@ -236,7 +236,8 @@ class SmbStore(private val c: Connection) : RemoteStore() {
             closed = true
             reading.decrementAndGet()
             asked.forEach { it.cancel(false) }
-            file.close()
+            // On a connection that is gone there is nothing left to close, and smbj says so with an unchecked throw.
+            runCatching { file.close() }
         }
     }
 

@@ -36,6 +36,22 @@ class Connections(context: Context) {
     @Synchronized
     fun remove(id: String) = store(_list.value.filterNot { it.id == id })
 
+    /**
+     * Takes the servers of a backup: in place of the ones here with [replace], else those not here yet. One that comes
+     * without its password keeps the one it has here.
+     */
+    @Synchronized
+    fun take(servers: List<Connection>, replace: Boolean) {
+        val here = _list.value
+        store(
+            if (replace) {
+                servers.map { s -> here.firstOrNull { it.id == s.id }?.takeIf { s.password.isEmpty() }?.let { s.copy(password = it.password) } ?: s }
+            } else {
+                here + servers.filter { s -> here.none { it.id == s.id } }
+            },
+        )
+    }
+
     private fun store(list: List<Connection>) {
         val cipher = Cipher.getInstance(AES_GCM).apply { init(Cipher.ENCRYPT_MODE, key()) }
         file.writeBytes(cipher.iv + cipher.doFinal(json.encodeToString(list).toByteArray()))

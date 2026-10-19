@@ -6,7 +6,6 @@ import android.media.MediaDataSource
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.util.LruCache
-import dev.glowcow.mnt.archive.StoreSource
 import dev.glowcow.mnt.files.FileStore
 import dev.glowcow.mnt.files.Remote
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +24,7 @@ import kotlin.math.sqrt
  * How loud a track is along its length, for the bar of time: [BINS] values 0–1, made by decoding it once and kept in
  * [dir]. A long track is heard at [BINS] places only, so a server's file is not read whole.
  */
-class Waves(private val files: FileStore, private val dir: File) {
+class Waves(private val files: FileStore, private val cache: AudioCache, private val dir: File) {
     private val known = LruCache<String, FloatArray>(64)
     private val one = Mutex()
 
@@ -51,14 +50,14 @@ class Waves(private val files: FileStore, private val dir: File) {
 
     private suspend fun measure(path: String, size: Long): FloatArray? {
         val extractor = MediaExtractor()
-        var source: StoreSource? = null
+        var source: MediaDataSource? = null
         var codec: MediaCodec? = null
         try {
             if (Remote.id(path) == null) {
                 extractor.setDataSource(path)
             } else {
-                source = StoreSource(files, path, size)
-                extractor.setDataSource(SourceMedia(source))
+                source = cache.media(path, size)
+                extractor.setDataSource(source)
             }
             val track = (0 until extractor.trackCount).firstOrNull { extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true } ?: return null
             val format = extractor.getTrackFormat(track)

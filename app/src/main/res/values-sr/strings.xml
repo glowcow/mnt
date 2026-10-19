@@ -187,10 +187,10 @@
     <string name="backup_restore">Врати</string>
     <string name="backup_overwrite">Замени оно што већ постоји</string>
     <string name="backup_wrong_password">Погрешна лозинка</string>
-    <string name="settings_backup_save_hint">Подешавања, закачене фасцикле и историја претраге у једној датотеци</string>
+    <string name="settings_backup_save_hint">Подешавања, сервери, закачене фасцикле и историја претраге у једној датотеци</string>
     <string name="settings_backup_restore_hint">Додаје закачене фасцикле и претраге из датотеке онима које су овде</string>
-    <string name="backup_password_note">Са лозинком датотека се шифрује. Без ње свако ко добије датотеку види називе ваших фасцикли и оно што сте тражили.</string>
-    <string name="backup_overwrite_hint">Подешавања, закачене фасцикле и историја претраге</string>
+    <string name="backup_password_note">Са лозинком датотека се шифрује и чува и лозинке сервера. Без ње сервери се чувају без лозинки, а свако ко добије датотеку види њихове адресе, називе ваших фасцикли и оно што сте тражили.</string>
+    <string name="backup_overwrite_hint">Подешавања, сервери, закачене фасцикле и историја претраге</string>
     <string name="backup_restored">Резервна копија је враћена</string>
     <string name="backup_invalid">Ово није резервна копија Mnt-а</string>
 
@@ -275,7 +275,7 @@
     <string name="settings_files">Датотеке</string>
     <string name="settings_files_hint">Фасцикле на картици Датотеке, скривене датотеке, корпа, сличице, претраге</string>
     <string name="settings_viewer">Прегледач</string>
-    <string name="settings_viewer_hint">Боје кода, дуги редови, странице, HDR, мапе, везе</string>
+    <string name="settings_viewer_hint">Боје кода, дуги редови, странице, HDR, мапе, везе, музика</string>
     <string name="settings_backup">Резервна копија</string>
     <string name="settings_credits">Лиценца и захвалнице</string>
     <string name="settings_code_light">Код у светлој теми</string>
@@ -338,6 +338,10 @@
     <string name="settings_photo_map">Мапа места снимања</string>
     <string name="settings_photo_map_hint">OpenStreetMap, преузима се при отварању детаља фотографије; захтев говори серверу мапа где је снимљена</string>
     <string name="settings_map_clear">Обриши кеш мапа</string>
+    <string name="settings_waves">Талас нумере</string>
+    <string name="settings_waves_hint">Јачина звука дуж траке премотавања; за нумеру са сервера чита целу датотеку</string>
+    <string name="settings_audio_clear">Обриши кеш музике</string>
+    <string name="settings_audio_clear_hint">Нумере са сервера чувају се овде док свирају, да би се свака читала са мреже само једном</string>
     <string name="settings_map_data">Подаци мапе</string>
     <string name="settings_pictures">Слике</string>
     <string name="settings_raw">RAW фотографије</string>
@@ -358,6 +362,7 @@
     <string name="player_lyrics">Текст</string>
     <string name="player_cast">Пусти на</string>
     <string name="player_this_phone">Овај телефон</string>
+    <string name="player_wired">Жичане слушалице</string>
     <string name="player_looking">Тражим звучнике…</string>
     <string name="player_volume">Јачина звука: %1$d</string>
     <string name="player_none_found">У овој мрежи нема звучника</string>

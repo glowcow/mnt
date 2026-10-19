@@ -31,13 +31,13 @@ import java.io.File
 import java.io.IOException
 
 /** The screens' side of the player: a controller of [PlayerService]'s session, and what it plays as state to draw. */
-class Playback(private val context: Context, private val files: FileStore, private val settings: SettingsStore, private val scope: CoroutineScope) {
+class Playback(private val context: Context, private val files: FileStore, private val settings: SettingsStore, private val scope: CoroutineScope, cache: AudioCache) {
     private var controller: MediaController? = null
     private var connecting = false
     private val waiting = ArrayList<(MediaController) -> Unit>()
 
-    val tags = Tags(files)
-    val waves = Waves(files, File(context.cacheDir, "waves"))
+    val tags = Tags(files, cache)
+    val waves = Waves(files, cache, File(context.cacheDir, "waves"))
     private val words = HashMap<String, String?>()
 
     /** Told by the service: the words the tags of [id] hold, or that they hold none. */

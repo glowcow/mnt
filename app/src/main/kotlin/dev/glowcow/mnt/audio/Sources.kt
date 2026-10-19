@@ -13,26 +13,35 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.TransferListener
 import dev.glowcow.mnt.files.FileStore
+import dev.glowcow.mnt.files.Remote
 import kotlinx.coroutines.runBlocking
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 
-/** Where the player reads: a file of any place through `mnt:`, the web through the player's own sources. */
+/**
+ * Where the player reads: a file of the phone through `mnt:`, one of a server through `mnt:` and [cache], the web
+ * through the player's own sources.
+ */
 @OptIn(UnstableApi::class)
-class Sources(private val context: Context, private val files: FileStore) : DataSource.Factory {
-    override fun createDataSource(): DataSource = Either(StoreDataSource(files), DefaultDataSource.Factory(context).createDataSource())
+class Sources(private val context: Context, private val files: FileStore, private val cache: AudioCache) : DataSource.Factory {
+    override fun createDataSource(): DataSource =
+        Either(StoreDataSource(files), cache.factory().createDataSource(), DefaultDataSource.Factory(context).createDataSource())
 
-    private class Either(private val store: DataSource, private val web: DataSource) : DataSource {
+    private class Either(private val store: DataSource, private val kept: DataSource, private val web: DataSource) : DataSource {
         private var open: DataSource? = null
 
         override fun addTransferListener(listener: TransferListener) {
             store.addTransferListener(listener)
+            kept.addTransferListener(listener)
             web.addTransferListener(listener)
         }
 
         override fun open(dataSpec: DataSpec): Long {
-            val source = if (dataSpec.uri.scheme == Sounds.SCHEME) store else web
+            val source = when {
+                dataSpec.uri.scheme != Sounds.SCHEME -> web
+                Remote.id(Sounds.path(dataSpec.uri)) != null -> kept
+                else -> store
+            }
             open = source
             return source.open(dataSpec)
         }
@@ -62,11 +71,12 @@ class StoreDataSource(private val files: FileStore) : BaseDataSource(true) {
         uri = dataSpec.uri
         transferInitializing(dataSpec)
         val path = Sounds.path(dataSpec.uri)
+        // No answer is not taken for no file: the player tries again, over a new connection, before it moves on.
         val size = try {
             runBlocking { files.stat(path) }?.size
         } catch (e: IOException) {
             throw DataSourceException(e, PlaybackException.ERROR_CODE_IO_UNSPECIFIED)
-        } ?: throw DataSourceException(FileNotFoundException(path), PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND)
+        } ?: throw DataSourceException(IOException("Cannot read $path"), PlaybackException.ERROR_CODE_IO_UNSPECIFIED)
         if (dataSpec.position > size) throw DataSourceException(PlaybackException.ERROR_CODE_IO_READ_POSITION_OUT_OF_RANGE)
         input = try {
             files.read(path, dataSpec.position)

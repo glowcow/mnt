@@ -51,6 +51,8 @@ data class AppSettings(
     val thumbnailsFar: Boolean = true,
     /** A photo's details show a map of where it was taken, downloaded from OpenStreetMap. */
     val photoMap: Boolean = false,
+    /** The player draws the loudness of the track along its seek bar, which reads the whole file of a track. */
+    val waves: Boolean = false,
 )
 
 private val Context.dataStore by preferencesDataStore("settings")
@@ -76,6 +78,7 @@ class SettingsStore(private val context: Context) {
     private val thumbnailsKey = booleanPreferencesKey("thumbnails")
     private val thumbnailsFarKey = booleanPreferencesKey("thumbnails_far")
     private val photoMapKey = booleanPreferencesKey("photo_map")
+    private val wavesKey = booleanPreferencesKey("waves")
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { p ->
         AppSettings(
@@ -99,6 +102,7 @@ class SettingsStore(private val context: Context) {
             thumbnails = p[thumbnailsKey] ?: true,
             thumbnailsFar = p[thumbnailsFarKey] ?: true,
             photoMap = p[photoMapKey] ?: false,
+            waves = p[wavesKey] ?: false,
         )
     }
 
@@ -124,6 +128,7 @@ class SettingsStore(private val context: Context) {
         it[thumbnailsKey] = s.thumbnails
         it[thumbnailsFarKey] = s.thumbnailsFar
         it[photoMapKey] = s.photoMap
+        it[wavesKey] = s.waves
     }
 
     /** Adds pinned folders and searches to the ones kept, those already here staying where they are. */
@@ -156,6 +161,8 @@ class SettingsStore(private val context: Context) {
     suspend fun setThumbnailsFar(on: Boolean) = context.dataStore.edit { it[thumbnailsFarKey] = on }
 
     suspend fun setPhotoMap(on: Boolean) = context.dataStore.edit { it[photoMapKey] = on }
+
+    suspend fun setWaves(on: Boolean) = context.dataStore.edit { it[wavesKey] = on }
 
     suspend fun setShowHidden(on: Boolean) = context.dataStore.edit { it[showHiddenKey] = on }
 

@@ -191,10 +191,10 @@
     <string name="backup_restore">Przywróć</string>
     <string name="backup_overwrite">Zastąp to, co już jest</string>
     <string name="backup_wrong_password">Nieprawidłowe hasło</string>
-    <string name="settings_backup_save_hint">Ustawienia, przypięte foldery i historia wyszukiwania w jednym pliku</string>
+    <string name="settings_backup_save_hint">Ustawienia, serwery, przypięte foldery i historia wyszukiwania w jednym pliku</string>
     <string name="settings_backup_restore_hint">Dodaje przypięte foldery i wyszukiwania z pliku do tych, które są tutaj</string>
-    <string name="backup_password_note">Z hasłem plik jest szyfrowany. Bez hasła każdy, kto dostanie plik, zobaczy nazwy twoich folderów i to, czego szukano.</string>
-    <string name="backup_overwrite_hint">Ustawienia, przypięte foldery i historia wyszukiwania</string>
+    <string name="backup_password_note">Z hasłem plik jest szyfrowany i zachowuje też hasła serwerów. Bez hasła serwery są zapisywane bez haseł, a każdy, kto dostanie plik, zobaczy ich adresy, nazwy twoich folderów i to, czego szukano.</string>
+    <string name="backup_overwrite_hint">Ustawienia, serwery, przypięte foldery i historia wyszukiwania</string>
     <string name="backup_restored">Kopia przywrócona</string>
     <string name="backup_invalid">To nie jest kopia zapasowa Mnt</string>
 
@@ -279,7 +279,7 @@
     <string name="settings_files">Pliki</string>
     <string name="settings_files_hint">Foldery na karcie Pliki, ukryte pliki, kosz, miniatury, wyszukiwania</string>
     <string name="settings_viewer">Podgląd</string>
-    <string name="settings_viewer_hint">Kolory kodu, długie wiersze, strony, HDR, mapy, linki</string>
+    <string name="settings_viewer_hint">Kolory kodu, długie wiersze, strony, HDR, mapy, linki, muzyka</string>
     <string name="settings_backup">Kopia zapasowa</string>
     <string name="settings_credits">Licencja i podziękowania</string>
     <string name="settings_code_light">Kod w jasnym motywie</string>
@@ -342,6 +342,10 @@
     <string name="settings_photo_map">Mapa miejsca zdjęcia</string>
     <string name="settings_photo_map_hint">OpenStreetMap, pobierana przy otwarciu szczegółów zdjęcia; zapytanie mówi serwerowi map, gdzie je zrobiono</string>
     <string name="settings_map_clear">Wyczyść pamięć podręczną map</string>
+    <string name="settings_waves">Fala utworu</string>
+    <string name="settings_waves_hint">Głośność wzdłuż paska przewijania; dla utworu z serwera czyta cały plik</string>
+    <string name="settings_audio_clear">Wyczyść pamięć podręczną muzyki</string>
+    <string name="settings_audio_clear_hint">Utwory z serwerów są tu zachowywane podczas odtwarzania, aby każdy był pobierany z sieci tylko raz</string>
     <string name="settings_map_data">Dane mapy</string>
     <string name="settings_pictures">Obrazy</string>
     <string name="settings_raw">Zdjęcia RAW</string>
@@ -362,6 +366,7 @@
     <string name="player_lyrics">Tekst</string>
     <string name="player_cast">Odtwarzaj na</string>
     <string name="player_this_phone">Ten telefon</string>
+    <string name="player_wired">Słuchawki przewodowe</string>
     <string name="player_looking">Szukam głośników…</string>
     <string name="player_volume">Głośność: %1$d</string>
     <string name="player_none_found">Nie znaleziono głośników w tej sieci</string>

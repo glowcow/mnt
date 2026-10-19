@@ -183,10 +183,10 @@
     <string name="backup_restore">Wiederherstellen</string>
     <string name="backup_overwrite">Vorhandenes ersetzen</string>
     <string name="backup_wrong_password">Falsches Passwort</string>
-    <string name="settings_backup_save_hint">Einstellungen, angeheftete Ordner und Suchverlauf in einer Datei</string>
+    <string name="settings_backup_save_hint">Einstellungen, Server, angeheftete Ordner und Suchverlauf in einer Datei</string>
     <string name="settings_backup_restore_hint">Fügt angeheftete Ordner und Suchen aus der Datei zu den hiesigen hinzu</string>
-    <string name="backup_password_note">Mit einem Passwort wird die Datei verschlüsselt. Ohne Passwort sieht jeder, der die Datei bekommt, die Namen Ihrer Ordner und wonach Sie gesucht haben.</string>
-    <string name="backup_overwrite_hint">Einstellungen, angeheftete Ordner und Suchverlauf</string>
+    <string name="backup_password_note">Mit einem Passwort wird die Datei verschlüsselt und behält auch die Passwörter der Server. Ohne Passwort werden die Server ohne Passwörter gespeichert, und jeder, der die Datei bekommt, sieht ihre Adressen, die Namen Ihrer Ordner und wonach Sie gesucht haben.</string>
+    <string name="backup_overwrite_hint">Einstellungen, Server, angeheftete Ordner und Suchverlauf</string>
     <string name="backup_restored">Sicherung wiederhergestellt</string>
     <string name="backup_invalid">Das ist keine Mnt-Sicherung</string>
 
@@ -271,7 +271,7 @@
     <string name="settings_files">Dateien</string>
     <string name="settings_files_hint">Ordner im Tab Dateien, versteckte Dateien, Papierkorb, Miniaturen, Suchen</string>
     <string name="settings_viewer">Ansicht</string>
-    <string name="settings_viewer_hint">Farben von Code, lange Zeilen, Seiten, HDR, Karten, Links</string>
+    <string name="settings_viewer_hint">Farben von Code, lange Zeilen, Seiten, HDR, Karten, Links, Musik</string>
     <string name="settings_backup">Sicherung</string>
     <string name="settings_credits">Lizenz und Danksagungen</string>
     <string name="settings_code_light">Code im hellen Design</string>
@@ -334,6 +334,10 @@
     <string name="settings_photo_map">Karte des Aufnahmeorts</string>
     <string name="settings_photo_map_hint">OpenStreetMap, geladen beim Öffnen der Fotodetails; die Anfrage verrät dem Kartenserver, wo es aufgenommen wurde</string>
     <string name="settings_map_clear">Karten-Cache leeren</string>
+    <string name="settings_waves">Wellenform des Titels</string>
+    <string name="settings_waves_hint">Die Lautstärke entlang der Suchleiste; bei einem Titel von einem Server wird die ganze Datei gelesen</string>
+    <string name="settings_audio_clear">Musik-Cache leeren</string>
+    <string name="settings_audio_clear_hint">Titel von Servern werden beim Abspielen hier aufbewahrt, damit jeder nur einmal aus dem Netz gelesen wird</string>
     <string name="settings_map_data">Kartendaten</string>
     <string name="settings_pictures">Bilder</string>
     <string name="settings_raw">RAW-Fotos</string>
@@ -354,6 +358,7 @@
     <string name="player_lyrics">Songtext</string>
     <string name="player_cast">Wiedergabe auf</string>
     <string name="player_this_phone">Dieses Telefon</string>
+    <string name="player_wired">Kabelkopfhörer</string>
     <string name="player_looking">Lautsprecher werden gesucht…</string>
     <string name="player_volume">Lautstärke: %1$d</string>
     <string name="player_none_found">Keine Lautsprecher in diesem Netzwerk gefunden</string>

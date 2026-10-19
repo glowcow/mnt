@@ -8,6 +8,7 @@ import dev.glowcow.mnt.data.SettingsStore
 import dev.glowcow.mnt.data.ThemeMode
 import dev.glowcow.mnt.files.Place
 import dev.glowcow.mnt.files.SortBy
+import dev.glowcow.mnt.net.Connections
 import dev.glowcow.mnt.view.code.CodeScheme
 import java.io.BufferedInputStream
 import java.io.InputStream
@@ -17,10 +18,10 @@ import kotlinx.coroutines.withContext
 
 enum class RestoreOutcome { RESTORED, WRONG_PASSWORD, INVALID }
 
-/** Saves the settings, the pinned folders and the search history to a file the user picks, and reads them back. */
-class Backup(private val context: Context, private val settings: SettingsStore) {
+/** Saves the settings, the servers, the pinned folders and the search history to a file the user picks, and reads them back. */
+class Backup(private val context: Context, private val settings: SettingsStore, private val connections: Connections) {
 
-    /** Writes a backup to [uri], encrypted when [password] is given. */
+    /** Writes a backup to [uri], encrypted when [password] is given; the servers' passwords go only into an encrypted one. */
     suspend fun save(uri: Uri, password: String?): Boolean = withContext(Dispatchers.IO) {
         runCatching {
             val s = settings.settings.first()
@@ -35,8 +36,9 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                             s.theme.name, s.palette.name, s.appUpdate, s.showHidden, s.sortBy.name, s.sortDescending,
                             s.pinned, s.hiddenPlaces.toList(), s.searches, s.binExternal,
                             s.codeLight.name, s.codeDark.name, s.wrapLines, s.lineNumbers, s.linksInApp, s.pages,
-                            s.ultraHdr, s.thumbnails, s.thumbnailsFar, s.photoMap,
+                            s.ultraHdr, s.thumbnails, s.thumbnailsFar, s.photoMap, s.waves,
                         ),
+                        servers = connections.list.value.map { if (password.isNullOrEmpty()) it.copy(password = "") else it },
                     ),
                 )
             }
@@ -49,7 +51,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
     }
 
     /**
-     * Adds the pinned folders and the searches of the backup at [uri] to the ones here. With
+     * Adds the servers, the pinned folders and the searches of the backup at [uri] to the ones here. With
      * [overwrite] everything here is replaced by what the backup holds, the settings too.
      */
     suspend fun restore(uri: Uri, password: String?, overwrite: Boolean): RestoreOutcome = withContext(Dispatchers.IO) {
@@ -63,6 +65,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                 BackupArchive.read(if (encrypted) BackupCrypto.decrypt(input, password!!.toCharArray()) else input)
             }
             val kept = kept(manifest.settings)
+            connections.take(manifest.servers.filter { it.id.isNotBlank() }.distinctBy { it.id }.take(MAX_LIST), overwrite)
             if (overwrite) settings.restore(kept) else settings.add(kept.pinned, kept.searches)
             RestoreOutcome.RESTORED
         } catch (e: WrongPasswordException) {
@@ -103,6 +106,7 @@ class Backup(private val context: Context, private val settings: SettingsStore) 
                 thumbnails = b.thumbnails,
                 thumbnailsFar = b.thumbnailsFar,
                 photoMap = b.photoMap,
+                waves = b.waves,
             )
         }
     }

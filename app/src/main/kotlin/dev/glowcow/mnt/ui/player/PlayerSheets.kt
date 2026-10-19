@@ -1,6 +1,7 @@
 package dev.glowcow.mnt.ui.player
 
 import android.content.pm.ActivityInfo
+import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import android.text.format.DateUtils
@@ -158,7 +159,7 @@ internal fun CastSheet(onDismiss: () -> Unit) {
     GroupSheet(stringResource(R.string.player_cast), onDismiss) { pick ->
         val target = casting.target
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val phone = remember { Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME) ?: Build.MODEL }
+            val phone = remember { phoneName(context) }
             Place(stringResource(R.string.player_this_phone), phone, chosen = target == null, onClick = { pick { casting.use(null) } }) {
                 Icon(MntIcons.Phone, null, tint = c.text, modifier = Modifier.size(24.dp))
             }
@@ -214,3 +215,6 @@ private fun Check() {
     val c = MntTheme.colors
     Icon(MntIcons.Check, null, tint = c.accent, modifier = Modifier.size(20.dp).inked(c.accent))
 }
+
+/** What the phone is called: the name its owner gave it, else its model. */
+internal fun phoneName(context: Context): String = Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME) ?: Build.MODEL

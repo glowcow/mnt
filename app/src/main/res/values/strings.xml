@@ -186,10 +186,10 @@
     <string name="backup_restore">Restore</string>
     <string name="backup_overwrite">Replace what is already here</string>
     <string name="backup_wrong_password">Wrong password</string>
-    <string name="settings_backup_save_hint">Settings, pinned folders and the search history in one file</string>
+    <string name="settings_backup_save_hint">Settings, servers, pinned folders and the search history in one file</string>
     <string name="settings_backup_restore_hint">Adds the pinned folders and searches from the file to the ones here</string>
-    <string name="backup_password_note">With a password the file is encrypted. Without one anybody who gets the file can see the names of your folders and what you searched for.</string>
-    <string name="backup_overwrite_hint">The settings, the pinned folders and the search history</string>
+    <string name="backup_password_note">With a password the file is encrypted and keeps the servers’ passwords too. Without one the servers are saved without their passwords, and anybody who gets the file can see where they are, the names of your folders and what you searched for.</string>
+    <string name="backup_overwrite_hint">The settings, the servers, the pinned folders and the search history</string>
     <string name="backup_restored">Backup restored</string>
     <string name="backup_invalid">This is not a Mnt backup</string>
 
@@ -274,7 +274,7 @@
     <string name="settings_files">Files</string>
     <string name="settings_files_hint">Folders on the Files tab, hidden files, the bin, thumbnails, searches</string>
     <string name="settings_viewer">Viewer</string>
-    <string name="settings_viewer_hint">Colours of code, long lines, pages, HDR, maps, links</string>
+    <string name="settings_viewer_hint">Colours of code, long lines, pages, HDR, maps, links, music</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_credits">Licence and credits</string>
     <string name="settings_code_light">Code in the light theme</string>
@@ -337,6 +337,10 @@
     <string name="settings_photo_map">Map of where a photo was taken</string>
     <string name="settings_photo_map_hint">OpenStreetMap, downloaded when a photo’s details are opened; the request tells the map server where it was taken</string>
     <string name="settings_map_clear">Clear the map cache</string>
+    <string name="settings_waves">Wave of the track</string>
+    <string name="settings_waves_hint">The loudness along the seek bar; for a track from a server it reads the whole file</string>
+    <string name="settings_audio_clear">Clear the music cache</string>
+    <string name="settings_audio_clear_hint">Tracks from servers are kept here as they play, so each is read from the network once</string>
     <string name="settings_map_data">Map data</string>
     <string name="settings_pictures">Pictures</string>
     <string name="settings_raw">RAW photos</string>
@@ -357,6 +361,7 @@
     <string name="player_lyrics">Lyrics</string>
     <string name="player_cast">Play on</string>
     <string name="player_this_phone">This phone</string>
+    <string name="player_wired">Wired headphones</string>
     <string name="player_looking">Looking for speakers…</string>
     <string name="player_volume">Volume: %1$d</string>
     <string name="player_none_found">No speakers found on this network</string>
