@@ -267,7 +267,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
                 entry<ServerRoute> { route -> ServerScreen(route.id, onBack = { backStack.remove(route) }) }
                 entry<BinRoute> { BinScreen(onBack = { backStack.remove(BinRoute) }) }
                 entry<DeviceRoute> { route -> DeviceScreen(route.id, onBack = { backStack.remove(route) }, onOpen = ::openFolder) }
-                entry<FolderRoute> { route -> FolderScreen(route.path, onBack = { backStack.removeLastOrNull() }, onOpen = ::openFolder, onView = ::openFile) }
+                entry<FolderRoute> { route -> FolderScreen(route.path, onBack = { backStack.removeLastOrNull() }, onOpen = ::openFolder, onView = ::openFile, onTab = ::selectTab) }
                 entry<SearchRoute> { SearchScreen(onTab = ::selectTab, onOpen = ::openFolder, onView = ::openFile) }
                 entry<SettingsRoute> { SettingsScreen(onTab = ::selectTab, onPage = { backStack.add(SettingsPageRoute(it)) }) }
                 entry<SettingsPageRoute> { route -> SettingsPageScreen(route.page, onBack = { backStack.remove(route) }) }

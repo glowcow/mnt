@@ -343,6 +343,7 @@
     <string name="settings_audio_clear">Svuota la cache della musica</string>
     <string name="settings_audio_clear_hint">I brani dei server vengono conservati qui mentre suonano, così ognuno viene letto dalla rete una sola volta</string>
     <string name="settings_map_data">Dati della mappa</string>
+    <string name="settings_sound_decoding">Decodifica audio</string>
     <string name="settings_pictures">Immagini</string>
     <string name="settings_raw">Foto RAW</string>
     <string name="player_channel">Riproduzione</string>

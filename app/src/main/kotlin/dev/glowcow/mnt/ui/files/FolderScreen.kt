@@ -57,6 +57,7 @@ import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.files.Opener
 import dev.glowcow.mnt.files.Paths
 import dev.glowcow.mnt.files.TransferProgress
+import dev.glowcow.mnt.ui.components.BottomBar
 import dev.glowcow.mnt.ui.components.DetailHeader
 import dev.glowcow.mnt.ui.components.DetailPage
 import dev.glowcow.mnt.ui.components.EmptyState
@@ -66,6 +67,7 @@ import dev.glowcow.mnt.ui.components.LocalOrigins
 import dev.glowcow.mnt.ui.components.NodeRow
 import dev.glowcow.mnt.ui.components.rememberThumbnail
 import dev.glowcow.mnt.ui.components.PillButton
+import dev.glowcow.mnt.ui.components.TopTab
 import dev.glowcow.mnt.ui.components.ProgressLine
 import dev.glowcow.mnt.ui.components.folderKey
 import dev.glowcow.mnt.ui.components.nodeMeta
@@ -83,6 +85,7 @@ fun FolderScreen(
     onBack: () -> Unit,
     onOpen: (String) -> Unit,
     onView: (String) -> Unit,
+    onTab: (TopTab) -> Unit,
     vm: FolderViewModel = viewModel { FolderViewModel(path, (this[APPLICATION_KEY] as MntApp).container) },
 ) {
     val c = MntTheme.colors
@@ -154,7 +157,8 @@ fun FolderScreen(
         opening != null -> ({ ProgressBar(stringResource(R.string.transfer_progress, stringResource(R.string.action_extract), ((opening ?: 0f) * 100).toInt()), "", opening ?: 0f, vm::stopOpening) })
         progress != null -> ({ progress?.let { ProgressBar(it, vm::stop) } })
         clip != null -> ({ clip?.let { ClipBar(it, onPaste = { paste(it) }, onCancel = vm::dropClip) } })
-        else -> null
+        // With nothing else to show the tabs stay, so home and the settings are one tap away.
+        else -> ({ BottomBar(TopTab.FILES, onTab) })
     }
 
     // Opened from a row of the Files tab, the page grows out of that row.

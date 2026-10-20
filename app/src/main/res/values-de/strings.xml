@@ -339,6 +339,7 @@
     <string name="settings_audio_clear">Musik-Cache leeren</string>
     <string name="settings_audio_clear_hint">Titel von Servern werden beim Abspielen hier aufbewahrt, damit jeder nur einmal aus dem Netz gelesen wird</string>
     <string name="settings_map_data">Kartendaten</string>
+    <string name="settings_sound_decoding">Audiodekodierung</string>
     <string name="settings_pictures">Bilder</string>
     <string name="settings_raw">RAW-Fotos</string>
     <string name="player_channel">Wiedergabe</string>

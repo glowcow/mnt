@@ -292,6 +292,8 @@ fun SettingsPageScreen(
                 GroupRow(stringResource(R.string.settings_pictures), value = "libjxl, Highway, libtiff, libde265, AndroidSVG · BSD, Apache-2.0, LGPL-3.0")
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_map_data), value = "OpenStreetMap · ODbL")
+                GroupDivider()
+                GroupRow(stringResource(R.string.settings_sound_decoding), value = "FFmpeg, Jellyfin's Media3 decoder · LGPL-2.1, GPL-3.0")
             }
         }
     }

@@ -194,7 +194,9 @@ class SmbStore(private val c: Connection) : RemoteStore() {
             piece = null
             if (over) return false
             while (asked.size < ahead && next < end) ask()
-            ahead = min(ahead + 1, AHEAD)
+            // Several on their way only once the pieces are whole: a reader after its first hundred kilobytes, as a
+            // reader of tags is, has asked for one piece more at most.
+            if (stride == PIECE) ahead = min(ahead + 1, AHEAD)
             val first = asked.removeFirstOrNull() ?: return false
             val bytes = pieces.removeFirst()
             size = try {
@@ -324,7 +326,7 @@ class SmbStore(private val c: Connection) : RemoteStore() {
         // How much the first question asks for and the most one asks for, and how many are on their way at once.
         const val FIRST = 64 * 1024
         const val PIECE = 1024 * 1024
-        const val AHEAD = 4
+        const val AHEAD = 2
 
         val POOL = Executors.newCachedThreadPool { Thread(it, "smb").apply { isDaemon = true } }
     }

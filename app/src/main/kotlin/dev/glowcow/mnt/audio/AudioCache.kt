@@ -101,7 +101,7 @@ class AudioCache(context: Context, private val files: FileStore) {
     private companion object {
         const val MAX_BYTES = 512L shl 20
         const val FRESH_MS = 60_000L
-        const val SKIP_AHEAD = 512L shl 10
+        const val SKIP_AHEAD = 64L shl 10
         const val SKIP_BUFFER = 64 shl 10
     }
 }

@@ -39,7 +39,8 @@ import dev.glowcow.mnt.ui.theme.TitleFont
 import dev.glowcow.mnt.ui.theme.inked
 
 enum class TopTab(val icon: ImageVector, val label: Int) {
-    FILES(MntIcons.Files, R.string.tab_files),
+    // The house: from any page it goes back to the start.
+    FILES(MntIcons.Home, R.string.tab_files),
     SEARCH(MntIcons.Search, R.string.tab_search),
     SETTINGS(MntIcons.Settings, R.string.tab_settings),
 }

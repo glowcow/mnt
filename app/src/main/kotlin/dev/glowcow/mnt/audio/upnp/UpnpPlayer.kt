@@ -51,6 +51,10 @@ class UpnpPlayer(
     private var duration = C.TIME_UNSET
     private var repeat = Player.REPEAT_MODE_OFF
     private var shuffle = false
+
+    // A renderer has no order of its own to shuffle by: shuffled, the queue itself is dealt anew, and this is how it was
+    // given, to put it back when shuffle goes off.
+    private var given: List<MediaItem>? = null
     @Volatile
     private var volume = 50
     private var volumeSetAt = 0L
@@ -119,6 +123,8 @@ class UpnpPlayer(
     override fun handleSetMediaItems(mediaItems: List<MediaItem>, startIndex: Int, startPositionMs: Long): ListenableFuture<*> {
         items = mediaItems.toList()
         index = if (startIndex == C.INDEX_UNSET) 0 else startIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
+        given = null
+        if (shuffle) deal()
         moveTo(if (startPositionMs == C.TIME_UNSET) 0 else startPositionMs)
         if (state != Player.STATE_IDLE) load()
         return done()
@@ -192,8 +198,34 @@ class UpnpPlayer(
     }
 
     override fun handleSetShuffleModeEnabled(shuffleModeEnabled: Boolean): ListenableFuture<*> {
-        shuffle = shuffleModeEnabled
+        if (shuffleModeEnabled != shuffle) {
+            shuffle = shuffleModeEnabled
+            if (shuffleModeEnabled) deal() else undeal()
+        }
         return done()
+    }
+
+    // Deals the queue anew, the track playing first and the rest in no order, keeping it as it was given.
+    private fun deal() {
+        if (items.isEmpty()) return
+        given = items
+        val playing = items[index]
+        items = listOf(playing) + items.filterIndexed { i, _ -> i != index }.shuffled()
+        loaded = if (loaded == index) 0 else -1
+        index = 0
+    }
+
+    // Puts the queue back as it was given, with what was added since at its end and the same track playing.
+    private fun undeal() {
+        val was = given ?: return
+        given = null
+        if (items.isEmpty()) return
+        val playing = items[index]
+        val back = was.filter { w -> items.any { it === w } } + items.filter { i -> was.none { it === i } }
+        val at = back.indexOfFirst { it === playing }.coerceAtLeast(0)
+        loaded = if (loaded == index) at else -1
+        items = back
+        index = at
     }
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> {

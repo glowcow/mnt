@@ -94,7 +94,7 @@ The files on the screenshots are made up.
 | Viewer | pages of the app's own HTML in a `WebView`; its own readers for Office, OpenDocument, RTF and EPUB files and its own syntax colouring; commonmark for Markdown, androidx.pdf for PDF, DjVuLibre 3.5 for DjVu |
 | Archives | libarchive 3.8 (read only) with XZ Utils 5.8, Zstandard 1.5 and bzip2 1.0, zlib of the system |
 | Pictures | the platform's decoders and its region decoder, the app's own drawing of HDR gain maps; LibRaw 0.22 for RAW, libjxl 0.12 with Highway 1.4, libtiff 4.7, libde265 1.1 for an iPhone's HDR gain map, AndroidSVG 1.4, AndroidX ExifInterface; OpenStreetMap tiles for the map of a photo |
-| Sound | Media3 1.11: ExoPlayer reading files of every place through the app's own source, a media session for the system's controls; UPnP/DLNA speakers spoken to by the app itself |
+| Sound | Media3 1.11: ExoPlayer reading files of every place through the app's own source and a cache of what came from servers, a media session for the system's controls; FFmpeg through Jellyfin's Media3 decoder 1.9.0 for ALAC on phones that have only a vendor's decoder of it; UPnP/DLNA speakers spoken to by the app itself |
 
 All versions live in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 
@@ -278,6 +278,12 @@ monochrome HEVC of an iPhone's gain map, is built in from
 see [`licenses/libde265-LGPL-3.0.txt`](licenses/libde265-LGPL-3.0.txt). The map of where a photo
 was taken, when it is turned on, is © OpenStreetMap contributors, under the
 Open Database License.
+
+[FFmpeg](https://ffmpeg.org)'s audio decoders come built by Jellyfin in
+[media3-ffmpeg-decoder](https://github.com/jellyfin/jellyfin-androidx-media)
+1.9.0+1 (GNU General Public License 3.0, as mnt is); FFmpeg itself is under
+the GNU Lesser General Public License 2.1 — see
+[`licenses/FFmpeg-LGPL-2.1.txt`](licenses/FFmpeg-LGPL-2.1.txt).
 
 The app links [smbj](https://github.com/hierynomus/smbj),
 [Apache Commons Net](https://commons.apache.org/proper/commons-net/) and

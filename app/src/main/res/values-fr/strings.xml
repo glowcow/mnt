@@ -343,6 +343,7 @@
     <string name="settings_audio_clear">Vider le cache de musique</string>
     <string name="settings_audio_clear_hint">Les morceaux des serveurs sont gardés ici pendant la lecture, pour que chacun ne soit lu sur le réseau qu’une fois</string>
     <string name="settings_map_data">Données cartographiques</string>
+    <string name="settings_sound_decoding">Décodage audio</string>
     <string name="settings_pictures">Images</string>
     <string name="settings_raw">Photos RAW</string>
     <string name="player_channel">Lecture</string>

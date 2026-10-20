@@ -347,6 +347,7 @@
     <string name="settings_audio_clear">Ачысціць кэш музыкі</string>
     <string name="settings_audio_clear_hint">Трэкі з сервераў захоўваюцца тут падчас прайгравання, каб кожны чытаўся з сеткі адзін раз</string>
     <string name="settings_map_data">Даныя карты</string>
+    <string name="settings_sound_decoding">Дэкадаванне гуку</string>
     <string name="settings_pictures">Малюнкі</string>
     <string name="settings_raw">RAW-фота</string>
     <string name="player_channel">Прайграванне</string>

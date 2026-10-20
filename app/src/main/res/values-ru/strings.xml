@@ -347,6 +347,7 @@
     <string name="settings_audio_clear">Очистить кэш музыки</string>
     <string name="settings_audio_clear_hint">Треки с серверов сохраняются здесь по мере игры, чтобы каждый читался из сети один раз</string>
     <string name="settings_map_data">Данные карты</string>
+    <string name="settings_sound_decoding">Декодирование звука</string>
     <string name="settings_pictures">Картинки</string>
     <string name="settings_raw">RAW-фото</string>
     <string name="player_channel">Воспроизведение</string>

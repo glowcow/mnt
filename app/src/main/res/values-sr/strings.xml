@@ -343,6 +343,7 @@
     <string name="settings_audio_clear">Обриши кеш музике</string>
     <string name="settings_audio_clear_hint">Нумере са сервера чувају се овде док свирају, да би се свака читала са мреже само једном</string>
     <string name="settings_map_data">Подаци мапе</string>
+    <string name="settings_sound_decoding">Декодирање звука</string>
     <string name="settings_pictures">Слике</string>
     <string name="settings_raw">RAW фотографије</string>
     <string name="player_channel">Репродукција</string>

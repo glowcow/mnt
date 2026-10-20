@@ -347,6 +347,7 @@
     <string name="settings_audio_clear">Wyczyść pamięć podręczną muzyki</string>
     <string name="settings_audio_clear_hint">Utwory z serwerów są tu zachowywane podczas odtwarzania, aby każdy był pobierany z sieci tylko raz</string>
     <string name="settings_map_data">Dane mapy</string>
+    <string name="settings_sound_decoding">Dekodowanie dźwięku</string>
     <string name="settings_pictures">Obrazy</string>
     <string name="settings_raw">Zdjęcia RAW</string>
     <string name="player_channel">Odtwarzanie</string>

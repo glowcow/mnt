@@ -342,6 +342,7 @@
     <string name="settings_audio_clear">Clear the music cache</string>
     <string name="settings_audio_clear_hint">Tracks from servers are kept here as they play, so each is read from the network once</string>
     <string name="settings_map_data">Map data</string>
+    <string name="settings_sound_decoding">Sound decoding</string>
     <string name="settings_pictures">Pictures</string>
     <string name="settings_raw">RAW photos</string>
     <string name="player_channel">Playback</string>

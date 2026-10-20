@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -188,25 +189,34 @@ fun FullPlayer(playback: Playback, onDrag: (Float) -> Unit, onDragStop: (Float) 
         val actions: @Composable (Modifier) -> Unit = { modifier ->
             Actions(playback, playback.wordsShown, modifier, onLyrics = { playback.wordsShown = !playback.wordsShown }) { sheet = it }
         }
+        val output: @Composable (Modifier) -> Unit = { modifier -> Output(modifier.trim(OUTPUT_INSET, OUTPUT_INSET)) { sheet = PlayerSheet.CAST } }
         if (maxWidth > maxHeight) {
             Row(Modifier.fillMaxSize().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Box(Modifier.fillMaxHeight().aspectRatio(1f, matchHeightConstraintsFirst = true)) { top() }
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
                     Titles(playback, onFolder)
-                    Middle(playback, waves, onOutput = { sheet = PlayerSheet.CAST })
-                    actions(Modifier)
+                    Middle(playback, waves)
+                    output(Modifier.align(Alignment.CenterHorizontally))
+                    actions(Modifier.trim(top = GLYPH_INSET))
                 }
             }
         } else {
-            // The cover is as wide as the screen while there is room; the wave and the buttons keep close under the titles,
-            // and what is left goes above the row at the bottom.
+            // The cover is as wide as the screen while there is room. Under the seek bar the pill, the buttons, where the
+            // sound goes and the row at the bottom stand as far apart from each other, counted from what is seen of them.
             Column(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f, fill = false).padding(top = 16.dp)) {
                     Box(Modifier.weight(1f, fill = false).aspectRatio(1f).align(Alignment.CenterHorizontally)) { top() }
-                    Titles(playback, onFolder, Modifier.padding(top = 16.dp))
-                    Middle(playback, waves, onOutput = { sheet = PlayerSheet.CAST }, Modifier.padding(top = 24.dp, bottom = 8.dp))
+                    Titles(playback, onFolder, Modifier.padding(top = TITLES_GAP))
+                    Seek(playback, waves, Modifier.padding(top = TITLES_GAP))
                 }
-                actions(Modifier.padding(bottom = 8.dp))
+                Spacer(Modifier.height(MIN_GAP))
+                Box(Modifier.align(Alignment.CenterHorizontally)) { Badge(playback) }
+                Spacer(Modifier.height(MIN_GAP))
+                Transport(playback)
+                Spacer(Modifier.height(MIN_GAP))
+                output(Modifier.align(Alignment.CenterHorizontally))
+                Spacer(Modifier.height(MIN_GAP))
+                actions(Modifier.trim(top = GLYPH_INSET).padding(bottom = 8.dp))
             }
         }
     }
@@ -393,17 +403,16 @@ private fun level(wave: FloatArray?, i: Int, count: Int): Float {
 
 /**
  * The seek bar with its times, the controls under it, and between them, half way from the foot of the bar to the top
- * of the play button, the pill of how the track is coded; under the controls, where the sound goes ([onOutput]).
+ * of the play button, the pill of how the track is coded.
  */
 @Composable
-private fun Middle(playback: Playback, waves: Boolean, onOutput: () -> Unit, modifier: Modifier = Modifier) {
+private fun Middle(playback: Playback, waves: Boolean, modifier: Modifier = Modifier) {
     Layout(
         content = {
             Seek(playback, waves)
             Transport(playback)
-            // Each in a box of its own, which is there with nothing to show too.
+            // In a box of its own, which is there with nothing to show too.
             Box { Badge(playback) }
-            Box { Output(onOutput) }
         },
         modifier = modifier.fillMaxWidth(),
     ) { measurables, constraints ->
@@ -411,15 +420,12 @@ private fun Middle(playback: Playback, waves: Boolean, onOutput: () -> Unit, mod
         val seek = measurables[0].measure(loose.copy(minWidth = constraints.maxWidth))
         val transport = measurables[1].measure(loose.copy(minWidth = constraints.maxWidth))
         val badge = measurables[2].measure(loose)
-        val output = measurables[3].measure(loose)
         val gap = MIDDLE_GAP.roundToPx()
         val play = seek.height + gap + (transport.height - PLAY.roundToPx()) / 2
-        val under = seek.height + gap + transport.height + OUTPUT_GAP.roundToPx()
-        layout(constraints.maxWidth, under + output.height) {
+        layout(constraints.maxWidth, seek.height + gap + transport.height) {
             seek.place(0, 0)
             transport.place(0, seek.height + gap)
             badge.place((constraints.maxWidth - badge.width) / 2, ((if (waves) WAVE else LINE).roundToPx() + play) / 2 - badge.height / 2)
-            output.place((constraints.maxWidth - output.width) / 2, under)
         }
     }
 }
@@ -446,14 +452,14 @@ private fun Badge(playback: Playback) {
  * itself; a tap ([onPick]) chooses another.
  */
 @Composable
-private fun Output(onPick: () -> Unit) {
+private fun Output(modifier: Modifier = Modifier, onPick: () -> Unit) {
     val c = MntTheme.colors
     val target = LocalContext.current.container.casting.target
     val local = rememberLocalOutput()
     val tint = if (target != null) c.accent else c.muted
     val ink = if (target != null) Modifier.inked(c.accent) else Modifier
     Row(
-        Modifier.clip(CircleShape).clickable(role = Role.Button, onClick = onPick).padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier.clip(CircleShape).clickable(role = Role.Button, onClick = onPick).padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -596,7 +602,24 @@ private val TRACK = 4.dp
 private val THUMB = 12.dp
 private val PLAY = 76.dp
 private val MIDDLE_GAP = 56.dp
-private val OUTPUT_GAP = 8.dp
+
+// As much above the titles as under them.
+private val TITLES_GAP = 24.dp
+
+// A glyph of the row at the bottom stands this far inside its button, the line of where the sound goes this far inside
+// its own; the gaps between the parts are counted without them.
+private val GLYPH_INSET = 12.dp
+private val OUTPUT_INSET = 6.dp
+
+// The least gap between the parts under the seek bar, on a phone short of room.
+private val MIN_GAP = 12.dp
+
+// Takes [top] and [bottom] off the room a part asks for, drawing it where it was.
+private fun Modifier.trim(top: Dp = 0.dp, bottom: Dp = 0.dp) = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val above = top.roundToPx()
+    layout(placeable.width, (placeable.height - above - bottom.roundToPx()).coerceAtLeast(0)) { placeable.place(0, -above) }
+}
 
 // The bars of the wave: how wide, how far apart, where their line runs, and the part not played yet.
 private val BAR = 5.dp

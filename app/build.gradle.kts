@@ -135,6 +135,8 @@ dependencies {
     // The player of sound, kept going by a media session.
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
+    // FFmpeg's decoders, for what a phone's own cannot play (ALAC on Qualcomm's).
+    implementation(libs.media3.ffmpeg)
 
     testImplementation(libs.junit)
     // The XML parser Android carries, for the tests of the document readers on the JVM.
