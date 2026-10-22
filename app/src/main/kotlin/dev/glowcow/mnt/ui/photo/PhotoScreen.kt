@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -156,6 +157,9 @@ private fun Photos(vm: PhotoViewModel, settings: AppSettings, onBack: () -> Unit
             HorizontalPager(pager, beyondViewportPageCount = 1, key = { items.getOrNull(it)?.path ?: it }) { i ->
                 val node = items.getOrNull(i) ?: return@HorizontalPager
                 val zoom = remember(node.path) { ZoomState() }
+                // A page left behind comes back whole.
+                val away by remember(i) { derivedStateOf { pager.settledPage != i } }
+                LaunchedEffect(away) { if (away) zoom.reset() }
                 when (val shot = vm.shot(node.path)) {
                     is Shot.Ready -> PhotoView(
                         picture = shot.picture,

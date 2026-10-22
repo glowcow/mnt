@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
@@ -100,6 +101,11 @@ class ZoomState {
     fun around(point: Offset, z: Float): Offset {
         val c = point - Offset(viewport.width / 2f, viewport.height / 2f)
         return c - (c - offset) * (z / zoom)
+    }
+
+    fun reset() {
+        zoom = 1f
+        offset = Offset.Zero
     }
 
     fun panBy(delta: Offset) {
@@ -198,6 +204,8 @@ fun PhotoView(
     Canvas(
         modifier
             .fillMaxSize()
+            // A grown picture stays on its own page.
+            .clipToBounds()
             .onSizeChanged { size ->
                 state.viewport = size
                 state.offset = state.clamp(state.offset)
@@ -245,7 +253,8 @@ fun PhotoView(
                                 }
                             }
                             when (mode) {
-                                Mode.PAN -> {
+                                // The finger left of a pinch moves the picture and never turns the page.
+                                Mode.PAN, Mode.ZOOM -> {
                                     state.panBy(delta)
                                     change.consume()
                                 }
