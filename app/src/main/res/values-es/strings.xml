@@ -463,4 +463,6 @@
     <string name="video_resume_title">¿Seguir donde se quedó?</string>
     <string name="video_resume_continue">Seguir desde %s</string>
     <string name="video_resume_start">Desde el principio</string>
+    <string name="settings_video_status">Barra de estado con los controles</string>
+    <string name="settings_video_status_hint">Un toque muestra también la hora y la batería</string>
 </resources>

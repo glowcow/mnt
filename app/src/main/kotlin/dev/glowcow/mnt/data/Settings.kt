@@ -53,6 +53,8 @@ data class VideoSettings(
     val buttons: Buttons = Buttons.FILES,
     /** At its end a video goes on to the next of its folder. */
     val playNext: Boolean = true,
+    /** The status bar comes and goes with the controls of a video; off, it stays away. */
+    val statusBar: Boolean = true,
     /** Leaving the app while a video plays shrinks it to picture in picture. */
     val pip: Boolean = true,
     /** Language tags of the audio and the subtitles picked first; empty takes the file's own, [OFF] shows no subtitles. */

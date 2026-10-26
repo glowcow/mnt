@@ -21,6 +21,13 @@ class VideosTest {
         assertEquals("Charlotte's Web", Videos.named("Charlotte's.Web.2006.mkv").title)
     }
 
+    @Test fun placeIsTheShowAboveASeason() {
+        assertEquals("Better Call Saul", Videos.place("/nas/tv/Better Call Saul/Season 01/Better Call Saul - S01E01 - Uno.mkv"))
+        assertEquals("Rick and Morty", Videos.place("/nas/tv/Rick and Morty/Сезон 1/e.mkv"))
+        assertEquals("movies", Videos.place("/nas/movies/Dossier.137.2025.REMUX.mkv"))
+        assertEquals("Season 01 extras", Videos.place("/nas/Season 01 extras/x.mkv"))
+    }
+
     @Test fun qualityByTheSize() {
         assertEquals("4K", Videos.quality(3840, 1600))
         assertEquals("HD", Videos.quality(1920, 800))

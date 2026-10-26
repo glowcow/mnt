@@ -83,6 +83,14 @@ object Videos {
         return words.take(end).joinToString(" ").trim().removeSuffix("-").trim()
     }
 
+    /** Where the video at [path] belongs: its folder, or the show above a folder of a season (`Show/Season 01`). */
+    fun place(path: String): String? {
+        val folder = Paths.parent(path)
+        val name = Paths.name(folder)
+        val above = Paths.name(Paths.parent(folder))
+        return (if (SEASON.matches(name) && above.isNotEmpty()) above else name).takeIf { it.isNotEmpty() }
+    }
+
     /** `4K`, `HD` or `SD` for a picture of [width] by [height]. */
     fun quality(width: Int, height: Int): String? = when {
         width <= 0 || height <= 0 -> null
@@ -94,5 +102,6 @@ object Videos {
     private val EPISODE = Regex("""(?i)\bS(\d{1,2})\s?E(\d{1,3})\b""")
     private val SCENE = Regex("""(?i)(\d{3,4}p|uhd|webrip|web-dl|bdrip|bdremux|remux|bluray|hdtv|hdr|dovi|x26[45]|h\.?26[45]|hevc|avc|dd\+?\d?|ddp\d?|aac|dts|nf|amzn|atvp|rus|eng|proper|repack)([-.].*)?""")
     private val YEAR = Regex("""\(?(19|20)\d\d\)?""")
+    private val SEASON = Regex("""(?iu)(season|сезон|staffel|saison|temporada|stagione|sezon)?\s*\d{1,2}|s\d{1,2}""")
     private val LANGUAGE = Regex("""(?i)[a-z]{2,3}""")
 }

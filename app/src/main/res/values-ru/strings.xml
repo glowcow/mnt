@@ -467,4 +467,6 @@
     <string name="video_resume_title">Продолжить с места остановки?</string>
     <string name="video_resume_continue">Продолжить с %s</string>
     <string name="video_resume_start">Сначала</string>
+    <string name="settings_video_status">Строка состояния с управлением</string>
+    <string name="settings_video_status_hint">Тап показывает и часы с батареей</string>
 </resources>

@@ -462,4 +462,6 @@
     <string name="video_resume_title">Pick up where it stopped?</string>
     <string name="video_resume_continue">Go on from %s</string>
     <string name="video_resume_start">Start over</string>
+    <string name="settings_video_status">Status bar with the controls</string>
+    <string name="settings_video_status_hint">A tap shows the clock and the battery too</string>
 </resources>

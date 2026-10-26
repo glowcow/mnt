@@ -571,6 +571,8 @@ private fun VideoPage(title: String, settings: AppSettings?, vm: SettingsViewMod
             GroupDivider()
             GroupRow(stringResource(R.string.settings_video_turn), value = stringResource(TURNS.getValue(v.turn)), onClick = { picking = VideoPicker.TURN })
             GroupDivider()
+            SwitchRow(stringResource(R.string.settings_video_status), stringResource(R.string.settings_video_status_hint), v.statusBar) { on -> set { it.copy(statusBar = on) } }
+            GroupDivider()
             SwitchRow(stringResource(R.string.settings_video_pip), stringResource(R.string.settings_video_pip_hint), v.pip) { on -> set { it.copy(pip = on) } }
         }
         Group {

@@ -463,4 +463,6 @@
     <string name="video_resume_title">להמשיך מהמקום שבו נעצר?</string>
     <string name="video_resume_continue">להמשיך מ־%s</string>
     <string name="video_resume_start">מההתחלה</string>
+    <string name="settings_video_status">שורת המצב עם הפקדים</string>
+    <string name="settings_video_status_hint">הקשה מציגה גם את השעה והסוללה</string>
 </resources>

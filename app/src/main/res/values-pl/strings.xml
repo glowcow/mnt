@@ -467,4 +467,6 @@
     <string name="video_resume_title">Wznowić od miejsca zatrzymania?</string>
     <string name="video_resume_continue">Wznów od %s</string>
     <string name="video_resume_start">Od początku</string>
+    <string name="settings_video_status">Pasek stanu z elementami sterowania</string>
+    <string name="settings_video_status_hint">Stuknięcie pokazuje też zegar i baterię</string>
 </resources>

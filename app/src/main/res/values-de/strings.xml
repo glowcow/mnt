@@ -459,4 +459,6 @@
     <string name="video_resume_title">Dort weiter, wo es aufhörte?</string>
     <string name="video_resume_continue">Weiter ab %s</string>
     <string name="video_resume_start">Von vorn</string>
+    <string name="settings_video_status">Statusleiste mit den Bedienelementen</string>
+    <string name="settings_video_status_hint">Ein Tippen zeigt auch Uhr und Akku</string>
 </resources>

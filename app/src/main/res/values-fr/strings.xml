@@ -463,4 +463,6 @@
     <string name="video_resume_title">Reprendre là où elle s’est arrêtée ?</string>
     <string name="video_resume_continue">Reprendre à %s</string>
     <string name="video_resume_start">Depuis le début</string>
+    <string name="settings_video_status">Barre d’état avec les commandes</string>
+    <string name="settings_video_status_hint">Un appui montre aussi l’heure et la batterie</string>
 </resources>

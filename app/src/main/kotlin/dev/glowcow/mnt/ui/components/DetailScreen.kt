@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -71,35 +72,41 @@ fun DetailPage(
     val barHeight = remember { mutableIntStateOf(0) }
     val spot = remember { mutableStateOf<Rect?>(null) }
     if (bar == null) spot.value = null
-    Box(Modifier.fillMaxSize().pageMotion(from).background(ground).imePadding().onSizeChanged { pageSize = it }) {
-        Box(
-            if (!glass) Modifier.fillMaxSize() else Modifier.fillMaxSize().drawWithContent {
-                page.record { this@drawWithContent.drawContent() }
-                drawLayer(page)
-            },
-        ) {
-            CompositionLocalProvider(LocalIsland provides spot) {
-                content(with(density) { headerHeight.toDp() }, with(density) { barHeight.intValue.toDp() })
+    // The island keeps its place while the page grows out of a row or shrinks back into it, and only fades.
+    val open = pageOpen(from)
+    Box(Modifier.fillMaxSize().imePadding().onSizeChanged { pageSize = it }) {
+        Box(Modifier.fillMaxSize().then(if (from == null) Modifier.graphicsLayer { alpha = open.value } else Modifier.grown(from) { open.value }).background(ground)) {
+            Box(
+                if (!glass) Modifier.fillMaxSize() else Modifier.fillMaxSize().drawWithContent {
+                    page.record { this@drawWithContent.drawContent() }
+                    drawLayer(page)
+                },
+            ) {
+                CompositionLocalProvider(LocalIsland provides spot) {
+                    content(with(density) { headerHeight.toDp() }, with(density) { barHeight.intValue.toDp() })
+                }
+            }
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { headerHeight = it.height }
+                    .then(
+                        when {
+                            glass -> Modifier.frosted(page, ground) { Offset.Zero }
+                            clear -> Modifier
+                            else -> Modifier.background(ground)
+                        },
+                    )
+                    .solid()
+                    .statusBarsPadding(),
+            ) {
+                header()
+                HeaderLine(shown = scrolled)
             }
         }
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .onSizeChanged { headerHeight = it.height }
-                .then(
-                    when {
-                        glass -> Modifier.frosted(page, ground) { Offset.Zero }
-                        clear -> Modifier
-                        else -> Modifier.background(ground)
-                    },
-                )
-                .solid()
-                .statusBarsPadding(),
-        ) {
-            header()
-            HeaderLine(shown = scrolled)
+        Box(Modifier.matchParentSize().graphicsLayer { alpha = open.value }) {
+            Island(page, ground, { pageSize }, { barHeight.intValue = it }, glass, clear, { spot.value = it }, content = bar)
         }
-        Island(page, ground, { pageSize }, { barHeight.intValue = it }, glass, clear, { spot.value = it }, content = bar)
     }
 }
 

@@ -5,7 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -66,8 +66,16 @@ val LocalDirection = staticCompositionLocalOf { Direction() }
  */
 @Composable
 fun Modifier.pageMotion(from: Rect? = null): Modifier {
+    val open = pageOpen(from)
+    if (from == null) return graphicsLayer { alpha = open.value }
+    return grown(from) { open.value }
+}
+
+/** How far the page on top has come in or gone, 0 to 1, by [pageMotion]'s timing for a page opened from [from]. */
+@Composable
+fun pageOpen(from: Rect?): State<Float> {
     val direction = LocalDirection.current
-    val open by LocalNavAnimatedContentScope.current.transition.animateFloat(
+    return LocalNavAnimatedContentScope.current.transition.animateFloat(
         { if (from != null) tween(MOVE_MS, easing = FastOutSlowInEasing) else tween(FADE_MS) },
     ) {
         when (it) {
@@ -76,8 +84,6 @@ fun Modifier.pageMotion(from: Rect? = null): Modifier {
             EnterExitState.PostExit -> if (direction.back) 0f else 1f
         }
     }
-    if (from == null) return graphicsLayer { alpha = open }
-    return grown(from) { open }
 }
 
 /**

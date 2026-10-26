@@ -463,4 +463,6 @@
     <string name="video_resume_title">Наставити где је стало?</string>
     <string name="video_resume_continue">Настави од %s</string>
     <string name="video_resume_start">Од почетка</string>
+    <string name="settings_video_status">Статусна трака са контролама</string>
+    <string name="settings_video_status_hint">Додир приказује и сат и батерију</string>
 </resources>

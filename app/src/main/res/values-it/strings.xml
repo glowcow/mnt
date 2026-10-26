@@ -463,4 +463,6 @@
     <string name="video_resume_title">Riprendere da dove si è fermato?</string>
     <string name="video_resume_continue">Riprendi da %s</string>
     <string name="video_resume_start">Dall’inizio</string>
+    <string name="settings_video_status">Barra di stato con i controlli</string>
+    <string name="settings_video_status_hint">Un tocco mostra anche l’ora e la batteria</string>
 </resources>

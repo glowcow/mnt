@@ -30,6 +30,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -198,7 +201,8 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
     LaunchedEffect(skipped) { if (skipped != null) delay(READOUT_MS).also { skipped = null } }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { vm.pause() }
 
-    // The system's bars stay away; a swipe from the edge brings them back for a moment.
+    // The system's bars stay away, the status bar but with the controls if the settings say so; a swipe from the
+    // edge brings them back for a moment.
     DisposableEffect(activity) {
         val insets = activity?.window?.let { WindowCompat.getInsetsController(it, view) }
         insets?.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -230,6 +234,11 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
             activity?.removeOnPictureInPictureModeChangedListener(listener)
             runCatching { activity?.setPictureInPictureParams(PictureInPictureParams.Builder().setAutoEnterEnabled(false).build()) }
         }
+    }
+    val statusShown = video.statusBar && shown && !inPip && vm.error == null
+    LaunchedEffect(activity, statusShown) {
+        val insets = activity?.window?.let { WindowCompat.getInsetsController(it, view) } ?: return@LaunchedEffect
+        if (statusShown) insets.show(WindowInsetsCompat.Type.statusBars()) else insets.hide(WindowInsetsCompat.Type.statusBars())
     }
     val pipParams = remember(aspect, videoRect, video.pip, vm.playing) {
         val ratio = if (aspect > 0f) aspect.coerceIn(PIP_MIN, PIP_MAX) else 16f / 9f
@@ -632,6 +641,7 @@ private fun Subtitles(player: ExoPlayer, seen: IntSize, scale: Float, lift: Floa
 }
 
 @OptIn(UnstableApi::class)
+@kotlin.OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, onSheet: (VideoSheet) -> Unit, onTouch: () -> Unit) {
     val c = MntTheme.colors
@@ -643,7 +653,7 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
         Box(Modifier.fillMaxWidth().fillMaxHeight(VEIL).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, VEIL_DARK))))
 
         Row(
-            Modifier.fillMaxWidth().align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(start = 24.dp, end = 12.dp, top = 12.dp),
+            Modifier.fillMaxWidth().align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing.union(WindowInsets.statusBarsIgnoringVisibility).only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(start = 24.dp, end = 12.dp, top = 12.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Column(Modifier.weight(1f).padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -651,7 +661,7 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
                 val minutes = vm.duration.takeIf { it != C.TIME_UNSET && it > 0 }?.let { ((it + 30_000) / 60_000).toInt() }
                 val parts = listOfNotNull(
                     named.season?.let { stringResource(R.string.video_episode, it, named.episode ?: 0) },
-                    Paths.name(Paths.parent(id)).takeIf { it.isNotEmpty() },
+                    Videos.place(id),
                     minutes?.let { stringResource(R.string.video_minutes, it) },
                 )
                 val quality = Videos.quality(vm.size.width, vm.size.height)
@@ -688,7 +698,7 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
                         if (playing) MntIcons.Pause else MntIcons.Play,
                         stringResource(if (playing) R.string.player_pause else R.string.player_play),
                         tint = c.onAccent,
-                        modifier = Modifier.size(30.dp).offset(x = if (playing) 0.dp else 2.dp),
+                        modifier = Modifier.size(30.dp),
                     )
                 }
             }

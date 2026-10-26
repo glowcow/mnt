@@ -467,4 +467,6 @@
     <string name="video_resume_title">Працягнуць з месца спынення?</string>
     <string name="video_resume_continue">Працягнуць з %s</string>
     <string name="video_resume_start">Спачатку</string>
+    <string name="settings_video_status">Радок стану з кіраваннем</string>
+    <string name="settings_video_status_hint">Тап паказвае і гадзіннік з батарэяй</string>
 </resources>
