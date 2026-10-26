@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
+import dev.glowcow.mnt.video.Videos
 
 /** What a search has found so far; [running] while it still looks, [capped] when it stopped at the limit. */
 data class SearchState(val found: List<Node> = emptyList(), val running: Boolean = false, val capped: Boolean = false)
@@ -104,8 +105,8 @@ class SearchViewModel(private val c: AppContainer) : ViewModel() {
     }
 
     /** Whether rows show thumbnails, and of the pictures on servers too. */
-    val thumbnails: StateFlow<Pair<Boolean, Boolean>> = c.settings.settings.map { it.thumbnails to it.thumbnailsFar }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false to false)
+    val thumbnails: StateFlow<Triple<Boolean, Boolean, Boolean>> = c.settings.settings.map { Triple(it.thumbnails, it.thumbnailsFar, it.thumbnailsVideo) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Triple(false, false, false))
 
     /** What was searched for before, the latest first. */
     val recent: StateFlow<List<String>> = c.settings.settings.map { it.searches }
@@ -197,12 +198,12 @@ fun SearchScreen(
                 else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = top, bottom = bottom)) {
                     items(state.found, key = { it.path }) { node ->
                         // A long press on a file leads to the folder it lies in.
-                        NodeRow(node, vm.display(Paths.parent(node.path)), thumbnail = rememberThumbnail(node, thumbnails.first, thumbnails.second), onLongClick = { onOpen(Paths.parent(node.path)) }) {
+                        NodeRow(node, vm.display(Paths.parent(node.path)), thumbnail = rememberThumbnail(node, thumbnails.first, thumbnails.second, thumbnails.third), onLongClick = { onOpen(Paths.parent(node.path)) }) {
                             vm.remember()
                             when {
                                 node.directory -> onOpen(node.path)
                                 Archives.opens(node.name) -> onOpen(Archives.root(node.path))
-                                Readers.shows(node.name) || Sounds.plays(node.name) || Format.of(node.name) != null -> onView(node.path)
+                                Readers.shows(node.name) || Sounds.plays(node.name) || Videos.plays(node.name) || Format.of(node.name) != null -> onView(node.path)
                                 !Opener.open(context, node.path) -> Toast.makeText(context, none, Toast.LENGTH_SHORT).show()
                             }
                         }

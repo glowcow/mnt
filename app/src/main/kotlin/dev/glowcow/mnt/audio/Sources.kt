@@ -59,9 +59,12 @@ class Sources(private val context: Context, private val files: FileStore, privat
     }
 }
 
-/** A file of the phone, of a server or of an archive, read from where the player asks: a jump opens it again there. */
+/**
+ * A file of the phone, of a server or of an archive, read from where the player asks: a jump opens it again there.
+ * A size [known] already spares asking the server for it at each jump.
+ */
 @OptIn(UnstableApi::class)
-class StoreDataSource(private val files: FileStore) : BaseDataSource(true) {
+class StoreDataSource(private val files: FileStore, private val known: (String) -> Long? = { null }) : BaseDataSource(true) {
     private var input: InputStream? = null
     private var uri: Uri? = null
     private var left = 0L
@@ -72,7 +75,7 @@ class StoreDataSource(private val files: FileStore) : BaseDataSource(true) {
         transferInitializing(dataSpec)
         val path = Sounds.path(dataSpec.uri)
         // No answer is not taken for no file: the player tries again, over a new connection, before it moves on.
-        val size = try {
+        val size = known(path) ?: try {
             runBlocking { files.stat(path) }?.size
         } catch (e: IOException) {
             throw DataSourceException(e, PlaybackException.ERROR_CODE_IO_UNSPECIFIED)

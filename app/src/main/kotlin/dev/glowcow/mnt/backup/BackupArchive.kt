@@ -7,6 +7,7 @@ import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import dev.glowcow.mnt.data.VideoSettings
 import dev.glowcow.mnt.net.Connection
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -34,6 +35,8 @@ data class BackupSettings(
     val thumbnailsFar: Boolean = true,
     val photoMap: Boolean = false,
     val waves: Boolean = false,
+    val video: VideoSettings = VideoSettings(),
+    val thumbnailsVideo: Boolean = true,
 )
 
 /** `backup.json` of an archive; [servers] keep their ids, which pinned folders on them are named by. */
@@ -50,7 +53,10 @@ data class BackupManifest(
 object BackupArchive {
     const val MANIFEST = "backup.json"
 
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     private const val MAX_MANIFEST = 4L * 1024 * 1024
     private const val MAX_ENTRIES = 1_000

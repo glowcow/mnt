@@ -1,5 +1,10 @@
 package dev.glowcow.mnt.backup
 
+import dev.glowcow.mnt.data.Buttons
+import dev.glowcow.mnt.data.Decoding
+import dev.glowcow.mnt.data.FrameRate
+import dev.glowcow.mnt.data.Resuming
+import dev.glowcow.mnt.data.VideoSettings
 import dev.glowcow.mnt.net.Connection
 import dev.glowcow.mnt.net.Protocol
 import org.junit.Assert.assertArrayEquals
@@ -34,6 +39,33 @@ class BackupTest {
         assertEquals(settings, manifest.settings)
         assertEquals("0.1.1", manifest.app)
         assertEquals(99, manifest.createdAt)
+    }
+
+    @Test
+    fun archiveKeepsTheVideoSettings() {
+        val video = VideoSettings(frameRate = FrameRate.ALWAYS, skipSeconds = 30, resume = Resuming.NEVER, swipeBrightness = true, buttons = Buttons.CHAPTERS, subtitleLanguage = "ru", decoding = Decoding.FFMPEG)
+        val written = ByteArrayOutputStream().also {
+            BackupArchive.write(it, BackupManifest(createdAt = 1, app = "0.9.1", settings = settings.copy(video = video, thumbnailsVideo = false)))
+        }.toByteArray()
+        val read = BackupArchive.read(ByteArrayInputStream(written)).settings
+        assertEquals(video, read.video)
+        assertFalse(read.thumbnailsVideo)
+    }
+
+    @Test
+    fun videoSettingsOfAnotherVersionFallBackByField() {
+        fun zipped(json: String) = ByteArrayOutputStream().also { out ->
+            ZipOutputStream(out).use { zip ->
+                zip.putNextEntry(ZipEntry(BackupArchive.MANIFEST))
+                zip.write(json.toByteArray())
+                zip.closeEntry()
+            }
+        }.toByteArray()
+        val older = BackupArchive.read(ByteArrayInputStream(zipped("""{"createdAt":1,"app":"0.8.7","settings":{"theme":"DARK","palette":"WARM"}}""")))
+        assertEquals(VideoSettings(), older.settings.video)
+        assertTrue(older.settings.thumbnailsVideo)
+        val other = BackupArchive.read(ByteArrayInputStream(zipped("""{"createdAt":1,"app":"9.0","settings":{"theme":"DARK","palette":"WARM","video":{"frameRate":"SOMEDAY","skipSeconds":15,"swipeLevels":true}}}""")))
+        assertEquals(VideoSettings(skipSeconds = 15), other.settings.video)
     }
 
     @Test

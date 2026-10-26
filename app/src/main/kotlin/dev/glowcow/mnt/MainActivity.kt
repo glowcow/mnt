@@ -45,21 +45,26 @@ class MainActivity : ComponentActivity() {
 
     // While a speaker plays, the volume keys turn it up and down and the app shows how loud, as Symfonium does.
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        // Over a video the keys turn the phone's sound with the page's own scale, not the system's panel.
+        container.volumeKeys?.let { keys ->
+            val step = keyStep(keyCode) ?: return super.onKeyDown(keyCode, event)
+            keys(step)
+            return true
+        }
         val step = volumeStep(keyCode) ?: return super.onKeyDown(keyCode, event)
         container.playback.volumeBy(step)
         return true
     }
 
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean = volumeStep(keyCode) != null || super.onKeyUp(keyCode, event)
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+        (container.volumeKeys != null && keyStep(keyCode) != null) || volumeStep(keyCode) != null || super.onKeyUp(keyCode, event)
 
-    private fun volumeStep(keyCode: Int): Int? = if (container.casting.target == null) {
-        null
-    } else {
-        when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP -> 1
-            KeyEvent.KEYCODE_VOLUME_DOWN -> -1
-            else -> null
-        }
+    private fun volumeStep(keyCode: Int): Int? = if (container.casting.target == null) null else keyStep(keyCode)
+
+    private fun keyStep(keyCode: Int): Int? = when (keyCode) {
+        KeyEvent.KEYCODE_VOLUME_UP -> 1
+        KeyEvent.KEYCODE_VOLUME_DOWN -> -1
+        else -> null
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -1,6 +1,20 @@
 package dev.glowcow.mnt.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.SideEffect
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,15 +60,57 @@ enum class TopTab(val icon: ImageVector, val label: Int) {
     SETTINGS(MntIcons.Settings, R.string.tab_settings),
 }
 
+/**
+ * The tabs' island. A folder page passes no [current] tab: its own icon, after the house, is lit there; on the other
+ * tabs that icon leads back to the folders left, and it is not there on the start page. It grows in and out of the
+ * island when it comes or goes from one page to the next.
+ */
 @Composable
-fun BottomBar(current: TopTab, onSelect: (TopTab) -> Unit) {
+fun BottomBar(current: TopTab?, onSelect: (TopTab) -> Unit) {
     val c = MntTheme.colors
+    val folder = LocalFolderTab.current
+    val memory = LocalFolderShown.current
+    val shown = remember { MutableTransitionState(memory.shown) }
+    shown.targetState = folder != null
+    SideEffect { memory.shown = folder != null }
+    // The way back is kept while the icon goes, for it to be drawn to the end.
+    var open by remember { mutableStateOf(folder) }
+    if (folder != null) open = folder
     IslandIcons {
         for (tab in TopTab.entries) {
-            IconButton48(tab.icon, stringResource(tab.label), tint = if (tab == current) c.text else c.muted, size = 24.dp) { onSelect(tab) }
+            if (tab != TopTab.FILES) {
+                IconButton48(tab.icon, stringResource(tab.label), tint = if (tab == current) c.text else c.muted, size = 24.dp) { onSelect(tab) }
+                continue
+            }
+            // The house and the folder in one piece, so the gap before the folder grows with it.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton48(tab.icon, stringResource(tab.label), tint = if (tab == current) c.text else c.muted, size = 24.dp) { onSelect(tab) }
+                AnimatedVisibility(
+                    shown,
+                    enter = expandHorizontally(tween(FOLDER_MS), Alignment.Start) + fadeIn(tween(FOLDER_MS)),
+                    exit = shrinkHorizontally(tween(FOLDER_MS), Alignment.Start) + fadeOut(tween(FOLDER_MS)),
+                ) {
+                    Row {
+                        Spacer(Modifier.width(4.dp))
+                        IconButton48(MntIcons.Folder, stringResource(R.string.tab_folder), tint = if (current == null) c.text else c.muted, size = 24.dp) { if (current != null) open?.invoke() }
+                    }
+                }
+            }
         }
     }
 }
+
+/** Whether the island last drawn had the folder's icon, for the next one to grow it in or out from there. */
+class FolderShown {
+    var shown = false
+}
+
+val LocalFolderShown = staticCompositionLocalOf { FolderShown() }
+
+private const val FOLDER_MS = 180
+
+/** Takes the user back to the folders they left for another tab; null where there are none to go back to. */
+val LocalFolderTab = staticCompositionLocalOf<(() -> Unit)?> { null }
 
 /**
  * The title of a page, on one line: Cormorant Garamond, [large] on a tab and the size a title was

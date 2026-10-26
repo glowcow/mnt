@@ -20,6 +20,7 @@ import dev.glowcow.mnt.files.Stores
 import dev.glowcow.mnt.files.TransferManager
 import dev.glowcow.mnt.files.TransferService
 import dev.glowcow.mnt.files.Trash
+import dev.glowcow.mnt.video.Resume
 import dev.glowcow.mnt.files.TrashScheduler
 import dev.glowcow.mnt.files.Volumes
 import dev.glowcow.mnt.net.Connections
@@ -61,6 +62,10 @@ class AppContainer(context: Context) {
     val audioCache = AudioCache(context, files)
     val playback = Playback(context, files, settings, scope, audioCache)
     val casting = Casting(context, scope)
+    val resume = Resume(context)
+
+    /** The video page's own answer to the volume keys, while it is open: up 1, down -1. */
+    var volumeKeys: ((Int) -> Unit)? = null
     val thumbnails = Thumbnails(files, File(context.cacheDir, "thumbs"), File(context.cacheDir, "thumbs-fetch"))
 
     private var purging: Job? = null

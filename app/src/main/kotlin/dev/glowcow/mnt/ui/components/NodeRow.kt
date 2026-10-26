@@ -52,6 +52,7 @@ import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.ui.theme.FileIcons
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
+import dev.glowcow.mnt.video.Videos
 
 /** The picture of a file or a folder, as VS Code's explorer draws it, the variant for a light ground in a light theme. */
 @Composable
@@ -129,8 +130,8 @@ private val TICK = 28.dp
  * drives, on servers and devices too when [far] allows; never inside an archive, where each one is a read through it.
  */
 @Composable
-fun rememberThumbnail(node: Node, on: Boolean, far: Boolean): Bitmap? {
-    if (!on || node.directory || !Readers.shows(node.name) || Archives.of(node.path) != null) return null
+fun rememberThumbnail(node: Node, on: Boolean, far: Boolean, videos: Boolean): Bitmap? {
+    if (!on || node.directory || !(Readers.shows(node.name) || videos && Videos.plays(node.name)) || Archives.of(node.path) != null) return null
     if (Remote.id(node.path) != null && !far) return null
     val thumbnails = LocalContext.current.container.thumbnails
     val size = with(LocalDensity.current) { 40.dp.roundToPx() }

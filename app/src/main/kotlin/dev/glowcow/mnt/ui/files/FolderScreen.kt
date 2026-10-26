@@ -75,6 +75,7 @@ import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.view.Format
 import dev.glowcow.mnt.view.image.Readers
+import dev.glowcow.mnt.video.Videos
 
 /** The sheet a folder's page has open. */
 enum class FolderSheet { SORT, NEW_FOLDER, RENAME, DELETE, MORE, DETAILS, ZIP, CONFLICT }
@@ -123,7 +124,7 @@ fun FolderScreen(
             selection.isNotEmpty() -> vm.toggle(node.path)
             node.directory -> onOpen(node.path)
             Archives.opens(node.name) -> onOpen(Archives.root(node.path))
-            Readers.shows(node.name) || Sounds.plays(node.name) || Format.of(node.name) != null -> onView(node.path)
+            Readers.shows(node.name) || Sounds.plays(node.name) || Videos.plays(node.name) || Format.of(node.name) != null -> onView(node.path)
             // Another app reads a file of an archive from a copy: it may jump about in it, an archive cannot.
             vm.archive != null -> vm.openOutside(node) { copy, refused ->
                 when {
@@ -158,7 +159,7 @@ fun FolderScreen(
         progress != null -> ({ progress?.let { ProgressBar(it, vm::stop) } })
         clip != null -> ({ clip?.let { ClipBar(it, onPaste = { paste(it) }, onCancel = vm::dropClip) } })
         // With nothing else to show the tabs stay, so home and the settings are one tap away.
-        else -> ({ BottomBar(TopTab.FILES, onTab) })
+        else -> ({ BottomBar(null, onTab) })
     }
 
     // Opened from a row of the Files tab, the page grows out of that row.
@@ -241,7 +242,7 @@ fun FolderScreen(
             } else {
                 LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(top = top, bottom = bottom)) {
                     items(shown.nodes, key = { it.path }) { node ->
-                        NodeRow(node, nodeMeta(node, holds[node.path]), selected = node.path in selection, thumbnail = rememberThumbnail(node, settings.thumbnails, settings.thumbnailsFar), onLongClick = { vm.toggle(node.path) }) { open(node) }
+                        NodeRow(node, nodeMeta(node, holds[node.path]), selected = node.path in selection, thumbnail = rememberThumbnail(node, settings.thumbnails, settings.thumbnailsFar, settings.thumbnailsVideo), onLongClick = { vm.toggle(node.path) }) { open(node) }
                     }
                 }
             }

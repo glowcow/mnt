@@ -135,6 +135,10 @@ dependencies {
     // The player of sound, kept going by a media session.
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
+    // The subtitles of a video, drawn as the player lays them out.
+    implementation(libs.media3.ui)
+    // A frame of a video of a server, read by the player's extractors round it.
+    implementation(libs.media3.inspector)
     // FFmpeg's decoders, for what a phone's own cannot play (ALAC on Qualcomm's).
     implementation(libs.media3.ffmpeg)
 

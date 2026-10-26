@@ -25,6 +25,9 @@ import dev.glowcow.mnt.ui.components.grown
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import dev.glowcow.mnt.audio.Sounds
+import dev.glowcow.mnt.ui.components.FolderShown
+import dev.glowcow.mnt.ui.components.LocalFolderShown
+import dev.glowcow.mnt.ui.components.LocalFolderTab
 import dev.glowcow.mnt.ui.components.LocalMiniPlayer
 import dev.glowcow.mnt.ui.player.FullPlayer
 import dev.glowcow.mnt.ui.player.MiniPlayer
@@ -82,6 +85,8 @@ import dev.glowcow.mnt.ui.settings.SettingsPageScreen
 import dev.glowcow.mnt.ui.settings.SettingsScreen
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.ui.photo.PhotoScreen
+import dev.glowcow.mnt.ui.video.VideoScreen
+import dev.glowcow.mnt.video.Videos
 import dev.glowcow.mnt.ui.view.BrowserScreen
 import dev.glowcow.mnt.ui.view.ViewerScreen
 import dev.glowcow.mnt.ui.view.outside
@@ -98,6 +103,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class ServerRoute(val id: String?) : NavKey
 @Serializable data class ViewerRoute(val path: String) : NavKey
 @Serializable data class PhotoRoute(val path: String) : NavKey
+@Serializable data class VideoRoute(val path: String) : NavKey
 @Serializable data class BrowserRoute(val url: String) : NavKey
 @Serializable data class SettingsPageRoute(val page: SettingsPage) : NavKey
 
@@ -111,12 +117,27 @@ private fun TopTab.route(): NavKey = when (this) {
 fun MntRoot(openTab: Flow<TopTab>) {
     val backStack = rememberNavBackStack(FilesRoute)
 
+    // The folders left for another tab, to go back to from its island; forgotten on the start page.
+    var trail by remember { mutableStateOf<List<NavKey>>(emptyList()) }
+
     // Files is the root: any other tab sits on top of it, so back returns there.
     fun selectTab(tab: TopTab) {
+        if (tab == TopTab.FILES) trail = emptyList() else if (backStack.lastOrNull() is FolderRoute) trail = backStack.drop(1).toList()
         backStack.retainAll { it == FilesRoute }
         if (backStack.isEmpty()) backStack.add(FilesRoute)
         if (tab != TopTab.FILES) backStack.add(tab.route())
     }
+
+    fun backToFolders() {
+        if (trail.isEmpty()) return
+        backStack.retainAll { it == FilesRoute }
+        if (backStack.isEmpty()) backStack.add(FilesRoute)
+        backStack.addAll(trail)
+    }
+    val top = backStack.lastOrNull()
+    LaunchedEffect(top) { if (top == FilesRoute) trail = emptyList() }
+    val folderShown = remember { FolderShown() }
+    val folderTab: (() -> Unit)? = if (top is FolderRoute || trail.isNotEmpty() && top != FilesRoute) ::backToFolders else null
 
     // A folder already on the way back is returned to, not opened a second time over itself.
     fun openFolder(path: String) {
@@ -138,6 +159,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
         when {
             Sounds.plays(name) -> playback.playFolder(path)
             Sounds.lists(name) -> playback.playList(path)
+            Videos.plays(name) -> backStack.add(VideoRoute(path))
             else -> backStack.add(if (Readers.shows(name)) PhotoRoute(path) else ViewerRoute(path))
         }
     }
@@ -211,8 +233,8 @@ fun MntRoot(openTab: Flow<TopTab>) {
     // Lists lie on the plain ground, the pages of blocks on the grouped one.
     val ground = when (backStack.lastOrNull()) {
         is FolderRoute, SearchRoute, BinRoute -> c.bg
-        // Pictures are shown on black in any theme.
-        is PhotoRoute -> Color.Black
+        // Pictures and videos are shown on black in any theme.
+        is PhotoRoute, is VideoRoute -> Color.Black
         else -> c.groupBg
     }
     val view = LocalView.current
@@ -241,7 +263,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
     ) {
     // Under the full player the pages are out of reach, of touch and of the screen reader alike.
     val hidden by remember { derivedStateOf { playback.shown && open.value == 1f } }
-    CompositionLocalProvider(LocalPageDark provides pageDark, LocalMiniPlayer provides if (playerShown) mini else null) {
+    CompositionLocalProvider(LocalPageDark provides pageDark, LocalMiniPlayer provides if (playerShown) mini else null, LocalFolderTab provides folderTab, LocalFolderShown provides folderShown) {
         NavDisplay(
             modifier = if (hidden) Modifier.clearAndSetSemantics {} else Modifier,
             backStack = backStack,
@@ -273,6 +295,7 @@ fun MntRoot(openTab: Flow<TopTab>) {
                 entry<SettingsPageRoute> { route -> SettingsPageScreen(route.page, onBack = { backStack.remove(route) }) }
                 entry<ViewerRoute> { route -> ViewerScreen(route.path, onBack = { backStack.remove(route) }, onLink = ::openLink, onFile = ::openFile) }
                 entry<PhotoRoute> { route -> PhotoScreen(route.path, onBack = { backStack.remove(route) }) }
+                entry<VideoRoute> { route -> VideoScreen(route.path, onBack = { backStack.remove(route) }) }
                 entry<BrowserRoute> { route -> BrowserScreen(route.url, onClose = { backStack.remove(route) }) }
             },
         )

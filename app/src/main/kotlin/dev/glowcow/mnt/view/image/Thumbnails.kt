@@ -4,11 +4,19 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.graphics.Matrix
+import android.media.MediaMetadataRetriever
 import androidx.exifinterface.media.ExifInterface
 import android.util.LruCache
 import dev.glowcow.mnt.files.FileStore
 import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.files.Remote
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import dev.glowcow.mnt.audio.Sounds
+import dev.glowcow.mnt.audio.StoreDataSource
+import dev.glowcow.mnt.video.Frames
+import dev.glowcow.mnt.video.Videos
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Semaphore
@@ -63,6 +71,7 @@ class Thumbnails(private val files: FileStore, private val dir: File, private va
     }
 
     private fun make(node: Node, size: Int): Bitmap? {
+        if (Videos.plays(node.name)) return frame(node, size)
         if (Remote.id(node.path) == null) return fromFile(File(node.path), size)
         // A camera on the USB port has one ready; a JPEG keeps one in its first kilobytes.
         files.thumbnail(node.path)?.let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.let { return it } }
@@ -79,6 +88,53 @@ class Thumbnails(private val files: FileStore, private val dir: File, private va
         } finally {
             copy.delete()
         }
+    }
+
+    // A frame of a video a tenth of the way in, past a dark opening, or further while the frame is all but black. A
+    // server's file goes through the player's extractors, which read only round the frame.
+    @OptIn(UnstableApi::class)
+    private fun frame(node: Node, size: Int): Bitmap? {
+        if (Remote.id(node.path) != null) {
+            val source = DataSource.Factory { StoreDataSource(files) { if (it == node.path) node.size else null } }
+            return Frames.square(source, Sounds.uri(node.path), size, FRAME_SHARES, ::dark)
+        }
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(node.path)
+            val length = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 0
+            val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
+            // Its short side as large as the square it fills.
+            val scale = if (width > 0 && height > 0) size.toFloat() / minOf(width, height) else 0f
+            fun at(share: Float): Bitmap? {
+                val us = (length * share).toLong().coerceAtMost(FRAME_AT_MOST_MS) * 1000
+                return if (scale > 0f && scale <= 1f) {
+                    retriever.getScaledFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, (width * scale).toInt().coerceAtLeast(size), (height * scale).toInt().coerceAtLeast(size))
+                } else {
+                    retriever.getFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                }
+            }
+            var frame: Bitmap? = null
+            for (share in FRAME_SHARES) {
+                frame = at(share) ?: continue
+                if (!dark(frame)) break
+            }
+            return frame
+        } finally {
+            retriever.release()
+        }
+    }
+
+    // Whether a frame is all but black, from a grid of its pixels.
+    private fun dark(frame: Bitmap): Boolean {
+        var sum = 0f
+        var count = 0
+        for (y in 0 until GRID) for (x in 0 until GRID) {
+            val p = frame.getPixel(frame.width * (2 * x + 1) / (2 * GRID), frame.height * (2 * y + 1) / (2 * GRID))
+            sum += (0.2126f * (p shr 16 and 0xFF) + 0.7152f * (p shr 8 and 0xFF) + 0.0722f * (p and 0xFF)) / 255f
+            count++
+        }
+        return sum / count < DARK
     }
 
     private fun fromFile(file: File, size: Int): Bitmap? {
@@ -143,5 +199,9 @@ class Thumbnails(private val files: FileStore, private val dir: File, private va
         const val FAR_WHOLE = 20L * 1024 * 1024
         const val QUALITY = 80
         const val KEEP_BYTES = 64L * 1024 * 1024
+        const val FRAME_AT_MOST_MS = 5L * 60 * 1000
+        val FRAME_SHARES = listOf(0.1f, 0.3f, 0.5f)
+        const val GRID = 8
+        const val DARK = 0.06f
     }
 }

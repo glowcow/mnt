@@ -91,6 +91,9 @@ import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.ui.theme.inked
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 
 /** Rounded block of rows on the grouped background. */
 @Composable
@@ -268,6 +271,9 @@ fun GroupSheet(title: String, onDismiss: () -> Unit, content: @Composable Column
     val c = MntTheme.colors
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+    // Over a page that keeps the system's bars away (a video), the sheet keeps them away too.
+    val page = LocalView.current
+    val barsAway = remember(page) { page.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.statusBars()) == false }
     // The top stays below the status bar. Material pads the content there by as much of the bar as the sheet has
     // reached, and a sheet about as tall as the screen then rocks between growing by it and fitting without it.
     ModalBottomSheet(
@@ -279,7 +285,16 @@ fun GroupSheet(title: String, onDismiss: () -> Unit, content: @Composable Column
     ) {
         // A sheet is a window of its own, and a window shows Display P3 only when asked to.
         val view = LocalView.current
-        SideEffect { (view.parent as? DialogWindowProvider)?.window?.colorMode = ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT }
+        SideEffect {
+            val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+            window.colorMode = ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT
+            if (barsAway) {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    hide(WindowInsetsCompat.Type.systemBars())
+                }
+            }
+        }
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
             Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = c.text, modifier = Modifier.padding(start = 4.dp, bottom = 14.dp))
             content { action ->

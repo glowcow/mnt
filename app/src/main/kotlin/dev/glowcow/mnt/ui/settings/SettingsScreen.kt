@@ -43,6 +43,13 @@ import dev.glowcow.mnt.data.AppSettings
 import dev.glowcow.mnt.data.Palette
 import dev.glowcow.mnt.data.SettingsStore
 import dev.glowcow.mnt.data.ThemeMode
+import dev.glowcow.mnt.data.Buttons
+import dev.glowcow.mnt.data.Decoding
+import dev.glowcow.mnt.data.FrameRate
+import dev.glowcow.mnt.data.Resuming
+import dev.glowcow.mnt.data.SubtitleSize
+import dev.glowcow.mnt.data.Turn
+import dev.glowcow.mnt.data.VideoSettings
 import dev.glowcow.mnt.files.Place
 import dev.glowcow.mnt.ui.components.CheckRow
 import dev.glowcow.mnt.ui.components.ChoiceSheet
@@ -101,6 +108,8 @@ class SettingsViewModel(
 
     fun setWaves(on: Boolean) = viewModelScope.launch { store.setWaves(on) }
 
+    fun setVideo(change: (VideoSettings) -> VideoSettings) = viewModelScope.launch { store.setVideo(change) }
+
     fun clearMapCache() = viewModelScope.launch {
         tiles.clear()
         mapCache = tiles.size()
@@ -149,6 +158,8 @@ class SettingsViewModel(
 
     fun setThumbnailsFar(on: Boolean) = viewModelScope.launch { store.setThumbnailsFar(on) }
 
+    fun setThumbnailsVideo(on: Boolean) = viewModelScope.launch { store.setThumbnailsVideo(on) }
+
     fun setBinExternal(on: Boolean) = viewModelScope.launch { store.setBinExternal(on) }
     fun setAppUpdate(on: Boolean) = viewModelScope.launch { store.setAppUpdate(on) }
     fun clearSearches() = viewModelScope.launch { store.clearSearches() }
@@ -156,7 +167,7 @@ class SettingsViewModel(
 }
 
 /** The subjects the settings are grouped by, each a page of its own. */
-enum class SettingsPage { APPEARANCE, FILES, VIEWER, BACKUP, CREDITS }
+enum class SettingsPage { APPEARANCE, FILES, VIEWER, VIDEO, BACKUP, CREDITS }
 
 @Composable
 fun SettingsScreen(
@@ -199,6 +210,8 @@ fun SettingsScreen(
                 GroupRow(stringResource(R.string.settings_files), subtitle = stringResource(R.string.settings_files_hint), icon = MntIcons.Folder, onClick = { onPage(SettingsPage.FILES) })
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_viewer), subtitle = stringResource(R.string.settings_viewer_hint), icon = MntIcons.FileText, onClick = { onPage(SettingsPage.VIEWER) })
+                GroupDivider()
+                GroupRow(stringResource(R.string.settings_video), subtitle = stringResource(R.string.settings_video_hint), icon = MntIcons.Film, onClick = { onPage(SettingsPage.VIDEO) })
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_backup), subtitle = stringResource(R.string.settings_backup_save_hint), icon = MntIcons.Floppy, onClick = { onPage(SettingsPage.BACKUP) })
             }
@@ -259,6 +272,7 @@ fun SettingsPageScreen(
             SettingsPage.APPEARANCE -> R.string.settings_appearance
             SettingsPage.FILES -> R.string.settings_files
             SettingsPage.VIEWER -> R.string.settings_viewer
+            SettingsPage.VIDEO -> R.string.settings_video
             SettingsPage.BACKUP -> R.string.settings_backup
             SettingsPage.CREDITS -> R.string.settings_credits
         },
@@ -268,6 +282,7 @@ fun SettingsPageScreen(
         SettingsPage.APPEARANCE -> Appearance(title, settings, vm, onBack)
         SettingsPage.FILES -> DetailScreen(title, onBack) { if (settings != null) Files(settings, vm) }
         SettingsPage.VIEWER -> Viewer(title, settings, vm, onBack)
+        SettingsPage.VIDEO -> VideoPage(title, settings, vm, onBack)
         SettingsPage.BACKUP -> BackupPage(title, vm, onBack)
         SettingsPage.CREDITS -> DetailScreen(title, onBack) {
             Group {
@@ -368,6 +383,8 @@ private fun ColumnScope.Files(settings: AppSettings, vm: SettingsViewModel) {
         if (settings.thumbnails) {
             GroupDivider()
             SwitchRow(stringResource(R.string.settings_thumbnails_far), stringResource(R.string.settings_thumbnails_far_hint), settings.thumbnailsFar, vm::setThumbnailsFar)
+            GroupDivider()
+            SwitchRow(stringResource(R.string.settings_thumbnails_video), stringResource(R.string.settings_thumbnails_video_hint), settings.thumbnailsVideo, vm::setThumbnailsVideo)
         }
         GroupDivider()
         // The value is how many searches are kept; with none there is nothing to tap for.
@@ -532,6 +549,84 @@ private fun BackupPage(title: String, vm: SettingsViewModel, onBack: () -> Unit)
 }
 
 private enum class Picker { THEME, PALETTE, LANGUAGE }
+
+private enum class VideoPicker { RATE, SKIP, TURN, RESUME, BUTTONS, AUDIO, SUBTITLES, SIZE, DECODING }
+
+@Composable
+private fun VideoPage(title: String, settings: AppSettings?, vm: SettingsViewModel, onBack: () -> Unit) {
+    var picking by rememberSaveable { mutableStateOf<VideoPicker?>(null) }
+    val v = settings?.video
+    fun set(change: (VideoSettings) -> VideoSettings) = vm.setVideo(change)
+    val fileOwn = stringResource(R.string.settings_video_file_language)
+    val off = stringResource(R.string.video_off)
+    fun languageName(tag: String) = when (tag) {
+        "" -> fileOwn
+        VideoSettings.OFF -> off
+        else -> LANGUAGES.firstOrNull { it.first == tag }?.second ?: tag
+    }
+    DetailScreen(title, onBack) {
+        if (v == null) return@DetailScreen
+        Group {
+            GroupRow(stringResource(R.string.settings_video_rate), subtitle = stringResource(R.string.settings_video_rate_hint), value = stringResource(RATES.getValue(v.frameRate)), onClick = { picking = VideoPicker.RATE })
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_turn), value = stringResource(TURNS.getValue(v.turn)), onClick = { picking = VideoPicker.TURN })
+            GroupDivider()
+            SwitchRow(stringResource(R.string.settings_video_pip), stringResource(R.string.settings_video_pip_hint), v.pip) { on -> set { it.copy(pip = on) } }
+        }
+        Group {
+            GroupRow(stringResource(R.string.settings_video_skip), value = stringResource(R.string.video_seconds, v.skipSeconds), onClick = { picking = VideoPicker.SKIP })
+            GroupDivider()
+            SwitchRow(stringResource(R.string.settings_video_brightness), stringResource(R.string.settings_video_brightness_hint), v.swipeBrightness) { on -> set { it.copy(swipeBrightness = on) } }
+            GroupDivider()
+            SwitchRow(stringResource(R.string.settings_video_volume), stringResource(R.string.settings_video_volume_hint), v.swipeVolume) { on -> set { it.copy(swipeVolume = on) } }
+            GroupDivider()
+            SwitchRow(stringResource(R.string.settings_video_seek), stringResource(R.string.settings_video_seek_hint), v.swipeSeek) { on -> set { it.copy(swipeSeek = on) } }
+        }
+        Group {
+            GroupRow(stringResource(R.string.settings_video_resume), subtitle = stringResource(R.string.settings_video_resume_hint), value = stringResource(RESUMING.getValue(v.resume)), onClick = { picking = VideoPicker.RESUME })
+            GroupDivider()
+            SwitchRow(stringResource(R.string.settings_video_next), stringResource(R.string.settings_video_next_hint), v.playNext) { on -> set { it.copy(playNext = on) } }
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_buttons), subtitle = stringResource(R.string.settings_video_buttons_hint), value = stringResource(BUTTONS.getValue(v.buttons)), onClick = { picking = VideoPicker.BUTTONS })
+        }
+        Group {
+            GroupRow(stringResource(R.string.settings_video_audio), value = languageName(v.audioLanguage), onClick = { picking = VideoPicker.AUDIO })
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_subtitles), value = languageName(v.subtitleLanguage), onClick = { picking = VideoPicker.SUBTITLES })
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_size), value = stringResource(SIZES.getValue(v.subtitleSize)), onClick = { picking = VideoPicker.SIZE })
+        }
+        Group {
+            GroupRow(stringResource(R.string.settings_video_decoding), subtitle = stringResource(R.string.settings_video_decoding_hint), value = stringResource(DECODINGS.getValue(v.decoding)), onClick = { picking = VideoPicker.DECODING })
+        }
+    }
+    if (v == null) return
+    val dismiss = { picking = null }
+    when (picking) {
+        VideoPicker.RATE -> ChoiceSheet(stringResource(R.string.settings_video_rate), FrameRate.entries.map { it to stringResource(RATES.getValue(it)) }, v.frameRate, { r -> set { it.copy(frameRate = r) } }, dismiss)
+        VideoPicker.TURN -> ChoiceSheet(stringResource(R.string.settings_video_turn), Turn.entries.map { it to stringResource(TURNS.getValue(it)) }, v.turn, { t -> set { it.copy(turn = t) } }, dismiss)
+        VideoPicker.RESUME -> ChoiceSheet(stringResource(R.string.settings_video_resume), Resuming.entries.map { it to stringResource(RESUMING.getValue(it)) }, v.resume, { r -> set { it.copy(resume = r) } }, dismiss)
+        VideoPicker.BUTTONS -> ChoiceSheet(stringResource(R.string.settings_video_buttons), Buttons.entries.map { it to stringResource(BUTTONS.getValue(it)) }, v.buttons, { b -> set { it.copy(buttons = b) } }, dismiss)
+        VideoPicker.SKIP -> ChoiceSheet(stringResource(R.string.settings_video_skip), VideoSettings.SKIPS.map { it to stringResource(R.string.video_seconds, it) }, v.skipSeconds, { n -> set { it.copy(skipSeconds = n) } }, dismiss)
+        VideoPicker.AUDIO -> ChoiceSheet(stringResource(R.string.settings_video_audio), (listOf("") + LANGUAGES.map { it.first }).map { it to languageName(it) }, v.audioLanguage, { l -> set { it.copy(audioLanguage = l) } }, dismiss)
+        VideoPicker.SUBTITLES -> ChoiceSheet(stringResource(R.string.settings_video_subtitles), (listOf("", VideoSettings.OFF) + LANGUAGES.map { it.first }).map { it to languageName(it) }, v.subtitleLanguage, { l -> set { it.copy(subtitleLanguage = l) } }, dismiss)
+        VideoPicker.SIZE -> ChoiceSheet(stringResource(R.string.settings_video_size), SubtitleSize.entries.map { it to stringResource(SIZES.getValue(it)) }, v.subtitleSize, { z -> set { it.copy(subtitleSize = z) } }, dismiss)
+        VideoPicker.DECODING -> ChoiceSheet(stringResource(R.string.settings_video_decoding), Decoding.entries.map { it to stringResource(DECODINGS.getValue(it)) }, v.decoding, { d -> set { it.copy(decoding = d) } }, dismiss)
+        null -> Unit
+    }
+}
+
+private val RATES = mapOf(FrameRate.OFF to R.string.video_off, FrameRate.SEAMLESS to R.string.settings_video_rate_seamless, FrameRate.ALWAYS to R.string.settings_video_rate_always)
+private val RESUMING = mapOf(Resuming.ASK to R.string.settings_video_resume_ask, Resuming.ALWAYS to R.string.settings_video_resume_always, Resuming.NEVER to R.string.settings_video_resume_never)
+private val BUTTONS = mapOf(Buttons.FILES to R.string.settings_video_buttons_files, Buttons.CHAPTERS to R.string.settings_video_buttons_chapters)
+private val TURNS = mapOf(Turn.VIDEO to R.string.settings_video_turn_video, Turn.PHONE to R.string.settings_video_turn_phone)
+private val SIZES = mapOf(
+    SubtitleSize.SMALL to R.string.settings_video_size_small,
+    SubtitleSize.NORMAL to R.string.settings_video_size_normal,
+    SubtitleSize.LARGE to R.string.settings_video_size_large,
+    SubtitleSize.LARGEST to R.string.settings_video_size_largest,
+)
+private val DECODINGS = mapOf(Decoding.PHONE to R.string.settings_video_decoding_phone, Decoding.FFMPEG to R.string.settings_video_decoding_ffmpeg)
 
 private enum class BackupSheet { SAVE, RESTORE }
 
