@@ -244,6 +244,7 @@
     <string name="server_nfs_note">Экспорт должен разрешать подключения с портов выше 1023 (опция «insecure»)</string>
     <string name="server_check">Проверить соединение</string>
     <string name="server_checking">Проверка…</string>
+    <string name="local_network_denied">Нет доступа к локальной сети: разрешите его в настройках приложения</string>
     <string name="server_ok">Сервер отвечает</string>
     <string name="server_failed">Нет соединения</string>
     <string name="password_show">Показать пароль</string>

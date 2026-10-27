@@ -240,6 +240,7 @@
     <string name="server_nfs_note">הייצוא צריך לאפשר חיבורים מפורטים מעל 1023 (האפשרות ‎insecure)</string>
     <string name="server_check">בדיקת החיבור</string>
     <string name="server_checking">בודק…</string>
+    <string name="local_network_denied">אין גישה לרשת המקומית: יש לאשר אותה בהגדרות האפליקציה</string>
     <string name="server_ok">השרת עונה</string>
     <string name="server_failed">אין חיבור</string>
     <string name="password_show">הצגת הסיסמה</string>

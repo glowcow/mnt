@@ -44,6 +44,7 @@ import dev.glowcow.mnt.R
 import dev.glowcow.mnt.files.Device
 import dev.glowcow.mnt.files.Paths
 import dev.glowcow.mnt.files.Place
+import dev.glowcow.mnt.files.Remote
 import dev.glowcow.mnt.files.TransferProgress
 import dev.glowcow.mnt.files.label
 import dev.glowcow.mnt.net.Mount
@@ -62,6 +63,7 @@ import dev.glowcow.mnt.ui.components.TopTab
 import dev.glowcow.mnt.ui.components.deviceKey
 import dev.glowcow.mnt.ui.components.folderKey
 import dev.glowcow.mnt.ui.components.origin
+import dev.glowcow.mnt.ui.components.rememberLocalNetwork
 import dev.glowcow.mnt.ui.theme.FileIcons
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
@@ -135,10 +137,14 @@ fun FilesScreen(
     val bin by vm.bin.collectAsStateWithLifecycle()
     val origins = LocalOrigins.current
     var about by rememberSaveable { mutableStateOf<String?>(null) }
-    // A folder opened from this tab grows out of the row that was tapped.
+    val network = rememberLocalNetwork()
+    // A folder opened from this tab grows out of the row that was tapped; a server's waits for the network.
     fun open(path: String) {
-        origins.mark(folderKey(path))
-        onOpen(path)
+        val go = {
+            origins.mark(folderKey(path))
+            onOpen(path)
+        }
+        if (mounts.any { it.id == Remote.id(path) && it.protocol != null }) network(go) else go()
     }
     LifecycleResumeEffect(Unit) {
         vm.refresh()

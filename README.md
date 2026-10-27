@@ -80,7 +80,8 @@ The files on the screenshots are made up.
   history in one file, encrypted with a password if you like (only then with
   the servers' passwords); new versions from GitHub.
 - **Private by default** — no accounts or analytics; the network is used only
-  for the servers you add and for the version check you turn on.
+  for the servers you add and for the version check you turn on. Local network
+  access is asked for the first time a server or the speakers are opened.
 
 ## Stack
 

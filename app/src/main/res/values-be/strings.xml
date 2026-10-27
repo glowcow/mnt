@@ -244,6 +244,7 @@
     <string name="server_nfs_note">Экспарт павінен дазваляць падключэнні з партоў вышэй за 1023 (опцыя «insecure»)</string>
     <string name="server_check">Праверыць злучэнне</string>
     <string name="server_checking">Праверка…</string>
+    <string name="local_network_denied">Няма доступу да лакальнай сеткі: дазвольце яго ў наладах праграмы</string>
     <string name="server_ok">Сервер адказвае</string>
     <string name="server_failed">Няма злучэння</string>
     <string name="password_show">Паказаць пароль</string>

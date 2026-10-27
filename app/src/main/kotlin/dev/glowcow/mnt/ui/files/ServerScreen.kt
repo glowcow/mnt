@@ -31,6 +31,7 @@ import dev.glowcow.mnt.ui.components.GroupField
 import dev.glowcow.mnt.ui.components.GroupRow
 import dev.glowcow.mnt.ui.components.PillButton
 import dev.glowcow.mnt.ui.components.SwitchRow
+import dev.glowcow.mnt.ui.components.rememberLocalNetwork
 import dev.glowcow.mnt.ui.theme.MntTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -85,6 +86,7 @@ fun ServerScreen(id: String?, onBack: () -> Unit, vm: ServerViewModel = viewMode
     val checked by vm.checked.collectAsStateWithLifecycle()
     var choosing by rememberSaveable { mutableStateOf(false) }
     val protocol = draft.protocol
+    val network = rememberLocalNetwork()
 
     DetailScreen(
         stringResource(if (id == null) R.string.server_new else R.string.server),
@@ -176,7 +178,7 @@ fun ServerScreen(id: String?, onBack: () -> Unit, vm: ServerViewModel = viewMode
         Group {
             GroupRow(
                 stringResource(R.string.server_check),
-                onClick = if (draft.complete && checked != Checked.Running) vm::check else null,
+                onClick = if (draft.complete && checked != Checked.Running) ({ network(vm::check) }) else null,
             )
         }
         when (val result = checked) {

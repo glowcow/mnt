@@ -236,6 +236,7 @@
     <string name="server_nfs_note">Der Export muss Verbindungen von Ports über 1023 erlauben (Option „insecure“)</string>
     <string name="server_check">Verbindung prüfen</string>
     <string name="server_checking">Wird geprüft…</string>
+    <string name="local_network_denied">Kein Zugriff auf das lokale Netzwerk: in den App-Einstellungen erlauben</string>
     <string name="server_ok">Der Server antwortet</string>
     <string name="server_failed">Keine Verbindung</string>
     <string name="password_show">Passwort anzeigen</string>

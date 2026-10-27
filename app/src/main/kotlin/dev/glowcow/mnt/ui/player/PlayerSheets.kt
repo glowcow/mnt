@@ -62,6 +62,7 @@ import dev.glowcow.mnt.ui.components.Group
 import dev.glowcow.mnt.ui.components.GroupDivider
 import dev.glowcow.mnt.ui.components.GroupRow
 import dev.glowcow.mnt.ui.components.GroupSheet
+import dev.glowcow.mnt.ui.components.rememberLocalNetwork
 import dev.glowcow.mnt.ui.theme.MntIcons
 import dev.glowcow.mnt.ui.theme.MntTheme
 import dev.glowcow.mnt.ui.theme.inked
@@ -155,7 +156,8 @@ internal fun CastSheet(onDismiss: () -> Unit) {
     val c = MntTheme.colors
     val context = LocalContext.current
     val casting = context.container.casting
-    LaunchedEffect(Unit) { casting.search() }
+    val network = rememberLocalNetwork()
+    LaunchedEffect(Unit) { network(casting::search) }
     GroupSheet(stringResource(R.string.player_cast), onDismiss) { pick ->
         val target = casting.target
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

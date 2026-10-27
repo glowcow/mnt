@@ -244,6 +244,7 @@
     <string name="server_nfs_note">Eksport musi zezwalać na połączenia z portów powyżej 1023 (opcja „insecure”)</string>
     <string name="server_check">Sprawdź połączenie</string>
     <string name="server_checking">Sprawdzanie…</string>
+    <string name="local_network_denied">Brak dostępu do sieci lokalnej: zezwól na to w ustawieniach aplikacji</string>
     <string name="server_ok">Serwer odpowiada</string>
     <string name="server_failed">Brak połączenia</string>
     <string name="password_show">Pokaż hasło</string>

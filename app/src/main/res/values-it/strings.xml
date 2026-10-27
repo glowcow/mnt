@@ -240,6 +240,7 @@
     <string name="server_nfs_note">L’export deve accettare connessioni da porte sopra la 1023 (opzione «insecure»)</string>
     <string name="server_check">Verifica la connessione</string>
     <string name="server_checking">Verifica…</string>
+    <string name="local_network_denied">Nessun accesso alla rete locale: consentilo nelle impostazioni dell’app</string>
     <string name="server_ok">Il server risponde</string>
     <string name="server_failed">Nessuna connessione</string>
     <string name="password_show">Mostra la password</string>

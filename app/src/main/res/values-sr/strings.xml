@@ -240,6 +240,7 @@
     <string name="server_nfs_note">Експорт мора да дозволи везе са портова изнад 1023 (опција „insecure“)</string>
     <string name="server_check">Провери везу</string>
     <string name="server_checking">Провера…</string>
+    <string name="local_network_denied">Нема приступа локалној мрежи: дозволите га у подешавањима апликације</string>
     <string name="server_ok">Сервер одговара</string>
     <string name="server_failed">Нема везе</string>
     <string name="password_show">Прикажи лозинку</string>
