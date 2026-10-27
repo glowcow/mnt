@@ -61,8 +61,9 @@ The files on the screenshots are made up.
 - **Music and video** — a tap on a track plays its folder, a playlist what it
   lists, from the phone or a server, with its wave, its words and a speaker of
   the network to play on; a video plays in the app through VLC's engine with
-  its tracks, subtitles in the look you set and chapters, gestures and picture
-  in picture, and picks up where it stopped.
+  its tracks, subtitles in the look you set and chapters, gestures, a turn of
+  the screen for one video and picture in picture, and picks up where it
+  stopped; a video's small picture is a frame VLC draws, whatever its format.
 - **Select and act** — tick any number of rows, then copy, move, share,
   rename, delete or pack them into a ZIP, or read what they are and hold;
   inside an archive, extract them.
@@ -96,7 +97,7 @@ The files on the screenshots are made up.
 | Viewer | pages of the app's own HTML in a `WebView`; its own readers for Office, OpenDocument, RTF and EPUB files and its own syntax colouring; commonmark for Markdown, androidx.pdf for PDF, DjVuLibre 3.5 for DjVu |
 | Archives | libarchive 3.8 (read only) with XZ Utils 5.8, Zstandard 1.5 and bzip2 1.0, zlib of the system |
 | Pictures | the platform's decoders and its region decoder, the app's own drawing of HDR gain maps; LibRaw 0.22 for RAW, libjxl 0.12 with Highway 1.4, libtiff 4.7, libde265 1.1 for an iPhone's HDR gain map, AndroidSVG 1.4, AndroidX ExifInterface; OpenStreetMap tiles for the map of a photo |
-| Sound and video | Media3 1.11 for sound: ExoPlayer reading files of every place through the app's own source and a cache of what came from servers, a media session for the system's controls; FFmpeg through Jellyfin's Media3 decoder 1.9.0 for what the phone cannot decode (ALAC); LibVLC 3.7 for video: the phone's hardware decoder where it takes the stream, VLC's FFmpeg on the processor the rest, VLC's subtitles; Media3's extractors for what a video holds and the frames of thumbnails; MKV chapters read by the app; UPnP/DLNA speakers spoken to by the app itself |
+| Sound and video | Media3 1.11 for sound: ExoPlayer reading files of every place through the app's own source and a cache of what came from servers, a media session for the system's controls; FFmpeg through Jellyfin's Media3 decoder 1.9.0 for what the phone cannot decode (ALAC); LibVLC 3.7 for video: the phone's hardware decoder where it takes the stream, VLC's FFmpeg on the processor the rest, VLC's subtitles; Media3's extractors for what a video holds; VLC's frames for the thumbnails of videos; MKV chapters read by the app; UPnP/DLNA speakers spoken to by the app itself |
 
 All versions live in [`gradle/libs.versions.toml`](gradle/libs.versions.toml).
 

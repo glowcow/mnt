@@ -384,6 +384,7 @@
     <string name="video_subtitles">Untertitel</string>
     <string name="video_audio">Tonspur</string>
     <string name="video_settings">Videoeinstellungen</string>
+    <string name="video_turn">Bildschirm drehen</string>
     <string name="video_off">Aus</string>
     <string name="video_speed">Geschwindigkeit</string>
     <string name="video_picture">Bild</string>
@@ -446,6 +447,8 @@
     <string name="video_delay_later">Später</string>
     <string name="settings_thumbnails_video">Auch Videos</string>
     <string name="settings_thumbnails_video_hint">Ein Bild aus jedem Video statt seines Symbols</string>
+    <string name="settings_thumbnails_clear">Vorschaubilder löschen</string>
+    <string name="settings_thumbnails_clear_hint">Kleine Bilder von Fotos und Videos werden hier aufbewahrt, damit jedes nur einmal erstellt wird</string>
     <string name="video_info">Medieninfo</string>
     <string name="video_info_name">Name</string>
     <string name="video_info_size">Größe</string>

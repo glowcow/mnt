@@ -392,6 +392,7 @@
     <string name="video_subtitles">Субтитры</string>
     <string name="video_audio">Звуковая дорожка</string>
     <string name="video_settings">Настройки видео</string>
+    <string name="video_turn">Повернуть экран</string>
     <string name="video_off">Выкл.</string>
     <string name="video_speed">Скорость</string>
     <string name="video_picture">Картинка</string>
@@ -454,6 +455,8 @@
     <string name="video_delay_later">Позже</string>
     <string name="settings_thumbnails_video">И видео</string>
     <string name="settings_thumbnails_video_hint">Кадр из каждого видео вместо его значка</string>
+    <string name="settings_thumbnails_clear">Очистить миниатюры</string>
+    <string name="settings_thumbnails_clear_hint">Маленькие картинки фото и видео хранятся здесь, чтобы каждая делалась один раз</string>
     <string name="video_info">Сведения о медиа</string>
     <string name="video_info_name">Имя</string>
     <string name="video_info_size">Размер</string>

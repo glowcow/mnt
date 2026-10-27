@@ -387,6 +387,7 @@
     <string name="video_subtitles">Subtitles</string>
     <string name="video_audio">Audio track</string>
     <string name="video_settings">Video settings</string>
+    <string name="video_turn">Turn the screen</string>
     <string name="video_off">Off</string>
     <string name="video_speed">Speed</string>
     <string name="video_picture">Picture</string>
@@ -449,6 +450,8 @@
     <string name="video_delay_later">Later</string>
     <string name="settings_thumbnails_video">Videos too</string>
     <string name="settings_thumbnails_video_hint">A frame of each video in place of its icon</string>
+    <string name="settings_thumbnails_clear">Clear thumbnails</string>
+    <string name="settings_thumbnails_clear_hint">Small pictures of photos and videos are kept here, so each is made once</string>
     <string name="video_info">Media info</string>
     <string name="video_info_name">Name</string>
     <string name="video_info_size">Size</string>

@@ -392,6 +392,7 @@
     <string name="video_subtitles">Napisy</string>
     <string name="video_audio">Ścieżka dźwiękowa</string>
     <string name="video_settings">Ustawienia wideo</string>
+    <string name="video_turn">Obróć ekran</string>
     <string name="video_off">Wył.</string>
     <string name="video_speed">Szybkość</string>
     <string name="video_picture">Obraz</string>
@@ -454,6 +455,8 @@
     <string name="video_delay_later">Później</string>
     <string name="settings_thumbnails_video">Także filmy</string>
     <string name="settings_thumbnails_video_hint">Klatka z każdego filmu zamiast jego ikony</string>
+    <string name="settings_thumbnails_clear">Wyczyść miniatury</string>
+    <string name="settings_thumbnails_clear_hint">Małe obrazy zdjęć i filmów są tu zachowywane, aby każdy powstawał tylko raz</string>
     <string name="video_info">Informacje o multimediach</string>
     <string name="video_info_name">Nazwa</string>
     <string name="video_info_size">Rozmiar</string>

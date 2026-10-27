@@ -392,6 +392,7 @@
     <string name="video_subtitles">Субцітры</string>
     <string name="video_audio">Гукавая дарожка</string>
     <string name="video_settings">Налады відэа</string>
+    <string name="video_turn">Павярнуць экран</string>
     <string name="video_off">Выкл.</string>
     <string name="video_speed">Хуткасць</string>
     <string name="video_picture">Карцінка</string>
@@ -454,6 +455,8 @@
     <string name="video_delay_later">Пазней</string>
     <string name="settings_thumbnails_video">І відэа</string>
     <string name="settings_thumbnails_video_hint">Кадр з кожнага відэа замест яго значка</string>
+    <string name="settings_thumbnails_clear">Ачысціць мініяцюры</string>
+    <string name="settings_thumbnails_clear_hint">Маленькія выявы фота і відэа захоўваюцца тут, каб кожная рабілася адзін раз</string>
     <string name="video_info">Звесткі пра медыя</string>
     <string name="video_info_name">Імя</string>
     <string name="video_info_size">Памер</string>

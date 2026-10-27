@@ -388,6 +388,7 @@
     <string name="video_subtitles">Титлови</string>
     <string name="video_audio">Звучни запис</string>
     <string name="video_settings">Подешавања видеа</string>
+    <string name="video_turn">Окрени екран</string>
     <string name="video_off">Искључено</string>
     <string name="video_speed">Брзина</string>
     <string name="video_picture">Слика</string>
@@ -450,6 +451,8 @@
     <string name="video_delay_later">Касније</string>
     <string name="settings_thumbnails_video">И видео</string>
     <string name="settings_thumbnails_video_hint">Кадар из сваког видеа уместо његове иконе</string>
+    <string name="settings_thumbnails_clear">Обриши сличице</string>
+    <string name="settings_thumbnails_clear_hint">Мале слике фотографија и видеа чувају се овде, да би се свака правила само једном</string>
     <string name="video_info">Подаци о медију</string>
     <string name="video_info_name">Име</string>
     <string name="video_info_size">Величина</string>

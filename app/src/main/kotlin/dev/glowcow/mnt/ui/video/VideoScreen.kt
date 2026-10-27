@@ -2,6 +2,7 @@ package dev.glowcow.mnt.ui.video
 
 import android.app.PictureInPictureParams
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.media.AudioManager
 import android.provider.Settings
 import android.util.Rational
@@ -16,9 +17,14 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,6 +49,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -80,12 +88,15 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -216,11 +227,13 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
 
     val picture = vm.size
     val aspect = if (picture.width > 0 && picture.height > 0) picture.width * picture.pixelWidthHeightRatio / picture.height else 0f
-    // The screen turns to the video's shape at once, or is left to the phone.
+    // The screen turns to the video's shape at once, or is left to the phone; turned by hand, it stays so for this video.
     val wide = aspect >= 1f
-    DisposableEffect(activity, video.turn, aspect > 0f, wide) {
-        if (video.turn == Turn.VIDEO && aspect > 0f) {
-            activity?.requestedOrientation = if (wide) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+    var turned by remember(vm.current) { mutableStateOf<Boolean?>(null) }
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    DisposableEffect(activity, video.turn, aspect > 0f, wide, turned) {
+        (turned ?: wide.takeIf { video.turn == Turn.VIDEO && aspect > 0f })?.let { across ->
+            activity?.requestedOrientation = if (across) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
         }
         onDispose { activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED }
     }
@@ -445,13 +458,18 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
         }
 
         if (!inPip) {
-            AnimatedVisibility(shown && !vm.failed, enter = fadeIn(tween(FADE_MS)), exit = fadeOut(tween(FADE_MS))) {
+            AnimatedVisibility(shown && !vm.failed, enter = fadeIn(tween(SHOW_MS)), exit = fadeOut(tween(HIDE_FADE_MS))) {
                 Controls(
                     vm,
+                    video.statusBar,
                     onBack = onBack,
                     onPip = { runCatching { activity?.enterPictureInPictureMode(pipParams) } },
                     onSheet = {
                         sheet = it
+                        touched++
+                    },
+                    onTurn = {
+                        turned = !landscape
                         touched++
                     },
                     onTouch = { touched++ },
@@ -625,7 +643,7 @@ private fun Surface(vm: VideoViewModel, frame: IntSize, grown: IntSize, pan: Off
 @OptIn(UnstableApi::class)
 @kotlin.OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, onSheet: (VideoSheet) -> Unit, onTouch: () -> Unit) {
+private fun AnimatedVisibilityScope.Controls(vm: VideoViewModel, statusBar: Boolean, onBack: () -> Unit, onPip: () -> Unit, onSheet: (VideoSheet) -> Unit, onTurn: () -> Unit, onTouch: () -> Unit) {
     val c = MntTheme.colors
     val id = vm.current ?: vm.path
     val named = Videos.named(Paths.name(id))
@@ -635,10 +653,18 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
         Box(Modifier.fillMaxWidth().fillMaxHeight(VEIL).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, VEIL_DARK))))
 
         Row(
-            Modifier.fillMaxWidth().align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing.union(WindowInsets.statusBarsIgnoringVisibility).only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)).padding(start = 24.dp, end = 12.dp, top = 12.dp),
+            Modifier.fillMaxWidth().align(Alignment.TopCenter)
+                .animateEnterExit(enter = slideInVertically(tween(SHOW_MS)) { -it / SLIDE_PART }, exit = slideOutVertically(tween(HIDE_FADE_MS)) { -it / SLIDE_PART })
+                // With the status bar it keeps the bar's room, so nothing moves when it comes; without, it goes up to the edge.
+                .windowInsetsPadding(
+                    (if (statusBar) WindowInsets.safeDrawing.union(WindowInsets.statusBarsIgnoringVisibility) else WindowInsets.displayCutout.union(WindowInsets.navigationBars))
+                        .only(WindowInsetsSides.Top),
+                )
+                .evenSides()
+                .padding(start = 24.dp, end = 12.dp, top = 12.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            Column(Modifier.weight(1f).padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.weight(1f).padding(top = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(named.title, color = c.text, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 val minutes = vm.duration.takeIf { it != C.TIME_UNSET && it > 0 }?.let { ((it + 30_000) / 60_000).toInt() }
                 val parts = listOfNotNull(
@@ -660,7 +686,11 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
             IconButton48(MntIcons.Close, stringResource(R.string.action_close), size = 24.dp, onClick = onBack)
         }
 
-        Row(Modifier.align(Alignment.Center), horizontalArrangement = Arrangement.spacedBy(40.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.align(Alignment.Center).animateEnterExit(enter = scaleIn(tween(SHOW_MS), initialScale = GROWN_FROM), exit = scaleOut(tween(HIDE_FADE_MS), targetScale = GROWN_FROM)),
+            horizontalArrangement = Arrangement.spacedBy(40.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Disc(MntIcons.SkipBack, stringResource(R.string.video_previous), SIDE_DISC, 26.dp, SCRIM, c.text, vm.canPrevious) {
                 vm.previous()
                 onTouch()
@@ -690,8 +720,14 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
             }
         }
 
+        // The row of buttons stands at the bottom; the line above it stays clear of the gesture strip, where a drag switched apps.
         Column(
-            Modifier.fillMaxWidth().align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)).padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
+            Modifier.fillMaxWidth().align(Alignment.BottomCenter)
+                .animateEnterExit(enter = slideInVertically(tween(SHOW_MS)) { it / SLIDE_PART }, exit = slideOutVertically(tween(HIDE_FADE_MS)) { it / SLIDE_PART })
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                .evenSides()
+                // The glyphs of the bottom row stand as far above the edge as under the times.
+                .padding(start = 24.dp, end = 24.dp, bottom = BOTTOM_GAP),
         ) {
             val now by produceState(vm.position, vm) {
                 while (true) {
@@ -699,7 +735,12 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
                     delay(TICK_MS)
                 }
             }
+            Seek(vm, now, onTouch)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                // The glyphs, not their targets, stand in line with the times above.
+                Box(Modifier.offset(x = (-12).dp)) {
+                    IconButton48(MntIcons.Gear, stringResource(R.string.video_settings), size = 24.dp) { onSheet(VideoSheet.SETTINGS) }
+                }
                 // The chapter it is in; a tap lists them all.
                 val at = vm.chapters.indexOfLast { it.start <= now }
                 Box(Modifier.weight(1f)) {
@@ -715,14 +756,12 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
                         )
                     }
                 }
-                // The glyphs, not their targets, end in line with the time below.
                 Row(Modifier.offset(x = 12.dp)) {
                     if (vm.subtitles.isNotEmpty()) IconButton48(MntIcons.Subtitles, stringResource(R.string.video_subtitles), size = 24.dp) { onSheet(VideoSheet.SUBTITLES) }
                     if (vm.audioTracks.size > 1) IconButton48(MntIcons.AudioTrack, stringResource(R.string.video_audio), size = 24.dp) { onSheet(VideoSheet.AUDIO) }
-                    IconButton48(MntIcons.Gear, stringResource(R.string.video_settings), size = 24.dp) { onSheet(VideoSheet.SETTINGS) }
+                    IconButton48(MntIcons.Rotate, stringResource(R.string.video_turn), size = 24.dp, onClick = onTurn)
                 }
             }
-            Seek(vm, now, onTouch)
         }
     }
 }
@@ -736,6 +775,8 @@ private fun Seek(vm: VideoViewModel, now: Long, onTouch: () -> Unit) {
     val fraction = if (held >= 0f) held else if (length > 0) (now.toFloat() / length).coerceIn(0f, 1f) else 0f
     val style = TextStyle(fontFeatureSettings = "tnum")
     val at = (fraction * length).toLong()
+    val measurer = rememberTextMeasurer()
+    val label = TextStyle(color = c.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum")
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(clock(at), color = c.text, fontSize = 14.sp, style = style)
         Canvas(
@@ -782,10 +823,33 @@ private fun Seek(vm: VideoViewModel, now: Long, onTouch: () -> Unit) {
                     drawRect(Color.Black, Offset(cx - notch / 2, y - thick / 2), Size(notch, thick))
                 }
             }
-            drawCircle(c.accent, r, Offset(x.coerceIn(r, size.width - r), y))
+            drawCircle(Color.White, r, Offset(x.coerceIn(r, size.width - r), y))
+            // While held, the time it would go to stands in a pill over the dot, clear of the finger.
+            if (held >= 0f) {
+                val text = measurer.measure(clock(at), label)
+                val padX = PILL_PAD_X.toPx()
+                val padY = PILL_PAD_Y.toPx()
+                val w = text.size.width + 2 * padX
+                val h = text.size.height + 2 * padY
+                val left = (x - w / 2).coerceIn(0f, maxOf(0f, size.width - w))
+                val top = y - r - PILL_GAP.toPx() - h
+                drawRoundRect(SCRIM, Offset(left, top), Size(w, h), CornerRadius(h / 2))
+                drawText(text, topLeft = Offset(left + padX, top + padY))
+            }
         }
         Text(if (length > 0) "-" + clock(length - at) else "", color = c.text, fontSize = 14.sp, style = style)
     }
+}
+
+// The rows stand in the middle between the sides: the camera's cutout, on one side only, is shared out to both,
+// which keeps their width. A navigation bar at a side is kept clear of in full.
+@Composable
+private fun Modifier.evenSides(): Modifier {
+    val density = LocalDensity.current
+    val direction = LocalLayoutDirection.current
+    val cutout = WindowInsets.displayCutout
+    val half = with(density) { ((cutout.getLeft(density, direction) + cutout.getRight(density, direction)) / 2).toDp() }
+    return windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Horizontal)).padding(horizontal = half)
 }
 
 @Composable
@@ -976,6 +1040,7 @@ private val VIDEO_CODINGS = mapOf(
     MimeTypes.VIDEO_H263 to "H.263",
     MimeTypes.VIDEO_DOLBY_VISION to "Dolby Vision",
     MimeTypes.VIDEO_VC1 to "VC-1",
+    "video/x-ms-wmv" to "WMV",
 )
 
 private val FITS = mapOf(Fit.FIT to R.string.video_fit, Fit.FILL to R.string.video_fill, Fit.STRETCH to R.string.video_stretch)
@@ -1001,14 +1066,19 @@ private const val PIP_MIN = 0.42f
 private const val PIP_MAX = 2.38f
 
 private const val MIN_BRIGHTNESS = 0.01f
-private const val HIDE_MS = 3_000L
+private const val HIDE_MS = 5_000L
 private const val READOUT_MS = 1000L
-private const val FADE_MS = 160
+// The controls fade in as their rows slide in from the edges and the discs grow to size; they go a little faster.
+private const val SHOW_MS = 250
+private const val HIDE_FADE_MS = 200
+private const val SLIDE_PART = 3
+private const val GROWN_FROM = 0.9f
 private const val TICK_MS = 250L
 
 private val SCRIM = Color.Black.copy(alpha = 0.45f)
 private val VEIL_DARK = Color.Black.copy(alpha = 0.6f)
 private const val VEIL = 0.3f
+private val BOTTOM_GAP = 10.dp
 private const val DIMMED = 0.35f
 private const val REST = 0.2f
 
@@ -1016,7 +1086,10 @@ private val SIDE_DISC = 56.dp
 private val PLAY_DISC = 72.dp
 private val SEEK_HEIGHT = 28.dp
 private val TRACK = 4.dp
-private val THUMB = 14.dp
-private val THUMB_HELD = 20.dp
+private val THUMB = 18.dp
+private val PILL_PAD_X = 12.dp
+private val PILL_PAD_Y = 6.dp
+private val PILL_GAP = 12.dp
+private val THUMB_HELD = 24.dp
 private val NOTCH = 2.dp
 

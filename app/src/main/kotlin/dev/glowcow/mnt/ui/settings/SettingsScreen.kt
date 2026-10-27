@@ -76,11 +76,14 @@ import dev.glowcow.mnt.update.AppRelease
 import dev.glowcow.mnt.update.AppUpdateState
 import dev.glowcow.mnt.update.AppUpdater
 import dev.glowcow.mnt.view.code.CodeScheme
+import dev.glowcow.mnt.view.image.Thumbnails
 import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsViewModel(
     private val store: SettingsStore,
@@ -88,6 +91,7 @@ class SettingsViewModel(
     private val backup: Backup,
     private val tiles: TileStore,
     private val audio: AudioCache,
+    private val thumbnails: Thumbnails,
 ) : ViewModel() {
     /** Bytes of downloaded map on the phone; null until counted. */
     var mapCache by mutableStateOf<Long?>(null)
@@ -97,9 +101,21 @@ class SettingsViewModel(
     var audioCache by mutableStateOf<Long?>(null)
         private set
 
+    /** Bytes of thumbnails kept on the phone; null until counted. */
+    var thumbnailCache by mutableStateOf<Long?>(null)
+        private set
+
     init {
         viewModelScope.launch { mapCache = tiles.size() }
         viewModelScope.launch { audioCache = audio.size() }
+        viewModelScope.launch { thumbnailCache = withContext(Dispatchers.IO) { thumbnails.size() } }
+    }
+
+    fun clearThumbnails() = viewModelScope.launch {
+        thumbnailCache = withContext(Dispatchers.IO) {
+            thumbnails.clear()
+            thumbnails.size()
+        }
     }
 
     fun clearAudioCache() = viewModelScope.launch {
@@ -176,7 +192,7 @@ enum class SettingsPage { APPEARANCE, FILES, VIEWER, VIDEO, BACKUP, CREDITS }
 fun SettingsScreen(
     onTab: (TopTab) -> Unit,
     onPage: (SettingsPage) -> Unit,
-    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles, it.audioCache) } },
+    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles, it.audioCache, it.thumbnails) } },
 ) {
     val c = MntTheme.colors
     val stored by vm.settings.collectAsStateWithLifecycle()
@@ -267,7 +283,7 @@ fun SettingsScreen(
 fun SettingsPageScreen(
     page: SettingsPage,
     onBack: () -> Unit,
-    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles, it.audioCache) } },
+    vm: SettingsViewModel = viewModel { (this[APPLICATION_KEY] as MntApp).container.let { SettingsViewModel(it.settings, it.appUpdater, it.backup, it.tiles, it.audioCache, it.thumbnails) } },
 ) {
     val stored by vm.settings.collectAsStateWithLifecycle()
     val title = stringResource(
@@ -389,6 +405,14 @@ private fun ColumnScope.Files(settings: AppSettings, vm: SettingsViewModel) {
             GroupDivider()
             SwitchRow(stringResource(R.string.settings_thumbnails_video), stringResource(R.string.settings_thumbnails_video_hint), settings.thumbnailsVideo, vm::setThumbnailsVideo)
         }
+        GroupDivider()
+        GroupRow(
+            stringResource(R.string.settings_thumbnails_clear),
+            subtitle = stringResource(R.string.settings_thumbnails_clear_hint),
+            value = vm.thumbnailCache?.let { android.text.format.Formatter.formatShortFileSize(LocalContext.current, it) },
+            onClick = if ((vm.thumbnailCache ?: 0L) > 0L) ({ vm.clearThumbnails() }) else null,
+            trailing = {},
+        )
         GroupDivider()
         // The value is how many searches are kept; with none there is nothing to tap for.
         GroupRow(

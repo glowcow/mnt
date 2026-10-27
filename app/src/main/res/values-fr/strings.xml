@@ -388,6 +388,7 @@
     <string name="video_subtitles">Sous-titres</string>
     <string name="video_audio">Piste audio</string>
     <string name="video_settings">Réglages vidéo</string>
+    <string name="video_turn">Tourner l’écran</string>
     <string name="video_off">Désactivé</string>
     <string name="video_speed">Vitesse</string>
     <string name="video_picture">Image</string>
@@ -450,6 +451,8 @@
     <string name="video_delay_later">Plus tard</string>
     <string name="settings_thumbnails_video">Les vidéos aussi</string>
     <string name="settings_thumbnails_video_hint">Une image de chaque vidéo à la place de son icône</string>
+    <string name="settings_thumbnails_clear">Effacer les miniatures</string>
+    <string name="settings_thumbnails_clear_hint">Les petites images des photos et des vidéos sont gardées ici, pour que chacune ne soit faite qu’une fois</string>
     <string name="video_info">Infos du média</string>
     <string name="video_info_name">Nom</string>
     <string name="video_info_size">Taille</string>

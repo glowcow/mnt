@@ -67,7 +67,7 @@ class AppContainer(context: Context) {
 
     /** The video page's own answer to the volume keys, while it is open: up 1, down -1. */
     var volumeKeys: ((Int) -> Unit)? = null
-    val thumbnails = Thumbnails(files, File(context.cacheDir, "thumbs"), File(context.cacheDir, "thumbs-fetch"))
+    val thumbnails = Thumbnails(context, files, File(context.cacheDir, "thumbs"), File(context.cacheDir, "thumbs-fetch"))
 
     private var purging: Job? = null
 

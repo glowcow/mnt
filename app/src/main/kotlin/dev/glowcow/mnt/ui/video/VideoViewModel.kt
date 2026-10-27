@@ -210,13 +210,16 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
     // VLC's engine for [options], made again when they change: the subtitles' look is set only on making it.
     private suspend fun engine(options: List<String>): MediaPlayer {
         player?.takeIf { options == made }?.let { return it }
+        // Gone before the new engine is made, for nothing to ask the released one meanwhile.
         player?.let {
+            player = null
             it.setEventListener(null)
             it.stop()
             it.vlcVout.detachViews()
             it.release()
         }
         vlc?.release()
+        vlc = null
         val libVlc = withContext(Dispatchers.Default) { LibVLC(app, ArrayList(options)) }
         vlc = libVlc
         made = options
@@ -240,6 +243,7 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
             "--freetype-rel-fontsize=${FONT_SIZES.getValue(video.subtitleSize)}",
             "--freetype-color=${if (video.subtitleColor == SubtitleColor.YELLOW) YELLOW else WHITE}",
             "--freetype-outline-thickness=${if (box) 0 else OUTLINE}",
+            "--freetype-shadow-opacity=0",
             "--freetype-background-color=0",
             "--freetype-background-opacity=${if (box) BOX_OPACITY else 0}",
             "-v",
@@ -287,7 +291,11 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
         if (p.vlcVout.areViewsAttached()) return
         attach(picture, words)
         p.setVideoTrackEnabled(true)
+        redraw = !p.isPlaying
     }
+
+    // Back from the background paused, the picture is drawn again once VLC has its output back: it shows none till then.
+    private var redraw = false
 
     /** The size the picture takes on the screen, for VLC to draw it and the subtitles at; stretched, it takes that shape. */
     fun layOut(width: Int, height: Int, stretch: Boolean) {
@@ -387,8 +395,7 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
         val video = found?.let { groups -> (0 until groups.length).map { groups[it].getFormat(0) }.firstOrNull { MimeTypes.isVideo(it.sampleMimeType) } }
         if (current != node.path || video == null) return video
         format = video
-        hardwareDecoder = withContext(Dispatchers.Default) { hardwareFor(video) }
-        hardware = hardwareDecoder != null
+        judge(video)
         return video
     }
 
@@ -461,6 +468,10 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
                 readPicture(p)
             }
             MediaPlayer.Event.Vout -> {
+                if (redraw && e.voutCount > 0) {
+                    redraw = false
+                    p.time = p.time
+                }
                 readPicture(p)
                 if (chapters.isEmpty()) chapters = p.getChapters(-1).orEmpty().map { Chapter(it.timeOffset, it.name?.takeIf(String::isNotBlank)) }.takeIf { it.size > 1 }.orEmpty()
             }
@@ -512,11 +523,24 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
         // What Media3 cannot read (WMV, RealMedia) VLC still tells the codec, size and rate of.
         if (format == null) {
             (details.values.firstOrNull { it is IMedia.VideoTrack } as? IMedia.VideoTrack)?.let { v ->
-                format = Format.Builder().setSampleMimeType(mimeOf(v.fourcc, IMedia.Track.Type.Video)).setWidth(v.width).setHeight(v.height)
+                val found = Format.Builder().setSampleMimeType(mimeOf(v.fourcc, IMedia.Track.Type.Video)).setWidth(v.width).setHeight(v.height)
                     .setFrameRate(if (v.frameRateDen > 0) v.frameRateNum.toFloat() / v.frameRateDen else Format.NO_VALUE.toFloat())
                     .setAverageBitrate(v.bitrate.takeIf { it > 0 } ?: Format.NO_VALUE)
                     .build()
+                format = found
+                judge(found)
             }
+        }
+    }
+
+    // Where the picture of [f] is decoded, once known for the video on now.
+    private fun judge(f: Format) {
+        val id = current
+        viewModelScope.launch {
+            val decoder = withContext(Dispatchers.Default) { hardwareFor(f) }
+            if (current != id || format !== f) return@launch
+            hardwareDecoder = decoder
+            hardware = decoder != null
         }
     }
 
@@ -656,11 +680,13 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
         const val CONTROLS_DP = 80
         const val WHITE = 0xFFFFFF
         const val YELLOW = 0xFFFF00
-        const val OUTLINE = 4
+        const val OUTLINE = 6
         const val BOX_OPACITY = 153
 
         // VLC's size of the subtitles is the height of the picture over it: the smaller, the larger the words.
         val FONT_SIZES = mapOf(SubtitleSize.SMALL to 20, SubtitleSize.NORMAL to 16, SubtitleSize.LARGE to 13, SubtitleSize.LARGEST to 10)
+
+        const val WMV = "video/x-ms-wmv"
 
         val AVC_PROFILES = mapOf(
             66 to CodecProfileLevel.AVCProfileBaseline,
@@ -683,6 +709,7 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
             "mpgv", "mp2v", "mp1v" -> MimeTypes.VIDEO_MPEG2
             "mp4v", "xvid", "divx", "dx50" -> MimeTypes.VIDEO_MP4V
             "wvc1", "vc-1", "wmv3" -> MimeTypes.VIDEO_VC1
+            "wmv1", "wmv2" -> WMV
             "h263" -> MimeTypes.VIDEO_H263
             "a52", "ac3" -> MimeTypes.AUDIO_AC3
             "eac3" -> MimeTypes.AUDIO_E_AC3

@@ -1,26 +1,24 @@
 package dev.glowcow.mnt.view.image
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.graphics.Matrix
-import android.media.MediaMetadataRetriever
 import androidx.exifinterface.media.ExifInterface
+import android.os.ParcelFileDescriptor
 import android.util.LruCache
 import dev.glowcow.mnt.files.FileStore
 import dev.glowcow.mnt.files.Node
 import dev.glowcow.mnt.files.Remote
-import androidx.annotation.OptIn
-import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
-import dev.glowcow.mnt.audio.Sounds
-import dev.glowcow.mnt.audio.StoreDataSource
-import dev.glowcow.mnt.video.Frames
+import dev.glowcow.mnt.files.RemoteProvider
+import dev.glowcow.mnt.video.VlcFrames
 import dev.glowcow.mnt.video.Videos
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.videolan.libvlc.Media
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.MessageDigest
@@ -32,7 +30,7 @@ import kotlin.concurrent.thread
  * a camera's) when that is large enough, else decoded small. Kept in memory and in [dir], under the file's path, size
  * and time; a server's file is fetched into [scratch] only when it is no larger than [FAR_WHOLE].
  */
-class Thumbnails(private val files: FileStore, private val dir: File, private val scratch: File) {
+class Thumbnails(private val context: Context, private val files: FileStore, private val dir: File, private val scratch: File) {
     private val memory = object : LruCache<String, Bitmap>((Runtime.getRuntime().maxMemory() / 32 / 1024).toInt()) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount / 1024
     }
@@ -63,6 +61,9 @@ class Thumbnails(private val files: FileStore, private val dir: File, private va
         return made
     }
 
+    /** Bytes of thumbnails kept on the phone. */
+    fun size(): Long = dir.listFiles()?.sumOf { it.length() } ?: 0L
+
     /** Forgets every thumbnail, in memory and on the phone. */
     fun clear() {
         memory.evictAll()
@@ -90,38 +91,20 @@ class Thumbnails(private val files: FileStore, private val dir: File, private va
         }
     }
 
-    // A frame of a video a tenth of the way in, past a dark opening, or further while the frame is all but black. A
-    // server's file goes through the player's extractors, which read only round the frame.
-    @OptIn(UnstableApi::class)
+    // A frame of a video a tenth of the way in, past a dark opening, or further while the frame is all but black: VLC's,
+    // whatever the format. A server's file is read through the app's provider, only round the frame.
     private fun frame(node: Node, size: Int): Bitmap? {
-        if (Remote.id(node.path) != null) {
-            val source = DataSource.Factory { StoreDataSource(files) { if (it == node.path) node.size else null } }
-            return Frames.square(source, Sounds.uri(node.path), size, FRAME_SHARES, ::dark)
-        }
-        val retriever = MediaMetadataRetriever()
+        if (Remote.id(node.path) == null) return VlcFrames.square(context, { Media(it, node.path) }, size, FRAME_SHARES, ::dark)
+        val opened = mutableListOf<ParcelFileDescriptor>()
         try {
-            retriever.setDataSource(node.path)
-            val length = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
-            val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toIntOrNull() ?: 0
-            val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
-            // Its short side as large as the square it fills.
-            val scale = if (width > 0 && height > 0) size.toFloat() / minOf(width, height) else 0f
-            fun at(share: Float): Bitmap? {
-                val us = (length * share).toLong().coerceAtMost(FRAME_AT_MOST_MS) * 1000
-                return if (scale > 0f && scale <= 1f) {
-                    retriever.getScaledFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, (width * scale).toInt().coerceAtLeast(size), (height * scale).toInt().coerceAtLeast(size))
-                } else {
-                    retriever.getFrameAtTime(us, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            return VlcFrames.square(context, { vlc ->
+                context.contentResolver.openFileDescriptor(RemoteProvider.uri(context, node.path), "r")?.let { fd ->
+                    opened += fd
+                    Media(vlc, fd.fileDescriptor)
                 }
-            }
-            var frame: Bitmap? = null
-            for (share in FRAME_SHARES) {
-                frame = at(share) ?: continue
-                if (!dark(frame)) break
-            }
-            return frame
+            }, size, FRAME_SHARES, ::dark)
         } finally {
-            retriever.release()
+            opened.forEach { runCatching { it.close() } }
         }
     }
 
@@ -199,7 +182,6 @@ class Thumbnails(private val files: FileStore, private val dir: File, private va
         const val FAR_WHOLE = 20L * 1024 * 1024
         const val QUALITY = 80
         const val KEEP_BYTES = 64L * 1024 * 1024
-        const val FRAME_AT_MOST_MS = 5L * 60 * 1000
         val FRAME_SHARES = listOf(0.1f, 0.3f, 0.5f)
         const val GRID = 8
         const val DARK = 0.06f

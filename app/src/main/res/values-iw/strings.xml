@@ -388,6 +388,7 @@
     <string name="video_subtitles">כתוביות</string>
     <string name="video_audio">רצועת שמע</string>
     <string name="video_settings">הגדרות וידאו</string>
+    <string name="video_turn">סיבוב המסך</string>
     <string name="video_off">כבוי</string>
     <string name="video_speed">מהירות</string>
     <string name="video_picture">תמונה</string>
@@ -450,6 +451,8 @@
     <string name="video_delay_later">מאוחר יותר</string>
     <string name="settings_thumbnails_video">גם סרטונים</string>
     <string name="settings_thumbnails_video_hint">פריים מכל סרטון במקום הסמל שלו</string>
+    <string name="settings_thumbnails_clear">ניקוי תמונות ממוזערות</string>
+    <string name="settings_thumbnails_clear_hint">תמונות קטנות של תמונות וסרטונים נשמרות כאן, כדי שכל אחת תיווצר פעם אחת בלבד</string>
     <string name="video_info">פרטי מדיה</string>
     <string name="video_info_name">שם</string>
     <string name="video_info_size">גודל</string>
