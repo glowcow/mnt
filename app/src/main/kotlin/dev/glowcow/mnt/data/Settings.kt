@@ -23,16 +23,24 @@ enum class FrameRate { OFF, SEAMLESS, ALWAYS }
 /** A video turns the screen to its own shape at once, or only as the phone is turned. */
 enum class Turn { VIDEO, PHONE }
 
-enum class SubtitleSize(val scale: Float) { SMALL(0.8f), NORMAL(1f), LARGE(1.25f), LARGEST(1.5f) }
+enum class SubtitleSize { SMALL, NORMAL, LARGE, LARGEST }
+
+/** How high subtitles stand over the bottom of the picture: there, a little higher, or above the controls. */
+enum class SubtitlePosition { BOTTOM, HIGHER, ABOVE_CONTROLS }
+
+enum class SubtitleColor { WHITE, YELLOW }
+
+/** What sets subtitles off the picture: a black outline, or a black box behind them. */
+enum class SubtitleBackground { OUTLINE, BOX }
+
+/** What a file of subtitles not in Unicode is read as: VLC's guess, or a given encoding. */
+enum class SubtitleEncoding { AUTO, CYRILLIC, UNICODE }
 
 /** Where a video opened again starts: the viewer is asked, or it goes on where it was left, or starts over. */
 enum class Resuming { ASK, ALWAYS, NEVER }
 
 /** What the previous and next buttons of a video go to: the videos of its folder, or its own chapters. */
 enum class Buttons { FILES, CHAPTERS }
-
-/** Whose decoders a video tries first: the phone's, or FFmpeg's in the app. */
-enum class Decoding { PHONE, FFMPEG }
 
 /** How videos play, kept as one value. */
 @Serializable
@@ -61,7 +69,10 @@ data class VideoSettings(
     val audioLanguage: String = "",
     val subtitleLanguage: String = "",
     val subtitleSize: SubtitleSize = SubtitleSize.NORMAL,
-    val decoding: Decoding = Decoding.PHONE,
+    val subtitlePosition: SubtitlePosition = SubtitlePosition.BOTTOM,
+    val subtitleColor: SubtitleColor = SubtitleColor.WHITE,
+    val subtitleBackground: SubtitleBackground = SubtitleBackground.OUTLINE,
+    val subtitleEncoding: SubtitleEncoding = SubtitleEncoding.AUTO,
 ) {
     companion object {
         const val OFF = "off"

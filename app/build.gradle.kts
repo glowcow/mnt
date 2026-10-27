@@ -135,12 +135,12 @@ dependencies {
     // The player of sound, kept going by a media session.
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.session)
-    // The subtitles of a video, drawn as the player lays them out.
-    implementation(libs.media3.ui)
-    // A frame of a video of a server, read by the player's extractors round it.
+    // A frame of a video of a server, and the stream a video holds, read by the player's extractors.
     implementation(libs.media3.inspector)
     // FFmpeg's decoders, for what a phone's own cannot play (ALAC on Qualcomm's).
     implementation(libs.media3.ffmpeg)
+    // VLC's engine plays the videos: the phone's decoders where they take a stream, its FFmpeg where they do not.
+    implementation(libs.libvlc)
 
     testImplementation(libs.junit)
     // The XML parser Android carries, for the tests of the document readers on the JVM.

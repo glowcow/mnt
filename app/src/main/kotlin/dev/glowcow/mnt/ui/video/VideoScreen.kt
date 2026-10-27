@@ -9,7 +9,9 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.HapticFeedbackConstants
 import android.view.SurfaceView
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.WindowManager
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.OptIn
@@ -85,6 +87,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -92,7 +95,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.util.Consumer
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -106,12 +108,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MimeTypes
-import androidx.media3.common.Player
-import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.CaptionStyleCompat
-import androidx.media3.ui.SubtitleView
 import dev.glowcow.mnt.R
 import dev.glowcow.mnt.container
 import dev.glowcow.mnt.data.FrameRate
@@ -142,7 +139,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-private enum class VideoSheet { SUBTITLES, AUDIO, SETTINGS, SPEED, FIT, INFO, CHAPTERS }
+private enum class VideoSheet { SUBTITLES, AUDIO, SETTINGS, SPEED, FIT, INFO, CHAPTERS, DELAY }
 
 /** What a drag shows while it goes: a level of the screen or the sound, or where a seek goes. */
 private data class Readout(val icon: ImageVector? = null, val level: Float? = null, val text: String? = null)
@@ -180,7 +177,6 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
     val view = LocalView.current
     val density = LocalDensity.current
     val activity = context as? ComponentActivity
-    val player = vm.player
     var shown by rememberSaveable { mutableStateOf(true) }
     var touched by remember { mutableIntStateOf(0) }
     var sheet by rememberSaveable { mutableStateOf<VideoSheet?>(null) }
@@ -199,7 +195,11 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
     LaunchedEffect(vm.begun) { if (vm.begun > 0) shown = true }
     LaunchedEffect(readout) { if (readout != null) delay(READOUT_MS).also { readout = null } }
     LaunchedEffect(skipped) { if (skipped != null) delay(READOUT_MS).also { skipped = null } }
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { vm.pause() }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        vm.pause()
+        vm.hide()
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) { vm.show() }
 
     // The system's bars stay away, the status bar but with the controls if the settings say so; a swipe from the
     // edge brings them back for a moment.
@@ -235,7 +235,7 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
             runCatching { activity?.setPictureInPictureParams(PictureInPictureParams.Builder().setAutoEnterEnabled(false).build()) }
         }
     }
-    val statusShown = video.statusBar && shown && !inPip && vm.error == null
+    val statusShown = video.statusBar && shown && !inPip && !vm.failed
     LaunchedEffect(activity, statusShown) {
         val insets = activity?.window?.let { WindowCompat.getInsetsController(it, view) } ?: return@LaunchedEffect
         if (statusShown) insets.show(WindowInsetsCompat.Type.statusBars()) else insets.hide(WindowInsetsCompat.Type.statusBars())
@@ -298,14 +298,7 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
         return Offset(at.x.coerceIn(-x, x), at.y.coerceIn(-y, y))
     }
     Box(Modifier.fillMaxSize().pageMotion().background(Color.Black).onSizeChanged { box = it }) {
-        if (player != null) {
-            Surface(player, grown, pan, video.frameRate, vm.format?.frameRate) { videoRect = it }
-            // Subtitles lie on the part of the picture that is seen.
-            val seen = IntSize(minOf(frame.width, box.width), minOf(frame.height, box.height))
-            // Over the controls at the bottom, the subtitles stand above them.
-            val lift = if (shown && !inPip) with(density) { (CONTROLS_HEIGHT.toPx() + WindowInsets.safeDrawing.getBottom(this) - (box.height - seen.height) / 2f).coerceAtLeast(0f) } else 0f
-            Subtitles(player, seen, video.subtitleSize.scale, lift)
-        }
+        Surface(vm, frame, grown, pan, vm.fit == Fit.STRETCH, video.frameRate, vm.format?.frameRate) { videoRect = it }
         // Taps, double taps, drags and pinches on the picture.
         val brightness = rememberUpdatedState(video.swipeBrightness)
         val volume = rememberUpdatedState(video.swipeVolume)
@@ -330,7 +323,7 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
                         do {
                             val event = awaitPointerEvent()
                             val pressed = event.changes.filter { it.pressed }
-                            if (pressed.size >= 2 && (mode == 0 || mode == PINCH || mode == PAN)) {
+                            if (pressed.size >= 2 && (mode == 0 || mode == PINCH)) {
                                 mode = PINCH
                                 val a = pressed[0].position
                                 val b = pressed[1].position
@@ -362,8 +355,8 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
                             if (mode == 0) {
                                 moved += change.positionChange()
                                 if (moved.getDistance() > viewConfiguration.touchSlop) {
+                                    // One finger always seeks or sets a level; a grown picture moves with two.
                                     mode = when {
-                                        zoom > 1f -> PAN
                                         abs(moved.x) > abs(moved.y) -> if (seeking.value) SEEK else -1
                                         down.position.x < size.width / 2 -> if (brightness.value) LIGHT else -1
                                         else -> if (volume.value) VOLUME else -1
@@ -377,10 +370,6 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
                             }
                             val along = change.position - down.position
                             when (mode) {
-                                PAN -> {
-                                    pan = held(pan + change.positionChange(), zoom)
-                                    change.consume()
-                                }
                                 SEEK -> {
                                     val length = vm.duration.takeIf { it > 0 } ?: 0L
                                     seekTo = (startAt + (along.x / size.width * SEEK_WIDTH_MS).toLong()).coerceIn(0, length.coerceAtLeast(0))
@@ -429,12 +418,12 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
                 },
         )
 
-        vm.error?.let { reason ->
+        if (vm.failed) {
             Column(Modifier.align(Alignment.Center).padding(horizontal = 32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                EmptyState(stringResource(R.string.video_failed), reason)
+                EmptyState(stringResource(R.string.video_failed))
                 Box(Modifier.padding(top = 16.dp)) {
                     PillButton(stringResource(R.string.viewer_open_with)) {
-                        vm.item?.mediaId?.let { if (!Opener.open(context, it)) Toast.makeText(context, R.string.open_none, Toast.LENGTH_SHORT).show() }
+                        vm.current?.let { if (!Opener.open(context, it)) Toast.makeText(context, R.string.open_none, Toast.LENGTH_SHORT).show() }
                     }
                 }
             }
@@ -456,7 +445,7 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
         }
 
         if (!inPip) {
-            AnimatedVisibility(shown && vm.error == null, enter = fadeIn(tween(FADE_MS)), exit = fadeOut(tween(FADE_MS))) {
+            AnimatedVisibility(shown && !vm.failed, enter = fadeIn(tween(FADE_MS)), exit = fadeOut(tween(FADE_MS))) {
                 Controls(
                     vm,
                     onBack = onBack,
@@ -503,8 +492,8 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
         }
         VideoSheet.AUDIO -> ChoiceSheet(
             title = stringResource(R.string.video_audio),
-            options = vm.audio.mapIndexed { i, it -> it to trackName(it, i + 1) },
-            selected = vm.audio.firstOrNull { it.selected },
+            options = vm.audioTracks.mapIndexed { i, it -> it to trackName(it, i + 1) },
+            selected = vm.audioTracks.firstOrNull { it.selected },
             onSelect = { vm.choose(C.TRACK_TYPE_AUDIO, it) },
             onDismiss = { sheet = null },
         )
@@ -516,6 +505,10 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
                 if (vm.chapters.isNotEmpty()) {
                     GroupDivider()
                     GroupRow(stringResource(R.string.video_chapters), value = vm.chapters.size.toString(), onClick = { pick { sheet = VideoSheet.CHAPTERS } })
+                }
+                if (!vm.subtitlesOff && vm.subtitles.isNotEmpty()) {
+                    GroupDivider()
+                    GroupRow(stringResource(R.string.video_delay), value = delayName(vm.subtitleDelay), onClick = { pick { sheet = VideoSheet.DELAY } })
                 }
                 GroupDivider()
                 GroupRow(stringResource(R.string.video_info), onClick = { pick { sheet = VideoSheet.INFO } })
@@ -532,11 +525,30 @@ private fun Video(vm: VideoViewModel, video: VideoSettings, onBack: () -> Unit) 
             )
         }
         VideoSheet.INFO -> GroupSheet(stringResource(R.string.video_info), onDismiss = { sheet = null }) { MediaInfo(vm) }
+        VideoSheet.DELAY -> GroupSheet(stringResource(R.string.video_delay), onDismiss = { sheet = null }) { pick ->
+            Group {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton48(MntIcons.Minus, stringResource(R.string.video_delay_earlier)) { vm.subtitleDelay -= DELAY_STEP_MS }
+                    Text(
+                        delayName(vm.subtitleDelay),
+                        color = c.text,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        style = TextStyle(fontFeatureSettings = "tnum"),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton48(MntIcons.Plus, stringResource(R.string.video_delay_later)) { vm.subtitleDelay += DELAY_STEP_MS }
+                }
+                GroupDivider()
+                GroupRow(stringResource(R.string.video_delay_none), onClick = { pick { vm.subtitleDelay = 0 } })
+            }
+        }
         VideoSheet.SPEED -> ChoiceSheet(
             title = stringResource(R.string.video_speed),
             options = SPEEDS.map { it to speedName(it) },
             selected = vm.speed,
-            onSelect = { vm.setSpeed(it) },
+            onSelect = { vm.speed = it },
             onDismiss = { sheet = null },
         )
         VideoSheet.FIT -> ChoiceSheet(
@@ -558,84 +570,54 @@ private fun frame(box: IntSize, aspect: Float, fit: Fit): IntSize {
     return if (byHeight) IntSize((box.height * aspect).roundToInt(), box.height) else IntSize(box.width, (box.width / aspect).roundToInt())
 }
 
-/** The picture: a surface of its own, [frame] in size in the middle; with [rate] Always the screen's rate follows the video's. */
-@OptIn(UnstableApi::class)
+/**
+ * The picture and its subtitles: two surfaces VLC draws on at [frame] in size, shown [grown] in the middle. The screen's
+ * rate follows the video's when it can do so without a blink, or always, as [rate] says.
+ */
 @Composable
-private fun Surface(player: ExoPlayer, frame: IntSize, pan: Offset, rate: FrameRate, frameRate: Float?, onRect: (android.graphics.Rect) -> Unit) {
+private fun Surface(vm: VideoViewModel, frame: IntSize, grown: IntSize, pan: Offset, stretch: Boolean, rate: FrameRate, frameRate: Float?, onRect: (android.graphics.Rect) -> Unit) {
     val density = LocalDensity.current
-    val wanted = if (rate == FrameRate.ALWAYS) frameRate?.takeIf { it > 0f } ?: 0f else 0f
-    val want = rememberUpdatedState(wanted)
+    val want = rememberUpdatedState(if (rate == FrameRate.OFF) 0f else frameRate?.takeIf { it > 0f } ?: 0f)
+    val change = rememberUpdatedState(if (rate == FrameRate.ALWAYS) Surface.CHANGE_FRAME_RATE_ALWAYS else Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS)
     fun setRate(surface: Surface?) {
-        if (want.value > 0f && surface?.isValid == true) {
-            surface.setFrameRate(want.value, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE, Surface.CHANGE_FRAME_RATE_ALWAYS)
-        }
+        if (want.value > 0f && surface?.isValid == true) surface.setFrameRate(want.value, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE, change.value)
     }
-    val modifier = if (frame.width > 0 && frame.height > 0) {
-        with(density) { Modifier.offset { IntOffset(pan.x.roundToInt(), pan.y.roundToInt()) }.requiredSize(frame.width.toDp(), frame.height.toDp()) }
+    LaunchedEffect(vm, frame, stretch) { vm.layOut(frame.width, frame.height, stretch) }
+    val modifier = if (grown.width > 0 && grown.height > 0) {
+        with(density) { Modifier.offset { IntOffset(pan.x.roundToInt(), pan.y.roundToInt()) }.requiredSize(grown.width.toDp(), grown.height.toDp()) }
     } else {
         Modifier.fillMaxSize()
     }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         AndroidView(
             factory = { context ->
-                SurfaceView(context).apply {
-                    holder.addCallback(object : SurfaceHolder.Callback {
-                        override fun surfaceCreated(holder: SurfaceHolder) = setRate(holder.surface)
-                        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit
-                        override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
-                    })
-                    player.setVideoSurfaceView(this)
+                FrameLayout(context).apply {
+                    val picture = SurfaceView(context).apply {
+                        holder.addCallback(object : SurfaceHolder.Callback {
+                            override fun surfaceCreated(holder: SurfaceHolder) = setRate(holder.surface)
+                            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit
+                            override fun surfaceDestroyed(holder: SurfaceHolder) = Unit
+                        })
+                    }
+                    val words = SurfaceView(context)
+                    addView(picture, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                    addView(words, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+                    vm.attach(picture, words)
                 }
             },
-            update = { setRate(it.holder.surface) },
-            onRelease = { player.clearVideoSurfaceView(it) },
+            update = { layout ->
+                val picture = layout.getChildAt(0) as SurfaceView
+                // Grown by the fingers, the same picture is drawn larger by the screen, not by VLC at that size.
+                if (frame.width > 0 && frame.height > 0) {
+                    (0 until layout.childCount).forEach { (layout.getChildAt(it) as SurfaceView).holder.setFixedSize(frame.width, frame.height) }
+                }
+                setRate(picture.holder.surface)
+            },
+            onRelease = { vm.detach(it.getChildAt(0) as SurfaceView) },
             modifier = modifier.onGloballyPositioned {
                 val r = it.boundsInWindow()
                 onRect(android.graphics.Rect(r.left.roundToInt(), r.top.roundToInt(), r.right.roundToInt(), r.bottom.roundToInt()))
             },
-        )
-    }
-}
-
-/** The subtitles the player hands over, white with a black outline in the app's face, over [seen] in the middle. */
-@OptIn(UnstableApi::class)
-@Composable
-private fun Subtitles(player: ExoPlayer, seen: IntSize, scale: Float, lift: Float) {
-    val density = LocalDensity.current
-    var subtitles by remember { mutableStateOf<SubtitleView?>(null) }
-    DisposableEffect(player, subtitles) {
-        val view = subtitles ?: return@DisposableEffect onDispose {}
-        val listener = object : Player.Listener {
-            override fun onCues(cueGroup: CueGroup) = view.setCues(cueGroup.cues)
-        }
-        player.addListener(listener)
-        view.setCues(player.currentCues.cues)
-        onDispose { player.removeListener(listener) }
-    }
-    if (seen.width <= 0 || seen.height <= 0) return
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        AndroidView(
-            factory = { context ->
-                SubtitleView(context).apply {
-                    setStyle(
-                        CaptionStyleCompat(
-                            android.graphics.Color.WHITE,
-                            android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT,
-                            CaptionStyleCompat.EDGE_TYPE_OUTLINE,
-                            android.graphics.Color.BLACK,
-                            ResourcesCompat.getFont(context, R.font.arimo),
-                        ),
-                    )
-                    setApplyEmbeddedStyles(true)
-                    subtitles = this
-                }
-            },
-            update = {
-                it.setFractionalTextSize(SubtitleView.DEFAULT_TEXT_SIZE_FRACTION * scale)
-                it.setBottomPaddingFraction(maxOf(SubtitleView.DEFAULT_BOTTOM_PADDING_FRACTION, lift / seen.height))
-            },
-            modifier = with(density) { Modifier.requiredSize(seen.width.toDp(), seen.height.toDp()) },
         )
     }
 }
@@ -645,7 +627,7 @@ private fun Subtitles(player: ExoPlayer, seen: IntSize, scale: Float, lift: Floa
 @Composable
 private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, onSheet: (VideoSheet) -> Unit, onTouch: () -> Unit) {
     val c = MntTheme.colors
-    val id = vm.item?.mediaId ?: vm.path
+    val id = vm.current ?: vm.path
     val named = Videos.named(Paths.name(id))
     Box(Modifier.fillMaxSize()) {
         // Veils at the top and the bottom, for what stands there to read over a light picture.
@@ -711,15 +693,15 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
         Column(
             Modifier.fillMaxWidth().align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)).padding(start = 24.dp, end = 24.dp, bottom = 16.dp),
         ) {
-            val now by produceState(vm.position to vm.buffered, vm) {
+            val now by produceState(vm.position, vm) {
                 while (true) {
-                    value = vm.position to vm.buffered
+                    value = vm.position
                     delay(TICK_MS)
                 }
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 // The chapter it is in; a tap lists them all.
-                val at = vm.chapters.indexOfLast { it.start <= now.first }
+                val at = vm.chapters.indexOfLast { it.start <= now }
                 Box(Modifier.weight(1f)) {
                     if (at >= 0) {
                         Text(
@@ -736,7 +718,7 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
                 // The glyphs, not their targets, end in line with the time below.
                 Row(Modifier.offset(x = 12.dp)) {
                     if (vm.subtitles.isNotEmpty()) IconButton48(MntIcons.Subtitles, stringResource(R.string.video_subtitles), size = 24.dp) { onSheet(VideoSheet.SUBTITLES) }
-                    if (vm.audio.size > 1) IconButton48(MntIcons.AudioTrack, stringResource(R.string.video_audio), size = 24.dp) { onSheet(VideoSheet.AUDIO) }
+                    if (vm.audioTracks.size > 1) IconButton48(MntIcons.AudioTrack, stringResource(R.string.video_audio), size = 24.dp) { onSheet(VideoSheet.AUDIO) }
                     IconButton48(MntIcons.Gear, stringResource(R.string.video_settings), size = 24.dp) { onSheet(VideoSheet.SETTINGS) }
                 }
             }
@@ -747,12 +729,11 @@ private fun Controls(vm: VideoViewModel, onBack: () -> Unit, onPip: () -> Unit, 
 
 /** The time gone, the line to seek along, and the time left. */
 @Composable
-private fun Seek(vm: VideoViewModel, now: Pair<Long, Long>, onTouch: () -> Unit) {
+private fun Seek(vm: VideoViewModel, now: Long, onTouch: () -> Unit) {
     val c = MntTheme.colors
     var held by remember { mutableFloatStateOf(-1f) }
     val length = vm.duration.takeIf { it != C.TIME_UNSET && it > 0 } ?: 0L
-    val fraction = if (held >= 0f) held else if (length > 0) (now.first.toFloat() / length).coerceIn(0f, 1f) else 0f
-    val ahead = if (length > 0) (now.second.toFloat() / length).coerceIn(0f, 1f) else 0f
+    val fraction = if (held >= 0f) held else if (length > 0) (now.toFloat() / length).coerceIn(0f, 1f) else 0f
     val style = TextStyle(fontFeatureSettings = "tnum")
     val at = (fraction * length).toLong()
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -792,7 +773,6 @@ private fun Seek(vm: VideoViewModel, now: Pair<Long, Long>, onTouch: () -> Unit)
             val x = size.width * fraction
             val corner = CornerRadius(thick / 2)
             drawRoundRect(Color.White.copy(alpha = REST), Offset(0f, y - thick / 2), Size(size.width, thick), corner)
-            drawRoundRect(Color.White.copy(alpha = AHEAD), Offset(0f, y - thick / 2), Size(size.width * ahead, thick), corner)
             drawRoundRect(c.accent, Offset(0f, y - thick / 2), Size(x, thick), corner)
             // Where each chapter begins, a notch in the line.
             if (length > 0) {
@@ -852,7 +832,7 @@ private fun ReadoutPill(r: Readout, modifier: Modifier) {
 @Composable
 private fun MediaInfo(vm: VideoViewModel) {
     val context = LocalContext.current
-    val id = vm.item?.mediaId ?: vm.path
+    val id = vm.current ?: vm.path
     val hardware = stringResource(R.string.video_info_hardware)
     val processor = stringResource(R.string.video_info_processor)
     Group {
@@ -884,16 +864,16 @@ private fun MediaInfo(vm: VideoViewModel) {
             }
             GroupDivider()
             GroupRow(stringResource(R.string.video_info_range), value = range(f))
-            vm.videoDecoder?.let { name ->
+            vm.hardware?.let { onPhone ->
                 GroupDivider()
-                GroupRow(stringResource(R.string.video_info_decoder), value = name + " · " + if (vm.hardware == true) hardware else processor)
+                GroupRow(stringResource(R.string.video_info_decoder), value = (vm.hardwareDecoder ?: "FFmpeg") + " · " + if (onPhone) hardware else processor)
             }
         }
     }
-    vm.audio.firstOrNull { it.selected }?.let { choice ->
+    vm.audioTracks.firstOrNull { it.selected }?.let { choice ->
         val f = choice.format
         Group(Modifier.padding(top = 12.dp)) {
-            GroupRow(stringResource(R.string.video_audio), value = trackName(choice, vm.audio.indexOf(choice) + 1))
+            GroupRow(stringResource(R.string.video_audio), value = trackName(choice, vm.audioTracks.indexOf(choice) + 1))
             if (f.sampleRate != Format.NO_VALUE) {
                 GroupDivider()
                 GroupRow(stringResource(R.string.video_info_sample_rate), value = stringResource(R.string.player_khz, dev.glowcow.mnt.ui.player.khz(f.sampleRate)))
@@ -901,10 +881,6 @@ private fun MediaInfo(vm: VideoViewModel) {
             bitrate(f)?.let {
                 GroupDivider()
                 GroupRow(stringResource(R.string.video_info_bitrate), value = stringResource(R.string.video_info_kbps, it / 1000))
-            }
-            vm.audioDecoder?.let { name ->
-                GroupDivider()
-                GroupRow(stringResource(R.string.video_info_audio_decoder), value = name)
             }
         }
     }
@@ -940,9 +916,7 @@ private fun trackName(choice: Choice, number: Int): String {
 
 @OptIn(UnstableApi::class)
 private fun coding(f: Format): String? {
-    // Subtitles read with the file come as the player's own cues, their kind kept in the codecs.
-    val mime = if (f.sampleMimeType == MimeTypes.APPLICATION_MEDIA3_CUES) f.codecs else f.sampleMimeType
-    val name = CODINGS[mime] ?: return null
+    val name = CODINGS[f.sampleMimeType] ?: return null
     val channels = when (f.channelCount) {
         Format.NO_VALUE, 0 -> null
         1 -> "1.0"
@@ -952,6 +926,15 @@ private fun coding(f: Format): String? {
         else -> f.channelCount.toString()
     }
     return listOfNotNull(name, channels).joinToString(" · ")
+}
+
+// `+0.3 s`, `−1.2 s`, `0 s`.
+@Composable
+private fun delayName(ms: Long): String {
+    if (ms == 0L) return stringResource(R.string.video_seconds, 0)
+    val sign = if (ms > 0) "+" else "−"
+    val locale = LocalConfiguration.current.locales[0]
+    return sign + stringResource(R.string.video_seconds_fraction, String.format(locale, "%.1f", abs(ms) / 1000f))
 }
 
 private fun speedName(speed: Float): String = (if (speed == speed.toInt().toFloat()) speed.toInt().toString() else String.format(Locale.ROOT, "%s", speed)) + "×"
@@ -996,6 +979,7 @@ private val VIDEO_CODINGS = mapOf(
 )
 
 private val FITS = mapOf(Fit.FIT to R.string.video_fit, Fit.FILL to R.string.video_fill, Fit.STRETCH to R.string.video_stretch)
+private const val DELAY_STEP_MS = 100L
 private val SPEEDS = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
 
 // What a gesture on the picture turned out to be.
@@ -1003,7 +987,6 @@ private const val PINCH = 1
 private const val SEEK = 2
 private const val LIGHT = 3
 private const val VOLUME = 4
-private const val PAN = 5
 
 // A drag across the whole width seeks this far; one up the whole of this share of the height goes from none to full.
 private const val SEEK_WIDTH_MS = 120_000L
@@ -1028,7 +1011,6 @@ private val VEIL_DARK = Color.Black.copy(alpha = 0.6f)
 private const val VEIL = 0.3f
 private const val DIMMED = 0.35f
 private const val REST = 0.2f
-private const val AHEAD = 0.4f
 
 private val SIDE_DISC = 56.dp
 private val PLAY_DISC = 72.dp
@@ -1038,5 +1020,3 @@ private val THUMB = 14.dp
 private val THUMB_HELD = 20.dp
 private val NOTCH = 2.dp
 
-// The controls at the bottom, from the screen's edge to the top of their buttons.
-private val CONTROLS_HEIGHT = 108.dp

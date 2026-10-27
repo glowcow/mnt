@@ -11,3 +11,6 @@
 # The archive reader's native code calls these by name.
 -keep class dev.glowcow.mnt.archive.ArchiveSource { int read(byte[]); long seek(long, int); }
 -keep class dev.glowcow.mnt.archive.ArchiveException { <init>(int, byte[]); }
+
+# LibVLC's native code calls back into its Java side by name, and its AAR brings no rules of its own.
+-keep class org.videolan.libvlc.** { *; }

@@ -44,9 +44,12 @@ import dev.glowcow.mnt.data.Palette
 import dev.glowcow.mnt.data.SettingsStore
 import dev.glowcow.mnt.data.ThemeMode
 import dev.glowcow.mnt.data.Buttons
-import dev.glowcow.mnt.data.Decoding
 import dev.glowcow.mnt.data.FrameRate
 import dev.glowcow.mnt.data.Resuming
+import dev.glowcow.mnt.data.SubtitleBackground
+import dev.glowcow.mnt.data.SubtitleColor
+import dev.glowcow.mnt.data.SubtitleEncoding
+import dev.glowcow.mnt.data.SubtitlePosition
 import dev.glowcow.mnt.data.SubtitleSize
 import dev.glowcow.mnt.data.Turn
 import dev.glowcow.mnt.data.VideoSettings
@@ -308,7 +311,7 @@ fun SettingsPageScreen(
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_map_data), value = "OpenStreetMap · ODbL")
                 GroupDivider()
-                GroupRow(stringResource(R.string.settings_sound_decoding), value = "FFmpeg, Jellyfin's Media3 decoder · LGPL-2.1, GPL-3.0")
+                GroupRow(stringResource(R.string.settings_sound_decoding), value = "LibVLC, FFmpeg, Jellyfin's Media3 decoder · LGPL-2.1, GPL-3.0")
             }
         }
     }
@@ -550,7 +553,7 @@ private fun BackupPage(title: String, vm: SettingsViewModel, onBack: () -> Unit)
 
 private enum class Picker { THEME, PALETTE, LANGUAGE }
 
-private enum class VideoPicker { RATE, SKIP, TURN, RESUME, BUTTONS, AUDIO, SUBTITLES, SIZE, DECODING }
+private enum class VideoPicker { RATE, SKIP, TURN, RESUME, BUTTONS, AUDIO, SUBTITLES, SIZE, POSITION, COLOR, BACKGROUND, ENCODING }
 
 @Composable
 private fun VideoPage(title: String, settings: AppSettings?, vm: SettingsViewModel, onBack: () -> Unit) {
@@ -597,9 +600,14 @@ private fun VideoPage(title: String, settings: AppSettings?, vm: SettingsViewMod
             GroupRow(stringResource(R.string.settings_video_subtitles), value = languageName(v.subtitleLanguage), onClick = { picking = VideoPicker.SUBTITLES })
             GroupDivider()
             GroupRow(stringResource(R.string.settings_video_size), value = stringResource(SIZES.getValue(v.subtitleSize)), onClick = { picking = VideoPicker.SIZE })
-        }
-        Group {
-            GroupRow(stringResource(R.string.settings_video_decoding), subtitle = stringResource(R.string.settings_video_decoding_hint), value = stringResource(DECODINGS.getValue(v.decoding)), onClick = { picking = VideoPicker.DECODING })
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_position), value = stringResource(POSITIONS.getValue(v.subtitlePosition)), onClick = { picking = VideoPicker.POSITION })
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_color), value = stringResource(COLORS.getValue(v.subtitleColor)), onClick = { picking = VideoPicker.COLOR })
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_background), value = stringResource(BACKGROUNDS.getValue(v.subtitleBackground)), onClick = { picking = VideoPicker.BACKGROUND })
+            GroupDivider()
+            GroupRow(stringResource(R.string.settings_video_encoding), value = stringResource(ENCODINGS.getValue(v.subtitleEncoding)), onClick = { picking = VideoPicker.ENCODING })
         }
     }
     if (v == null) return
@@ -613,7 +621,10 @@ private fun VideoPage(title: String, settings: AppSettings?, vm: SettingsViewMod
         VideoPicker.AUDIO -> ChoiceSheet(stringResource(R.string.settings_video_audio), (listOf("") + LANGUAGES.map { it.first }).map { it to languageName(it) }, v.audioLanguage, { l -> set { it.copy(audioLanguage = l) } }, dismiss)
         VideoPicker.SUBTITLES -> ChoiceSheet(stringResource(R.string.settings_video_subtitles), (listOf("", VideoSettings.OFF) + LANGUAGES.map { it.first }).map { it to languageName(it) }, v.subtitleLanguage, { l -> set { it.copy(subtitleLanguage = l) } }, dismiss)
         VideoPicker.SIZE -> ChoiceSheet(stringResource(R.string.settings_video_size), SubtitleSize.entries.map { it to stringResource(SIZES.getValue(it)) }, v.subtitleSize, { z -> set { it.copy(subtitleSize = z) } }, dismiss)
-        VideoPicker.DECODING -> ChoiceSheet(stringResource(R.string.settings_video_decoding), Decoding.entries.map { it to stringResource(DECODINGS.getValue(it)) }, v.decoding, { d -> set { it.copy(decoding = d) } }, dismiss)
+        VideoPicker.POSITION -> ChoiceSheet(stringResource(R.string.settings_video_position), SubtitlePosition.entries.map { it to stringResource(POSITIONS.getValue(it)) }, v.subtitlePosition, { p -> set { it.copy(subtitlePosition = p) } }, dismiss)
+        VideoPicker.COLOR -> ChoiceSheet(stringResource(R.string.settings_video_color), SubtitleColor.entries.map { it to stringResource(COLORS.getValue(it)) }, v.subtitleColor, { k -> set { it.copy(subtitleColor = k) } }, dismiss)
+        VideoPicker.BACKGROUND -> ChoiceSheet(stringResource(R.string.settings_video_background), SubtitleBackground.entries.map { it to stringResource(BACKGROUNDS.getValue(it)) }, v.subtitleBackground, { b -> set { it.copy(subtitleBackground = b) } }, dismiss)
+        VideoPicker.ENCODING -> ChoiceSheet(stringResource(R.string.settings_video_encoding), SubtitleEncoding.entries.map { it to stringResource(ENCODINGS.getValue(it)) }, v.subtitleEncoding, { e -> set { it.copy(subtitleEncoding = e) } }, dismiss)
         null -> Unit
     }
 }
@@ -622,13 +633,24 @@ private val RATES = mapOf(FrameRate.OFF to R.string.video_off, FrameRate.SEAMLES
 private val RESUMING = mapOf(Resuming.ASK to R.string.settings_video_resume_ask, Resuming.ALWAYS to R.string.settings_video_resume_always, Resuming.NEVER to R.string.settings_video_resume_never)
 private val BUTTONS = mapOf(Buttons.FILES to R.string.settings_video_buttons_files, Buttons.CHAPTERS to R.string.settings_video_buttons_chapters)
 private val TURNS = mapOf(Turn.VIDEO to R.string.settings_video_turn_video, Turn.PHONE to R.string.settings_video_turn_phone)
+private val POSITIONS = mapOf(
+    SubtitlePosition.BOTTOM to R.string.settings_video_position_bottom,
+    SubtitlePosition.HIGHER to R.string.settings_video_position_higher,
+    SubtitlePosition.ABOVE_CONTROLS to R.string.settings_video_position_above,
+)
+private val COLORS = mapOf(SubtitleColor.WHITE to R.string.settings_video_color_white, SubtitleColor.YELLOW to R.string.settings_video_color_yellow)
+private val BACKGROUNDS = mapOf(SubtitleBackground.OUTLINE to R.string.settings_video_background_outline, SubtitleBackground.BOX to R.string.settings_video_background_box)
+private val ENCODINGS = mapOf(
+    SubtitleEncoding.AUTO to R.string.settings_video_encoding_auto,
+    SubtitleEncoding.CYRILLIC to R.string.settings_video_encoding_cyrillic,
+    SubtitleEncoding.UNICODE to R.string.settings_video_encoding_unicode,
+)
 private val SIZES = mapOf(
     SubtitleSize.SMALL to R.string.settings_video_size_small,
     SubtitleSize.NORMAL to R.string.settings_video_size_normal,
     SubtitleSize.LARGE to R.string.settings_video_size_large,
     SubtitleSize.LARGEST to R.string.settings_video_size_largest,
 )
-private val DECODINGS = mapOf(Decoding.PHONE to R.string.settings_video_decoding_phone, Decoding.FFMPEG to R.string.settings_video_decoding_ffmpeg)
 
 private enum class BackupSheet { SAVE, RESTORE }
 

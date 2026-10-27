@@ -10,8 +10,11 @@ import dev.glowcow.mnt.files.Paths
 
 /** What the app's video player plays, the subtitles that lie beside a video, and what its name says. */
 object Videos {
-    // What the player's extractors take; ASF (WMV) and RealMedia have none.
-    private val plays = setOf("mkv", "mp4", "m4v", "webm", "mov", "avi", "ts", "m2ts", "mts", "flv", "3gp", "mpg", "mpeg", "vob", "ogv")
+    // What VLC plays, by the endings videos come with.
+    private val plays = setOf(
+        "mkv", "mp4", "m4v", "webm", "mov", "avi", "ts", "m2ts", "mts", "flv", "3gp", "mpg", "mpeg", "vob", "ogv",
+        "wmv", "asf", "rm", "rmvb", "divx", "f4v", "mxf", "ogm",
+    )
 
     // Subtitles beside a video, by their ending, as the player names their kind.
     private val subtitles = mapOf(

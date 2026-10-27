@@ -16,6 +16,12 @@ object Opener {
         Intent(Intent.ACTION_VIEW).setDataAndType(uri(context, path), type(path)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
     )
 
+    /** Asks the system's chooser which app is to show the file, even where one is set for its type. */
+    fun choose(context: Context, path: String): Boolean = launch(
+        context,
+        Intent.createChooser(Intent(Intent.ACTION_VIEW).setDataAndType(uri(context, path), type(path)).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), null),
+    )
+
     fun share(context: Context, paths: List<String>): Boolean {
         val uris = ArrayList(paths.map { uri(context, it) })
         val types = paths.map { type(it) }.distinct()

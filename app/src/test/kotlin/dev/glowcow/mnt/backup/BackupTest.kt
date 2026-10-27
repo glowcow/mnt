@@ -1,7 +1,6 @@
 package dev.glowcow.mnt.backup
 
 import dev.glowcow.mnt.data.Buttons
-import dev.glowcow.mnt.data.Decoding
 import dev.glowcow.mnt.data.FrameRate
 import dev.glowcow.mnt.data.Resuming
 import dev.glowcow.mnt.data.VideoSettings
@@ -43,7 +42,7 @@ class BackupTest {
 
     @Test
     fun archiveKeepsTheVideoSettings() {
-        val video = VideoSettings(frameRate = FrameRate.ALWAYS, skipSeconds = 30, resume = Resuming.NEVER, swipeBrightness = true, buttons = Buttons.CHAPTERS, subtitleLanguage = "ru", decoding = Decoding.FFMPEG)
+        val video = VideoSettings(frameRate = FrameRate.ALWAYS, skipSeconds = 30, resume = Resuming.NEVER, swipeBrightness = true, buttons = Buttons.CHAPTERS, subtitleLanguage = "ru")
         val written = ByteArrayOutputStream().also {
             BackupArchive.write(it, BackupManifest(createdAt = 1, app = "0.9.1", settings = settings.copy(video = video, thumbnailsVideo = false)))
         }.toByteArray()

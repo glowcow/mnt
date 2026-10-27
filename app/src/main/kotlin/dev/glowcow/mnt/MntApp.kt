@@ -29,6 +29,7 @@ import dev.glowcow.mnt.net.Remotes
 import dev.glowcow.mnt.ui.files.FolderViewModel
 import dev.glowcow.mnt.update.AppUpdateScheduler
 import dev.glowcow.mnt.update.AppUpdater
+import dev.glowcow.mnt.video.VlcFonts
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -104,6 +105,7 @@ class MntApp : Application() {
             File(cacheDir, "photo").deleteRecursively()
             File(cacheDir, "thumbs-fetch").deleteRecursively()
         }
+        thread(name = "vlc-fonts", priority = Thread.MIN_PRIORITY) { runCatching { VlcFonts.warm(this) } }
         // A transfer starts from a screen, so the app is in front and may start the service that keeps it going.
         container.scope.launch {
             container.transfers.progress.map { it != null }.distinctUntilChanged().collect { running ->

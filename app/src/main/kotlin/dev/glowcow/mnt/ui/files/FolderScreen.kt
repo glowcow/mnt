@@ -119,6 +119,22 @@ fun FolderScreen(
         conflicts = vm.conflicts(clip)
         if (conflicts > 0) sheet = FolderSheet.CONFLICT else started(vm.paste(Conflict.SKIP))
     }
+    // The system's chooser for one file; a file of an archive goes to it as a copy.
+    fun openWith(node: Node) {
+        vm.clearSelection()
+        if (vm.archive == null) {
+            if (!Opener.choose(context, node.path)) toast(R.string.open_none)
+            return
+        }
+        vm.openOutside(node) { copy, refused ->
+            when {
+                copy != null -> if (!Opener.choose(context, copy)) toast(R.string.open_none)
+                refused == Reason.LOCKED -> toast(R.string.file_locked)
+                else -> toast(R.string.action_failed)
+            }
+        }
+    }
+
     fun open(node: Node) {
         when {
             selection.isNotEmpty() -> vm.toggle(node.path)
@@ -152,6 +168,7 @@ fun FolderScreen(
                 onMove = { vm.pick(move = true) },
                 onDetails = { sheet = FolderSheet.DETAILS },
                 onDelete = { sheet = FolderSheet.DELETE },
+                onOpenWith = remember(selection) { vm.selected().singleOrNull()?.takeIf { !it.directory } }?.let { node -> { openWith(node) } },
                 onMore = { sheet = FolderSheet.MORE },
             )
         })
@@ -258,10 +275,7 @@ fun FolderScreen(
         onSheet = { sheet = it },
         onStarted = ::started,
         onShare = { if (!Opener.share(context, vm.selected().map { it.path })) toast(R.string.open_none) },
-        onOpenWith = {
-            vm.clearSelection()
-            if (!Opener.open(context, it.path)) toast(R.string.open_none)
-        },
+        onOpenWith = ::openWith,
         onFailed = { toast(R.string.action_failed) },
     )
 }
@@ -302,7 +316,7 @@ private fun Centered(top: Dp, bottom: Dp, content: @Composable () -> Unit) {
 
 /** What can be done with the ticked rows: in an archive, only taking them out; archives alone can be unpacked. */
 @Composable
-private fun SelectionBar(writes: Boolean, onUnpack: (() -> Unit)?, onCopy: () -> Unit, onMove: () -> Unit, onDetails: () -> Unit, onDelete: () -> Unit, onMore: () -> Unit) {
+private fun SelectionBar(writes: Boolean, onUnpack: (() -> Unit)?, onCopy: () -> Unit, onMove: () -> Unit, onDetails: () -> Unit, onDelete: () -> Unit, onOpenWith: (() -> Unit)?, onMore: () -> Unit) {
     IslandIcons {
         onUnpack?.let { IconButton48(MntIcons.Unpack, stringResource(R.string.action_unpack), onClick = it) }
         // Out of an archive a copy is taking files out: it looks as unpacking does.
@@ -310,6 +324,8 @@ private fun SelectionBar(writes: Boolean, onUnpack: (() -> Unit)?, onCopy: () ->
         if (writes) IconButton48(MntIcons.Move, stringResource(R.string.action_move), onClick = onMove)
         IconButton48(MntIcons.Info, stringResource(R.string.action_details), onClick = onDetails)
         if (writes) IconButton48(MntIcons.Delete, stringResource(R.string.action_delete), onClick = onDelete)
+        // One file ticked can be handed to another app the user picks.
+        onOpenWith?.let { IconButton48(MntIcons.External, stringResource(R.string.viewer_open_with), onClick = it) }
         IconButton48(MntIcons.More, stringResource(R.string.action_more), onClick = onMore)
     }
 }
