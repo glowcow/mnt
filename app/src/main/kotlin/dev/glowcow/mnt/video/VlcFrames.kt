@@ -26,8 +26,8 @@ object VlcFrames {
      */
     @Synchronized
     fun square(context: Context, open: (LibVLC) -> Media?, size: Int, shares: List<Float>, dark: (Bitmap) -> Boolean): Bitmap? {
-        // A frame slow to decode on the processor is still drawn, not dropped as late.
-        val libVlc = vlc ?: LibVLC(context.applicationContext, arrayListOf("--no-audio", "--no-spu", "--no-osd", "--vout=gles2", "--no-drop-late-frames", "--no-skip-frames")).also { vlc = it }
+        // A frame slow to decode on the processor is still drawn, not dropped as late. No text, so the fonts are never scanned.
+        val libVlc = vlc ?: LibVLC(context.applicationContext, arrayListOf("--no-audio", "--no-spu", "--no-osd", "--text-renderer=none", "--vout=gles2", "--no-drop-late-frames", "--no-skip-frames")).also { vlc = it }
         val player = MediaPlayer(libVlc)
         var reader: ImageReader? = null
         try {

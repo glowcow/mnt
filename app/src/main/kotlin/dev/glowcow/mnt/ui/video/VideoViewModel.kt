@@ -211,15 +211,7 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
     private suspend fun engine(options: List<String>): MediaPlayer {
         player?.takeIf { options == made }?.let { return it }
         // Gone before the new engine is made, for nothing to ask the released one meanwhile.
-        player?.let {
-            player = null
-            it.setEventListener(null)
-            it.stop()
-            it.vlcVout.detachViews()
-            it.release()
-        }
-        vlc?.release()
-        vlc = null
+        retire()
         val libVlc = withContext(Dispatchers.Default) { LibVLC(app, ArrayList(options)) }
         vlc = libVlc
         made = options
@@ -348,8 +340,12 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
             // Asked whether to go on, it waits on the first picture of that place.
             asking = left.takeIf { it > 0 && s.resume == Resuming.ASK }
             if (asking != null) media.addOption(":start-paused")
-            p.media = media
-            media.release()
+            // Another video's input is stopped on the way, as slowly as [retire] says.
+            try {
+                withContext(Dispatchers.Default) { p.media = media }
+            } finally {
+                media.release()
+            }
             if (asking != null) p.play() else play()
             readChapters(node)
         }
@@ -652,16 +648,23 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
         runCatching { app.unregisterReceiver(noisy) }
         focus?.let { audio.abandonAudioFocusRequest(it) }
         session?.release()
-        player?.let {
-            it.setEventListener(null)
-            it.stop()
-            it.vlcVout.detachViews()
-            it.release()
-        }
-        player = null
-        vlc?.release()
-        vlc = null
+        retire()
         runCatching { descriptor?.close() }
+    }
+
+    // VLC stops by waiting on its threads, which a decoder or the fonts may hold for seconds: never on the main thread.
+    private fun retire() {
+        val p = player
+        val libVlc = vlc
+        player = null
+        vlc = null
+        p?.setEventListener(null)
+        p?.vlcVout?.takeIf { it.areViewsAttached() }?.detachViews()
+        c.scope.launch(Dispatchers.Default) {
+            p?.stop()
+            p?.release()
+            libVlc?.release()
+        }
     }
 
     private companion object {
