@@ -19,6 +19,9 @@ abstract class RemoteStore : FileStore {
     var error: String? = null
         private set
 
+    /** The fingerprint of a certificate the place showed in place of the one trusted; null when it showed none. */
+    open val changed: String? get() = null
+
     protected abstract fun listing(path: String): List<Node>
 
     /** The file or folder at [path]; null when there is none. */
@@ -53,6 +56,8 @@ abstract class RemoteStore : FileStore {
     override suspend fun list(path: String): List<Node>? = ask { listing(path) }
 
     override suspend fun stat(path: String): Node? = if (path == ROOT) Node(ROOT, "", true, 0, 0) else ask { node(path) }
+
+    override suspend fun lookUp(path: String): Node? = if (path == ROOT) stat(path) else withContext(Dispatchers.IO) { node(path) }
 
     override suspend fun facts(path: String): Facts? = stat(path)?.let { Facts() }
 

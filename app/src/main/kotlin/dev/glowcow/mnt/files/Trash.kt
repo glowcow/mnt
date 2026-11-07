@@ -47,8 +47,8 @@ class Trash(private val files: FileStore, private val roots: () -> List<String>,
     /** Puts [item] back where it was, under a spare name when its own was taken meanwhile. */
     suspend fun restore(item: Trashed): Boolean {
         if (!folder(item.from)) return false
-        val taken = files.list(item.from).orEmpty().mapTo(HashSet()) { it.name }
-        if (!files.rename(item.node.path, Paths.child(item.from, Paths.free(item.node.name) { it in taken }))) return false
+        val taken = files.list(item.from).orEmpty().mapTo(HashSet()) { it.name.lowercase() }
+        if (!files.rename(item.node.path, Paths.child(item.from, Paths.free(item.node.name) { it.lowercase() in taken }))) return false
         files.remove(item.id + NOTE)
         files.remove(item.id)
         return true

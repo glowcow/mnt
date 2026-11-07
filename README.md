@@ -92,7 +92,7 @@ The files on the screenshots are made up.
 | UI | Jetpack Compose (BOM 2026.09), Material 3, Navigation 3 |
 | Files | `java.io` / `java.nio` behind one `FileStore` interface, all files access |
 | Storage | DataStore for settings |
-| Servers | smbj for SMB, Apache Commons Net for FTP, nfs-client for NFS; S3 is spoken by the app itself |
+| Servers | smbj for SMB, Apache Commons Net for FTP (an FTPS server’s certificate pinned on first use), nfs-client for NFS; S3 is spoken by the app itself |
 | USB devices | the platform's `MtpDevice` |
 | Network | `HttpURLConnection`, kotlinx.serialization for JSON |
 | Viewer | pages of the app's own HTML in a `WebView`; its own readers for Office, OpenDocument, RTF and EPUB files and its own syntax colouring; commonmark for Markdown, androidx.pdf for PDF, DjVuLibre 3.5 for DjVu |

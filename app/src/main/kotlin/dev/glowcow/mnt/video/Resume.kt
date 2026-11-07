@@ -4,10 +4,14 @@ import android.content.Context
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.util.concurrent.Executors
 
 /** Where each video was left, for it to start there when opened again; the latest [KEPT] are kept. */
 class Resume(context: Context) {
     private val file = File(context.filesDir, "video-positions.json")
+
+    // The file is written on a thread of its own, one write after another: a player keeps its place every few seconds.
+    private val writer = Executors.newSingleThreadExecutor { Thread(it, "video-positions").apply { isDaemon = true } }
 
     @Serializable
     private data class Spot(val path: String, val at: Long, val length: Long)
@@ -16,7 +20,7 @@ class Resume(context: Context) {
         runCatching { json.decodeFromString<List<Spot>>(file.readText()) }.getOrNull().orEmpty().toMutableList()
     }
 
-    /** Where to start [path]: where it was left, unless that was at its very start or end. */
+    /** Blocking, the first time: where to start [path] — where it was left, unless that was at its very start or end. */
     @Synchronized
     fun at(path: String): Long = spots.firstOrNull { it.path == path }?.at ?: 0L
 
@@ -27,7 +31,8 @@ class Resume(context: Context) {
         val kept = length > 0 && at > EDGE_MS && at < length - EDGE_MS
         if (kept) spots.add(0, Spot(path, at, length))
         while (spots.size > KEPT) spots.removeAt(spots.lastIndex)
-        runCatching { file.writeText(json.encodeToString(spots.toList())) }
+        val text = json.encodeToString(spots.toList())
+        writer.execute { runCatching { file.writeText(text) } }
     }
 
     private companion object {

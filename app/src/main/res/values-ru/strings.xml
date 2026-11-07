@@ -247,6 +247,8 @@
     <string name="local_network_denied">Нет доступа к локальной сети: разрешите его в настройках приложения</string>
     <string name="server_ok">Сервер отвечает</string>
     <string name="server_failed">Нет соединения</string>
+    <string name="server_cert_changed">Сервер показывает другой сертификат, не тот, что раньше. Если его обновили, доверьтесь новому на странице сервера</string>
+    <string name="server_cert_trust">Доверять новому сертификату</string>
     <string name="password_show">Показать пароль</string>
     <string name="password_hide">Скрыть пароль</string>
     <string name="viewer_search">Поиск в файле</string>
@@ -280,8 +282,12 @@
     <string name="settings_appearance">Оформление</string>
     <string name="settings_files">Файлы</string>
     <string name="settings_files_hint">Папки на вкладке «Файлы», скрытые файлы, корзина, миниатюры, поиск</string>
-    <string name="settings_viewer">Просмотр</string>
-    <string name="settings_viewer_hint">Цвета кода, длинные строки, страницы, HDR, карты, ссылки, музыка</string>
+    <string name="settings_documents">Документы</string>
+    <string name="settings_documents_hint">Цвета кода, длинные строки, страницы, HDR, карты, ссылки</string>
+    <string name="settings_media">Аудио и видео</string>
+    <string name="settings_media_hint">Волна трека, частота экрана, жесты, субтитры, языки</string>
+    <string name="settings_cache">Кэш</string>
+    <string name="settings_cache_hint">Миниатюры, карты, музыка</string>
     <string name="settings_backup">Резервная копия</string>
     <string name="settings_credits">Лицензия и благодарности</string>
     <string name="settings_code_light">Код в светлой теме</string>
@@ -406,8 +412,6 @@
     <string name="video_seconds_fraction">%s с</string>
     <string name="video_forced">Принудительные</string>
     <string name="video_track">Дорожка %d</string>
-    <string name="settings_video">Видео</string>
-    <string name="settings_video_hint">Частота экрана, жесты, субтитры, языки</string>
     <string name="settings_video_rate">Частота экрана под видео</string>
     <string name="settings_video_rate_hint">Частота обновления экрана подстраивается под кадры фильма</string>
     <string name="settings_video_rate_seamless">Когда без перерыва</string>

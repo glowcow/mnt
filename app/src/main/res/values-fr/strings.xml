@@ -243,6 +243,8 @@
     <string name="local_network_denied">Pas d’accès au réseau local : autorisez-le dans les paramètres de l’app</string>
     <string name="server_ok">Le serveur répond</string>
     <string name="server_failed">Pas de connexion</string>
+    <string name="server_cert_changed">Le serveur présente un autre certificat qu’auparavant. S’il a été renouvelé, faites confiance au nouveau sur la page du serveur</string>
+    <string name="server_cert_trust">Faire confiance au nouveau certificat</string>
     <string name="password_show">Afficher le mot de passe</string>
     <string name="password_hide">Masquer le mot de passe</string>
     <string name="viewer_search">Rechercher dans le fichier</string>
@@ -276,8 +278,12 @@
     <string name="settings_appearance">Apparence</string>
     <string name="settings_files">Fichiers</string>
     <string name="settings_files_hint">Dossiers de l’onglet Fichiers, fichiers cachés, corbeille, miniatures, recherches</string>
-    <string name="settings_viewer">Visionneuse</string>
-    <string name="settings_viewer_hint">Couleurs du code, lignes longues, pages, HDR, cartes, liens, musique</string>
+    <string name="settings_documents">Documents</string>
+    <string name="settings_documents_hint">Couleurs du code, lignes longues, pages, HDR, cartes, liens</string>
+    <string name="settings_media">Audio et vidéo</string>
+    <string name="settings_media_hint">Onde du morceau, fréquence de l’écran, gestes, sous-titres, langues</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_cache_hint">Miniatures, cartes, musique</string>
     <string name="settings_backup">Sauvegarde</string>
     <string name="settings_credits">Licence et remerciements</string>
     <string name="settings_code_light">Code en thème clair</string>
@@ -402,8 +408,6 @@
     <string name="video_seconds_fraction">%s s</string>
     <string name="video_forced">Forcés</string>
     <string name="video_track">Piste %d</string>
-    <string name="settings_video">Vidéo</string>
-    <string name="settings_video_hint">Fréquence de l’écran, gestes, sous-titres, langues</string>
     <string name="settings_video_rate">Adapter l’écran à la vidéo</string>
     <string name="settings_video_rate_hint">La fréquence de l’écran suit les images du film</string>
     <string name="settings_video_rate_seamless">Si sans coupure</string>

@@ -239,6 +239,8 @@
     <string name="local_network_denied">Kein Zugriff auf das lokale Netzwerk: in den App-Einstellungen erlauben</string>
     <string name="server_ok">Der Server antwortet</string>
     <string name="server_failed">Keine Verbindung</string>
+    <string name="server_cert_changed">Der Server zeigt ein anderes Zertifikat als zuvor. Wurde es erneuert, vertrauen Sie dem neuen auf der Seite des Servers</string>
+    <string name="server_cert_trust">Dem neuen Zertifikat vertrauen</string>
     <string name="password_show">Passwort anzeigen</string>
     <string name="password_hide">Passwort verbergen</string>
     <string name="viewer_search">In der Datei suchen</string>
@@ -272,8 +274,12 @@
     <string name="settings_appearance">Darstellung</string>
     <string name="settings_files">Dateien</string>
     <string name="settings_files_hint">Ordner im Tab Dateien, versteckte Dateien, Papierkorb, Miniaturen, Suchen</string>
-    <string name="settings_viewer">Ansicht</string>
-    <string name="settings_viewer_hint">Farben von Code, lange Zeilen, Seiten, HDR, Karten, Links, Musik</string>
+    <string name="settings_documents">Dokumente</string>
+    <string name="settings_documents_hint">Farben von Code, lange Zeilen, Seiten, HDR, Karten, Links</string>
+    <string name="settings_media">Audio und Video</string>
+    <string name="settings_media_hint">Wellenform, Bildwiederholrate, Gesten, Untertitel, Sprachen</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_cache_hint">Miniaturen, Karten, Musik</string>
     <string name="settings_backup">Sicherung</string>
     <string name="settings_credits">Lizenz und Danksagungen</string>
     <string name="settings_code_light">Code im hellen Design</string>
@@ -398,8 +404,6 @@
     <string name="video_seconds_fraction">%s s</string>
     <string name="video_forced">Erzwungen</string>
     <string name="video_track">Spur %d</string>
-    <string name="settings_video">Video</string>
-    <string name="settings_video_hint">Bildrate, Gesten, Untertitel, Sprachen</string>
     <string name="settings_video_rate">Bildschirm an das Video anpassen</string>
     <string name="settings_video_rate_hint">Die Bildwiederholrate folgt den Bildern des Films</string>
     <string name="settings_video_rate_seamless">Wenn nahtlos</string>

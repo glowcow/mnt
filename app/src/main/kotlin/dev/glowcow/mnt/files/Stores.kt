@@ -42,6 +42,8 @@ class Stores(private val local: FileStore, private val remote: (id: String) -> F
 
     override suspend fun stat(path: String): Node? = at(path)?.run { store.stat(this.path)?.let(::out) }
 
+    override suspend fun lookUp(path: String): Node? = (at(path) ?: throw IOException("No such place")).run { store.lookUp(this.path)?.let(::out) }
+
     override suspend fun facts(path: String): Facts? = at(path)?.run { store.facts(this.path) }
 
     override suspend fun mkdir(path: String): Boolean = at(path)?.run { store.mkdir(this.path) } ?: false

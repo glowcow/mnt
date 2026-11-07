@@ -238,7 +238,39 @@ class TransferTest {
 
         assertEquals("640", facts.mode!!.toString(8))
         assertEquals(Files.getOwner(file.toPath()).name, facts.owner)
-        assertEquals(5L, LocalStore { 5L }.facts(file.path)!!.created)
+        assertEquals(5L, LocalStore(born = { 5L }).facts(file.path)!!.created)
         assertEquals(null, store.facts(File(temp.root, "none").path))
+    }
+
+    @Test
+    fun leavesAFileAloneWhenThePlaceCannotTellWhetherItsNameIsTaken() = runBlocking {
+        write("src/one.txt", "new")
+        write("dst/one.txt", "old")
+        val blind = object : FileStore by store {
+            override suspend fun lookUp(path: String): Node? = throw java.io.IOException("No answer")
+        }
+        val transfer = Transfer(blind)
+
+        transfer.copy(listOf(File(temp.root, "src/one.txt").path), File(temp.root, "dst").path, move = false, conflict = Conflict.REPLACE)
+
+        assertEquals(1, transfer.failed)
+        assertEquals("old", text("dst/one.txt"))
+    }
+
+    @Test
+    fun keepsBothOnlyWhenTheFolderCanBeRead() = runBlocking {
+        write("src/one.txt", "new")
+        write("dst/one.txt", "old")
+        val dest = File(temp.root, "dst").path
+        val unread = object : FileStore by store {
+            override suspend fun list(path: String): List<Node>? = if (path == dest) null else store.list(path)
+        }
+        val transfer = Transfer(unread)
+
+        transfer.copy(listOf(File(temp.root, "src/one.txt").path), dest, move = false, conflict = Conflict.KEEP_BOTH)
+
+        assertEquals(1, transfer.failed)
+        assertEquals(listOf("dst/one.txt", "src/one.txt"), tree())
+        assertEquals("old", text("dst/one.txt"))
     }
 }

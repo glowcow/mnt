@@ -240,7 +240,10 @@ fun FolderScreen(
             FolderContent.Closed -> Centered(top, bottom) {
                 val archive = vm.archive
                 if (archive == null) {
-                    EmptyState(stringResource(R.string.folder_closed), vm.reason() ?: stringResource(R.string.folder_closed_text))
+                    EmptyState(
+                        stringResource(R.string.folder_closed),
+                        if (vm.certificateChanged()) stringResource(R.string.server_cert_changed) else vm.reason() ?: stringResource(R.string.folder_closed_text),
+                    )
                 } else {
                     // An archive that cannot be read may still be opened by an app that knows more of them.
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {

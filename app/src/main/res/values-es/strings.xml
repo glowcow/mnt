@@ -243,6 +243,8 @@
     <string name="local_network_denied">Sin acceso a la red local: permítelo en los ajustes de la app</string>
     <string name="server_ok">El servidor responde</string>
     <string name="server_failed">Sin conexión</string>
+    <string name="server_cert_changed">El servidor muestra un certificado distinto del de antes. Si se renovó, confía en el nuevo en la página del servidor</string>
+    <string name="server_cert_trust">Confiar en el nuevo certificado</string>
     <string name="password_show">Mostrar la contraseña</string>
     <string name="password_hide">Ocultar la contraseña</string>
     <string name="viewer_search">Buscar en el archivo</string>
@@ -276,8 +278,12 @@
     <string name="settings_appearance">Apariencia</string>
     <string name="settings_files">Archivos</string>
     <string name="settings_files_hint">Carpetas de la pestaña Archivos, archivos ocultos, papelera, miniaturas, búsquedas</string>
-    <string name="settings_viewer">Visor</string>
-    <string name="settings_viewer_hint">Colores del código, líneas largas, páginas, HDR, mapas, enlaces, música</string>
+    <string name="settings_documents">Documentos</string>
+    <string name="settings_documents_hint">Colores del código, líneas largas, páginas, HDR, mapas, enlaces</string>
+    <string name="settings_media">Audio y vídeo</string>
+    <string name="settings_media_hint">Onda de la pista, frecuencia de pantalla, gestos, subtítulos, idiomas</string>
+    <string name="settings_cache">Caché</string>
+    <string name="settings_cache_hint">Miniaturas, mapas, música</string>
     <string name="settings_backup">Copia de seguridad</string>
     <string name="settings_credits">Licencia y créditos</string>
     <string name="settings_code_light">Código en el tema claro</string>
@@ -402,8 +408,6 @@
     <string name="video_seconds_fraction">%s s</string>
     <string name="video_forced">Forzados</string>
     <string name="video_track">Pista %d</string>
-    <string name="settings_video">Vídeo</string>
-    <string name="settings_video_hint">Frecuencia de pantalla, gestos, subtítulos, idiomas</string>
     <string name="settings_video_rate">Ajustar la pantalla al vídeo</string>
     <string name="settings_video_rate_hint">La frecuencia de la pantalla sigue los fotogramas de la película</string>
     <string name="settings_video_rate_seamless">Cuando no hay corte</string>

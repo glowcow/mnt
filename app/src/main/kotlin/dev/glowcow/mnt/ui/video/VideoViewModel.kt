@@ -55,12 +55,16 @@ import dev.glowcow.mnt.video.Chapters
 import dev.glowcow.mnt.video.Videos
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.videolan.libvlc.LibVLC
@@ -323,7 +327,7 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
             val subs = subtitleFiles(node)
             val stream = describe(node)
             val p = engine(options(s, subtitleMargin(s.subtitlePosition, stream)))
-            val media = mediaFor(node) ?: run {
+            val (media, fd) = mediaFor(node) ?: run {
                 failed = true
                 return@launch
             }
@@ -335,31 +339,38 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
                 else -> media.addOption(":sub-language=${s.subtitleLanguage}")
             }
             subs.forEach { media.addSlave(IMedia.Slave(IMedia.Slave.Type.Subtitle, SLAVE_PRIORITY, it)) }
-            val left = if (s.resume == Resuming.NEVER) 0L else c.resume.at(node.path)
+            val left = if (s.resume == Resuming.NEVER) 0L else withContext(Dispatchers.IO) { c.resume.at(node.path) }
             if (left > 0) media.addOption(":start-time=${left / 1000.0}")
             // Asked whether to go on, it waits on the first picture of that place.
             asking = left.takeIf { it > 0 && s.resume == Resuming.ASK }
             if (asking != null) media.addOption(":start-paused")
-            // Another video's input is stopped on the way, as slowly as [retire] says.
+            // Another video's input is stopped on the way, as slowly as [retire] says; its file is closed only then.
+            val old = descriptor
+            descriptor = fd
             try {
                 withContext(Dispatchers.Default) { p.media = media }
             } finally {
                 media.release()
+                old?.let { runCatching { it.close() } }
             }
             if (asking != null) p.play() else play()
             readChapters(node)
         }
     }
 
-    // A file of the phone by its path; a server's through the app's provider, which reads it on demand.
-    private fun mediaFor(node: Node): Media? {
-        val libVlc = vlc ?: return null
-        runCatching { descriptor?.close() }
-        descriptor = null
-        if (Remote.id(node.path) == null) return Media(libVlc, node.path)
-        val fd = runCatching { app.contentResolver.openFileDescriptor(RemoteProvider.uri(app, node.path), "r") }.getOrNull() ?: return null
-        descriptor = fd
-        return Media(libVlc, fd.fileDescriptor)
+    // A file of the phone by its path; a server's through the app's provider, which asks the server: off the main thread.
+    private suspend fun mediaFor(node: Node): Pair<Media, ParcelFileDescriptor?>? {
+        if (Remote.id(node.path) == null) return vlc?.let { Media(it, node.path) to null }
+        val fd = withContext(NonCancellable + Dispatchers.IO) {
+            runCatching { app.contentResolver.openFileDescriptor(RemoteProvider.uri(app, node.path), "r") }.getOrNull()
+        } ?: return null
+        val libVlc = vlc
+        if (libVlc == null || !currentCoroutineContext().isActive) {
+            runCatching { fd.close() }
+            currentCoroutineContext().ensureActive()
+            return null
+        }
+        return Media(libVlc, fd.fileDescriptor) to fd
     }
 
     // The subtitles named after the video beside it; a server's are copied to the phone for VLC to read.
@@ -649,21 +660,23 @@ class VideoViewModel(val path: String, private val app: Application) : ViewModel
         focus?.let { audio.abandonAudioFocusRequest(it) }
         session?.release()
         retire()
-        runCatching { descriptor?.close() }
     }
 
     // VLC stops by waiting on its threads, which a decoder or the fonts may hold for seconds: never on the main thread.
     private fun retire() {
         val p = player
         val libVlc = vlc
+        val fd = descriptor
         player = null
         vlc = null
+        descriptor = null
         p?.setEventListener(null)
         p?.vlcVout?.takeIf { it.areViewsAttached() }?.detachViews()
         c.scope.launch(Dispatchers.Default) {
             p?.stop()
             p?.release()
             libVlc?.release()
+            fd?.let { runCatching { it.close() } }
         }
     }
 

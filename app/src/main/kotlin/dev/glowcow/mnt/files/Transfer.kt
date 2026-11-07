@@ -137,14 +137,21 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
         // A folder cannot go into itself: the copy would never end.
         if (node.directory && Paths.within(dest, source)) return fail()
         var target = Paths.child(dest, node.name)
-        val taken = files.stat(target)
+        // A server that could not tell whether the name is taken is not written to: the file there may be one to keep.
+        val taken = try {
+            files.lookUp(target)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            return fail()
+        }
         var merge = false
         if (taken != null) {
             when {
                 // Onto itself: a move changes nothing, a copy makes a second one.
-                target == source -> if (move) return step(source, node) else target = spare(dest, node.name)
+                target == source -> if (move) return step(source, node) else target = spare(dest, node.name) ?: return fail()
                 conflict == Conflict.SKIP -> return step(source, node)
-                conflict == Conflict.KEEP_BOTH -> target = spare(dest, node.name)
+                conflict == Conflict.KEEP_BOTH -> target = spare(dest, node.name) ?: return fail()
                 node.directory && taken.directory -> merge = true
                 // A file gives way to a folder and a folder to a file; a file over a file is replaced by the rename.
                 node.directory != taken.directory -> if (!clear(target)) return fail()
@@ -287,9 +294,10 @@ class Transfer(private val files: FileStore, private val onProgress: (name: Stri
         return files.remove(path)
     }
 
-    private suspend fun spare(folder: String, name: String): String {
-        val taken = files.list(folder).orEmpty().mapTo(HashSet()) { it.name }
-        return Paths.child(folder, Paths.free(name) { it in taken })
+    // Names that differ in case alone are one name on the phone's storage and on a card.
+    private suspend fun spare(folder: String, name: String): String? {
+        val taken = files.list(folder)?.mapTo(HashSet()) { it.name.lowercase() } ?: return null
+        return Paths.child(folder, Paths.free(name) { it.lowercase() in taken })
     }
 
     /** Counts a tree that needed no copying as done. */

@@ -3,6 +3,8 @@ package dev.glowcow.mnt.files
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
+import java.io.FilterOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -18,6 +20,9 @@ interface FileStore {
 
     /** The file or folder at [path]; null when there is none. */
     suspend fun stat(path: String): Node?
+
+    /** The file or folder at [path]; null when there is none, and a throw when that cannot be told. */
+    suspend fun lookUp(path: String): Node? = stat(path)
 
     /** What more is known of the file or folder at [path]; null when there is none. */
     suspend fun facts(path: String): Facts?
@@ -68,9 +73,10 @@ interface FileStore {
 
 /**
  * The phone's own file system: the shared storage and the drives mounted into it.
- * [born] tells when a file came to be where the file system itself keeps no such time.
+ * [born] tells when a file came to be where the file system itself keeps no such time; [removable], whether a path
+ * lies on a card or a drive, which may be pulled out as soon as a copy is done.
  */
-class LocalStore(private val born: (String) -> Long? = { null }) : FileStore {
+class LocalStore(private val born: (String) -> Long? = { null }, private val removable: (String) -> Boolean = { false }) : FileStore {
     override suspend fun list(path: String): List<Node>? = withContext(Dispatchers.IO) {
         File(path).listFiles()?.mapNotNull { it.node() }
     }
@@ -112,7 +118,22 @@ class LocalStore(private val born: (String) -> Long? = { null }) : FileStore {
 
     override fun read(path: String, offset: Long): InputStream = File(path).inputStream().also { if (offset > 0) it.channel.position(offset) }
 
-    override fun write(path: String, size: Long): OutputStream = File(path).outputStream()
+    override fun write(path: String, size: Long): OutputStream {
+        val out = FileOutputStream(path)
+        if (!removable(path)) return out
+        // Written means on the card or the drive, not in the phone's memory waiting to go there.
+        return object : FilterOutputStream(out) {
+            override fun write(b: ByteArray, off: Int, len: Int) = out.write(b, off, len)
+
+            override fun close() {
+                try {
+                    out.fd.sync()
+                } finally {
+                    out.close()
+                }
+            }
+        }
+    }
 
     // The room files can take now: what the system could clear from caches is not counted on.
     @Suppress("UsableSpace")

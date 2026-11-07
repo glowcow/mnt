@@ -242,6 +242,8 @@
     <string name="local_network_denied">No access to the local network: allow it in the app’s settings</string>
     <string name="server_ok">The server answers</string>
     <string name="server_failed">No connection</string>
+    <string name="server_cert_changed">The server shows a certificate other than the one it showed before. If it was renewed, trust the new one on the server’s page</string>
+    <string name="server_cert_trust">Trust the new certificate</string>
     <string name="password_show">Show the password</string>
     <string name="password_hide">Hide the password</string>
     <string name="viewer_search">Search in the file</string>
@@ -275,8 +277,12 @@
     <string name="settings_appearance">Appearance</string>
     <string name="settings_files">Files</string>
     <string name="settings_files_hint">Folders on the Files tab, hidden files, the bin, thumbnails, searches</string>
-    <string name="settings_viewer">Viewer</string>
-    <string name="settings_viewer_hint">Colours of code, long lines, pages, HDR, maps, links, music</string>
+    <string name="settings_documents">Documents</string>
+    <string name="settings_documents_hint">Colours of code, long lines, pages, HDR, maps, links</string>
+    <string name="settings_media">Audio and video</string>
+    <string name="settings_media_hint">Wave of the track, screen rate, gestures, subtitles, languages</string>
+    <string name="settings_cache">Cache</string>
+    <string name="settings_cache_hint">Thumbnails, maps, music</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_credits">Licence and credits</string>
     <string name="settings_code_light">Code in the light theme</string>
@@ -401,8 +407,6 @@
     <string name="video_seconds_fraction">%s s</string>
     <string name="video_forced">Forced</string>
     <string name="video_track">Track %d</string>
-    <string name="settings_video">Video</string>
-    <string name="settings_video_hint">Screen rate, gestures, subtitles, languages</string>
     <string name="settings_video_rate">Match the screen to the video</string>
     <string name="settings_video_rate_hint">The screen’s refresh rate follows the film’s frames</string>
     <string name="settings_video_rate_seamless">When seamless</string>

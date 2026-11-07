@@ -105,6 +105,13 @@ class SettingsViewModel(
     var thumbnailCache by mutableStateOf<Long?>(null)
         private set
 
+    /** What the three take together; null until all are counted. */
+    val cacheTotal: Long?
+        get() {
+            val parts = listOf(thumbnailCache, mapCache, audioCache)
+            return if (parts.any { it == null }) null else parts.sumOf { it ?: 0L }
+        }
+
     init {
         viewModelScope.launch { mapCache = tiles.size() }
         viewModelScope.launch { audioCache = audio.size() }
@@ -186,7 +193,7 @@ class SettingsViewModel(
 }
 
 /** The subjects the settings are grouped by, each a page of its own. */
-enum class SettingsPage { APPEARANCE, FILES, VIEWER, VIDEO, BACKUP, CREDITS }
+enum class SettingsPage { APPEARANCE, FILES, DOCUMENTS, MEDIA, CACHE, BACKUP, CREDITS }
 
 @Composable
 fun SettingsScreen(
@@ -228,9 +235,18 @@ fun SettingsScreen(
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_files), subtitle = stringResource(R.string.settings_files_hint), icon = MntIcons.Folder, onClick = { onPage(SettingsPage.FILES) })
                 GroupDivider()
-                GroupRow(stringResource(R.string.settings_viewer), subtitle = stringResource(R.string.settings_viewer_hint), icon = MntIcons.FileText, onClick = { onPage(SettingsPage.VIEWER) })
+                GroupRow(stringResource(R.string.settings_documents), subtitle = stringResource(R.string.settings_documents_hint), icon = MntIcons.FileText, onClick = { onPage(SettingsPage.DOCUMENTS) })
                 GroupDivider()
-                GroupRow(stringResource(R.string.settings_video), subtitle = stringResource(R.string.settings_video_hint), icon = MntIcons.Film, onClick = { onPage(SettingsPage.VIDEO) })
+                GroupRow(stringResource(R.string.settings_media), subtitle = stringResource(R.string.settings_media_hint), icon = MntIcons.Film, onClick = { onPage(SettingsPage.MEDIA) })
+                GroupDivider()
+                // The value is what all the caches take together, once each is counted.
+                GroupRow(
+                    stringResource(R.string.settings_cache),
+                    subtitle = stringResource(R.string.settings_cache_hint),
+                    icon = MntIcons.Database,
+                    value = vm.cacheTotal?.let { android.text.format.Formatter.formatShortFileSize(context, it) },
+                    onClick = { onPage(SettingsPage.CACHE) },
+                )
                 GroupDivider()
                 GroupRow(stringResource(R.string.settings_backup), subtitle = stringResource(R.string.settings_backup_save_hint), icon = MntIcons.Floppy, onClick = { onPage(SettingsPage.BACKUP) })
             }
@@ -290,8 +306,9 @@ fun SettingsPageScreen(
         when (page) {
             SettingsPage.APPEARANCE -> R.string.settings_appearance
             SettingsPage.FILES -> R.string.settings_files
-            SettingsPage.VIEWER -> R.string.settings_viewer
-            SettingsPage.VIDEO -> R.string.settings_video
+            SettingsPage.DOCUMENTS -> R.string.settings_documents
+            SettingsPage.MEDIA -> R.string.settings_media
+            SettingsPage.CACHE -> R.string.settings_cache
             SettingsPage.BACKUP -> R.string.settings_backup
             SettingsPage.CREDITS -> R.string.settings_credits
         },
@@ -300,8 +317,9 @@ fun SettingsPageScreen(
     when (page) {
         SettingsPage.APPEARANCE -> Appearance(title, settings, vm, onBack)
         SettingsPage.FILES -> DetailScreen(title, onBack) { if (settings != null) Files(settings, vm) }
-        SettingsPage.VIEWER -> Viewer(title, settings, vm, onBack)
-        SettingsPage.VIDEO -> VideoPage(title, settings, vm, onBack)
+        SettingsPage.DOCUMENTS -> Documents(title, settings, vm, onBack)
+        SettingsPage.MEDIA -> MediaPage(title, settings, vm, onBack)
+        SettingsPage.CACHE -> DetailScreen(title, onBack) { Caches(vm) }
         SettingsPage.BACKUP -> BackupPage(title, vm, onBack)
         SettingsPage.CREDITS -> DetailScreen(title, onBack) {
             Group {
@@ -406,14 +424,6 @@ private fun ColumnScope.Files(settings: AppSettings, vm: SettingsViewModel) {
             SwitchRow(stringResource(R.string.settings_thumbnails_video), stringResource(R.string.settings_thumbnails_video_hint), settings.thumbnailsVideo, vm::setThumbnailsVideo)
         }
         GroupDivider()
-        GroupRow(
-            stringResource(R.string.settings_thumbnails_clear),
-            subtitle = stringResource(R.string.settings_thumbnails_clear_hint),
-            value = vm.thumbnailCache?.let { android.text.format.Formatter.formatShortFileSize(LocalContext.current, it) },
-            onClick = if ((vm.thumbnailCache ?: 0L) > 0L) ({ vm.clearThumbnails() }) else null,
-            trailing = {},
-        )
-        GroupDivider()
         // The value is how many searches are kept; with none there is nothing to tap for.
         GroupRow(
             stringResource(R.string.settings_search_clear),
@@ -437,7 +447,7 @@ private fun ColumnScope.Files(settings: AppSettings, vm: SettingsViewModel) {
 }
 
 @Composable
-private fun Viewer(title: String, settings: AppSettings?, vm: SettingsViewModel, onBack: () -> Unit) {
+private fun Documents(title: String, settings: AppSettings?, vm: SettingsViewModel, onBack: () -> Unit) {
     var picking by rememberSaveable { mutableStateOf<Boolean?>(null) }
     DetailScreen(title, onBack) {
         if (settings == null) return@DetailScreen
@@ -459,26 +469,6 @@ private fun Viewer(title: String, settings: AppSettings?, vm: SettingsViewModel,
         }
         Group {
             SwitchRow(stringResource(R.string.settings_photo_map), stringResource(R.string.settings_photo_map_hint), settings.photoMap, vm::setPhotoMap)
-            GroupDivider()
-            // With nothing downloaded there is nothing to clear.
-            GroupRow(
-                stringResource(R.string.settings_map_clear),
-                value = vm.mapCache?.let { android.text.format.Formatter.formatShortFileSize(LocalContext.current, it) },
-                onClick = if ((vm.mapCache ?: 0L) > 0L) ({ vm.clearMapCache() }) else null,
-                trailing = {},
-            )
-        }
-        Group {
-            SwitchRow(stringResource(R.string.settings_waves), stringResource(R.string.settings_waves_hint), settings.waves, vm::setWaves)
-            GroupDivider()
-            // With nothing kept there is nothing to clear.
-            GroupRow(
-                stringResource(R.string.settings_audio_clear),
-                subtitle = stringResource(R.string.settings_audio_clear_hint),
-                value = vm.audioCache?.let { android.text.format.Formatter.formatShortFileSize(LocalContext.current, it) },
-                onClick = if ((vm.audioCache ?: 0L) > 0L) ({ vm.clearAudioCache() }) else null,
-                trailing = {},
-            )
         }
         Group {
             SwitchRow(stringResource(R.string.settings_links), stringResource(R.string.settings_links_hint), settings.linksInApp, vm::setLinksInApp)
@@ -494,6 +484,38 @@ private fun Viewer(title: String, settings: AppSettings?, vm: SettingsViewModel,
             onSelect = { vm.setCodeScheme(dark, it) },
             onDismiss = { picking = null },
         ) { scheme -> CodePreview(scheme, colorsOf(settings.palette, scheme.dark ?: dark, wide)) }
+    }
+}
+
+/** Each cache with what it takes; one with nothing kept has nothing to clear. */
+@Composable
+private fun Caches(vm: SettingsViewModel) {
+    val context = LocalContext.current
+    fun size(bytes: Long?) = bytes?.let { android.text.format.Formatter.formatShortFileSize(context, it) }
+    fun clear(bytes: Long?, action: () -> Unit) = if ((bytes ?: 0L) > 0L) action else null
+    Group {
+        GroupRow(
+            stringResource(R.string.settings_thumbnails_clear),
+            subtitle = stringResource(R.string.settings_thumbnails_clear_hint),
+            value = size(vm.thumbnailCache),
+            onClick = clear(vm.thumbnailCache) { vm.clearThumbnails() },
+            trailing = {},
+        )
+        GroupDivider()
+        GroupRow(
+            stringResource(R.string.settings_map_clear),
+            value = size(vm.mapCache),
+            onClick = clear(vm.mapCache) { vm.clearMapCache() },
+            trailing = {},
+        )
+        GroupDivider()
+        GroupRow(
+            stringResource(R.string.settings_audio_clear),
+            subtitle = stringResource(R.string.settings_audio_clear_hint),
+            value = size(vm.audioCache),
+            onClick = clear(vm.audioCache) { vm.clearAudioCache() },
+            trailing = {},
+        )
     }
 }
 
@@ -580,7 +602,7 @@ private enum class Picker { THEME, PALETTE, LANGUAGE }
 private enum class VideoPicker { RATE, SKIP, TURN, RESUME, BUTTONS, AUDIO, SUBTITLES, SIZE, POSITION, COLOR, BACKGROUND, ENCODING }
 
 @Composable
-private fun VideoPage(title: String, settings: AppSettings?, vm: SettingsViewModel, onBack: () -> Unit) {
+private fun MediaPage(title: String, settings: AppSettings?, vm: SettingsViewModel, onBack: () -> Unit) {
     var picking by rememberSaveable { mutableStateOf<VideoPicker?>(null) }
     val v = settings?.video
     fun set(change: (VideoSettings) -> VideoSettings) = vm.setVideo(change)
@@ -592,7 +614,10 @@ private fun VideoPage(title: String, settings: AppSettings?, vm: SettingsViewMod
         else -> LANGUAGES.firstOrNull { it.first == tag }?.second ?: tag
     }
     DetailScreen(title, onBack) {
-        if (v == null) return@DetailScreen
+        if (settings == null || v == null) return@DetailScreen
+        Group {
+            SwitchRow(stringResource(R.string.settings_waves), stringResource(R.string.settings_waves_hint), settings.waves, vm::setWaves)
+        }
         Group {
             GroupRow(stringResource(R.string.settings_video_rate), subtitle = stringResource(R.string.settings_video_rate_hint), value = stringResource(RATES.getValue(v.frameRate)), onClick = { picking = VideoPicker.RATE })
             GroupDivider()

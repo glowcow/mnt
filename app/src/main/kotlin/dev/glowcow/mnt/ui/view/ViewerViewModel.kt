@@ -45,6 +45,7 @@ import java.nio.charset.Charset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -293,25 +294,31 @@ class ViewerViewModel(val path: String, private val app: Application) : ViewMode
         val dir = File(app.cacheDir, "view").apply { mkdirs() }
         val target = File(dir, "${path.hashCode().toUInt()}-${name.takeLast(60)}")
         val total = found.size.coerceAtLeast(1)
-        runInterruptible {
-            c.files.read(path).use { input ->
-                target.outputStream().use { out ->
-                    val buffer = ByteArray(256 * 1024)
-                    var done = 0L
-                    var shownAt = 0L
-                    while (true) {
-                        val n = input.read(buffer)
-                        if (n < 0) break
-                        out.write(buffer, 0, n)
-                        done += n
-                        if (done - shownAt > total / 50) {
-                            shownAt = done
-                            val fraction = done.toFloat() / total
-                            viewModelScope.launch { shown = Shown.Fetching(fraction) }
+        // A part fetched is no use to anyone: it goes when the fetch fails or is left.
+        try {
+            runInterruptible {
+                c.files.read(path).use { input ->
+                    target.outputStream().use { out ->
+                        val buffer = ByteArray(256 * 1024)
+                        var done = 0L
+                        var shownAt = 0L
+                        while (true) {
+                            val n = input.read(buffer)
+                            if (n < 0) break
+                            out.write(buffer, 0, n)
+                            done += n
+                            if (done - shownAt > total / 50) {
+                                shownAt = done
+                                val fraction = done.toFloat() / total
+                                viewModelScope.launch { shown = Shown.Fetching(fraction) }
+                            }
                         }
                     }
                 }
             }
+        } catch (e: Throwable) {
+            withContext(NonCancellable + Dispatchers.IO) { target.delete() }
+            throw e
         }
         fetched = target
         return target.also { local = it }

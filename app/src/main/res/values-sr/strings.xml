@@ -243,6 +243,8 @@
     <string name="local_network_denied">Нема приступа локалној мрежи: дозволите га у подешавањима апликације</string>
     <string name="server_ok">Сервер одговара</string>
     <string name="server_failed">Нема везе</string>
+    <string name="server_cert_changed">Сервер показује други сертификат него раније. Ако је обновљен, верујте новом на страници сервера</string>
+    <string name="server_cert_trust">Веруј новом сертификату</string>
     <string name="password_show">Прикажи лозинку</string>
     <string name="password_hide">Сакриј лозинку</string>
     <string name="viewer_search">Претрага у датотеци</string>
@@ -276,8 +278,12 @@
     <string name="settings_appearance">Изглед</string>
     <string name="settings_files">Датотеке</string>
     <string name="settings_files_hint">Фасцикле на картици Датотеке, скривене датотеке, корпа, сличице, претраге</string>
-    <string name="settings_viewer">Прегледач</string>
-    <string name="settings_viewer_hint">Боје кода, дуги редови, странице, HDR, мапе, везе, музика</string>
+    <string name="settings_documents">Документи</string>
+    <string name="settings_documents_hint">Боје кода, дуги редови, странице, HDR, мапе, везе</string>
+    <string name="settings_media">Аудио и видео</string>
+    <string name="settings_media_hint">Талас нумере, освежавање екрана, покрети, титлови, језици</string>
+    <string name="settings_cache">Кеш</string>
+    <string name="settings_cache_hint">Сличице, мапе, музика</string>
     <string name="settings_backup">Резервна копија</string>
     <string name="settings_credits">Лиценца и захвалнице</string>
     <string name="settings_code_light">Код у светлој теми</string>
@@ -402,8 +408,6 @@
     <string name="video_seconds_fraction">%s с</string>
     <string name="video_forced">Принудни</string>
     <string name="video_track">Запис %d</string>
-    <string name="settings_video">Видео</string>
-    <string name="settings_video_hint">Освежавање екрана, покрети, титлови, језици</string>
     <string name="settings_video_rate">Прилагоди екран видеу</string>
     <string name="settings_video_rate_hint">Освежавање екрана прати кадрове филма</string>
     <string name="settings_video_rate_seamless">Кад је без прекида</string>

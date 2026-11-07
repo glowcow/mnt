@@ -47,6 +47,9 @@ sealed interface Checked {
     data object Fine : Checked
 
     class Failed(val reason: String) : Checked
+
+    /** The server showed a certificate other than the one trusted, with this fingerprint. */
+    class Changed(val seen: String) : Checked
 }
 
 class ServerViewModel(id: String?, private val c: AppContainer) : ViewModel() {
@@ -60,7 +63,16 @@ class ServerViewModel(id: String?, private val c: AppContainer) : ViewModel() {
     fun change(to: Connection) {
         checking?.cancel()
         checked.value = null
-        draft.value = to
+        // Another server is another certificate: the one trusted goes with the old address.
+        val from = draft.value
+        val moved = to.protocol != from.protocol || to.host != from.host || to.port != from.port || to.secure != from.secure
+        draft.value = if (moved) to.copy(pin = "") else to
+    }
+
+    /** Trusts the certificate the server showed in place of the old one, and tries it again. */
+    fun trust(seen: String) {
+        draft.value = draft.value.copy(pin = seen)
+        check()
     }
 
     /** Asks the server for its top folder, with what the page holds and without keeping it. */
@@ -68,9 +80,15 @@ class ServerViewModel(id: String?, private val c: AppContainer) : ViewModel() {
         checking?.cancel()
         checked.value = Checked.Running
         checking = viewModelScope.launch {
-            val store = draft.value.store()
+            // The certificate seen the first time is the one kept when the server is saved.
+            val store = draft.value.store { pin -> draft.value = draft.value.copy(pin = pin) }
             val listed = store.list("/")
-            checked.value = if (listed != null) Checked.Fine else Checked.Failed(store.error.orEmpty())
+            val changed = store.changed
+            checked.value = when {
+                listed != null -> Checked.Fine
+                changed != null -> Checked.Changed(changed)
+                else -> Checked.Failed(store.error.orEmpty())
+            }
             c.haptics.done(listed != null)
             withContext(Dispatchers.IO) { store.close() }
         }
@@ -186,6 +204,10 @@ fun ServerScreen(id: String?, onBack: () -> Unit, vm: ServerViewModel = viewMode
             Checked.Running -> Hint(stringResource(R.string.server_checking))
             Checked.Fine -> Hint(stringResource(R.string.server_ok))
             is Checked.Failed -> Hint(listOf(stringResource(R.string.server_failed), result.reason).filter { it.isNotEmpty() }.joinToString(": "))
+            is Checked.Changed -> {
+                Hint(stringResource(R.string.server_cert_changed))
+                Group { GroupRow(stringResource(R.string.server_cert_trust), subtitle = "SHA-256 ${result.seen}", onClick = { network { vm.trust(result.seen) } }) }
+            }
         }
     }
 

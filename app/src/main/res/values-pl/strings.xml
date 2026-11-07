@@ -247,6 +247,8 @@
     <string name="local_network_denied">Brak dostępu do sieci lokalnej: zezwól na to w ustawieniach aplikacji</string>
     <string name="server_ok">Serwer odpowiada</string>
     <string name="server_failed">Brak połączenia</string>
+    <string name="server_cert_changed">Serwer pokazuje inny certyfikat niż wcześniej. Jeśli został odnowiony, zaufaj nowemu na stronie serwera</string>
+    <string name="server_cert_trust">Zaufaj nowemu certyfikatowi</string>
     <string name="password_show">Pokaż hasło</string>
     <string name="password_hide">Ukryj hasło</string>
     <string name="viewer_search">Szukaj w pliku</string>
@@ -280,8 +282,12 @@
     <string name="settings_appearance">Wygląd</string>
     <string name="settings_files">Pliki</string>
     <string name="settings_files_hint">Foldery na karcie Pliki, ukryte pliki, kosz, miniatury, wyszukiwania</string>
-    <string name="settings_viewer">Podgląd</string>
-    <string name="settings_viewer_hint">Kolory kodu, długie wiersze, strony, HDR, mapy, linki, muzyka</string>
+    <string name="settings_documents">Dokumenty</string>
+    <string name="settings_documents_hint">Kolory kodu, długie wiersze, strony, HDR, mapy, linki</string>
+    <string name="settings_media">Audio i wideo</string>
+    <string name="settings_media_hint">Fala utworu, odświeżanie ekranu, gesty, napisy, języki</string>
+    <string name="settings_cache">Pamięć podręczna</string>
+    <string name="settings_cache_hint">Miniatury, mapy, muzyka</string>
     <string name="settings_backup">Kopia zapasowa</string>
     <string name="settings_credits">Licencja i podziękowania</string>
     <string name="settings_code_light">Kod w jasnym motywie</string>
@@ -406,8 +412,6 @@
     <string name="video_seconds_fraction">%s s</string>
     <string name="video_forced">Wymuszone</string>
     <string name="video_track">Ścieżka %d</string>
-    <string name="settings_video">Wideo</string>
-    <string name="settings_video_hint">Częstotliwość ekranu, gesty, napisy, języki</string>
     <string name="settings_video_rate">Dopasuj ekran do filmu</string>
     <string name="settings_video_rate_hint">Częstotliwość odświeżania ekranu idzie za klatkami filmu</string>
     <string name="settings_video_rate_seamless">Gdy bez przerwy</string>

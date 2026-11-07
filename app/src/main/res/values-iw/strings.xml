@@ -243,6 +243,8 @@
     <string name="local_network_denied">אין גישה לרשת המקומית: יש לאשר אותה בהגדרות האפליקציה</string>
     <string name="server_ok">השרת עונה</string>
     <string name="server_failed">אין חיבור</string>
+    <string name="server_cert_changed">השרת מציג תעודה שונה מזו שהציג קודם. אם היא חודשה, יש לסמוך על החדשה בדף השרת</string>
+    <string name="server_cert_trust">לסמוך על התעודה החדשה</string>
     <string name="password_show">הצגת הסיסמה</string>
     <string name="password_hide">הסתרת הסיסמה</string>
     <string name="viewer_search">חיפוש בקובץ</string>
@@ -276,8 +278,12 @@
     <string name="settings_appearance">מראה</string>
     <string name="settings_files">קבצים</string>
     <string name="settings_files_hint">תיקיות בכרטיסייה קבצים, קבצים מוסתרים, סל המחזור, תמונות ממוזערות, חיפושים</string>
-    <string name="settings_viewer">תצוגה</string>
-    <string name="settings_viewer_hint">צבעי קוד, שורות ארוכות, עמודים, HDR, מפות, קישורים, מוזיקה</string>
+    <string name="settings_documents">מסמכים</string>
+    <string name="settings_documents_hint">צבעי קוד, שורות ארוכות, עמודים, HDR, מפות, קישורים</string>
+    <string name="settings_media">אודיו ווידאו</string>
+    <string name="settings_media_hint">גל הרצועה, קצב מסך, מחוות, כתוביות, שפות</string>
+    <string name="settings_cache">מטמון</string>
+    <string name="settings_cache_hint">תמונות ממוזערות, מפות, מוזיקה</string>
     <string name="settings_backup">גיבוי</string>
     <string name="settings_credits">רישיון ותודות</string>
     <string name="settings_code_light">קוד בערכת הנושא הבהירה</string>
@@ -402,8 +408,6 @@
     <string name="video_seconds_fraction">%s שנ׳</string>
     <string name="video_forced">מאולצות</string>
     <string name="video_track">רצועה %d</string>
-    <string name="settings_video">וידאו</string>
-    <string name="settings_video_hint">קצב מסך, מחוות, כתוביות, שפות</string>
     <string name="settings_video_rate">התאמת המסך לסרטון</string>
     <string name="settings_video_rate_hint">קצב הרענון של המסך עוקב אחר הפריימים של הסרט</string>
     <string name="settings_video_rate_seamless">כשאין הפסקה</string>

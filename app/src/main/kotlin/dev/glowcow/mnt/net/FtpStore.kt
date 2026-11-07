@@ -18,8 +18,13 @@ import java.util.TimeZone
  * An FTP server, plain or with TLS asked for after connecting, from the folder named or the one it puts the user in. One connection does one thing at a
  * time and a file being read or written holds it, so a few are kept and more are opened when needed.
  */
-class FtpStore(private val c: Connection) : RemoteStore() {
+class FtpStore(private val c: Connection, onPin: (String) -> Unit = {}) : RemoteStore() {
     private val idle = ArrayDeque<FTPClient>()
+
+    // commons-net alone checks only a certificate's dates; this one is held to the certificate trusted before.
+    private val trust = PinningTrust(c.host.trim(), c.pin, onPin)
+
+    override val changed: String? get() = trust.refused
 
     // The folder everything is counted from: the one named, or the one the server puts the user in.
     @Volatile
@@ -30,12 +35,13 @@ class FtpStore(private val c: Connection) : RemoteStore() {
     private var shift: Long? = null
 
     private fun connect(): FTPClient {
-        val ftp = if (c.secure) FTPSClient(false) else FTPClient()
+        trust.refused = null
+        val ftp = if (c.secure) FTPSClient(false).apply { trustManager = trust } else FTPClient()
         ftp.connectTimeout = TIMEOUT_MS
         ftp.defaultTimeout = TIMEOUT_MS
         ftp.autodetectUTF8 = true
-        ftp.connect(c.host.trim(), c.port.takeIf { it > 0 } ?: c.protocol.port)
         try {
+            ftp.connect(c.host.trim(), c.port.takeIf { it > 0 } ?: c.protocol.port)
             ftp.soTimeout = TIMEOUT_MS
             if (!ftp.login(c.user.ifBlank { "anonymous" }, c.password)) fail(ftp)
             if (ftp is FTPSClient) {

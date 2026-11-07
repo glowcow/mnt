@@ -20,8 +20,9 @@ class TileStore(private val dir: File, private val agent: String) {
         if (y !in 0 until side) return@withContext null
         val column = x.mod(side)
         val file = File(dir, "$zoom/$column/$y.png")
-        if (!file.isFile) {
-            runCatching { download(zoom, column, y, file) }.onFailure { file.delete() }
+        // A tile kept a month is asked for again, as the tile server asks; until a new one comes the old one is shown.
+        if (!file.isFile || System.currentTimeMillis() - file.lastModified() > MAX_AGE_MS) {
+            runCatching { download(zoom, column, y, file) }.onFailure { File(file.path + PART).delete() }
         }
         if (file.isFile) BitmapFactory.decodeFile(file.path) else null
     }
@@ -34,7 +35,7 @@ class TileStore(private val dir: File, private val agent: String) {
             connection.setRequestProperty("User-Agent", agent)
             if (connection.responseCode != 200) error("HTTP ${connection.responseCode}")
             into.parentFile?.mkdirs()
-            val part = File(into.path + ".part")
+            val part = File(into.path + PART)
             connection.inputStream.use { input -> part.outputStream().use { input.copyTo(it) } }
             if (!part.renameTo(into)) error("cannot store the tile")
         } finally {
@@ -52,5 +53,7 @@ class TileStore(private val dir: File, private val agent: String) {
 
     private companion object {
         const val TIMEOUT_MS = 10_000
+        const val MAX_AGE_MS = 30L * 24 * 3_600_000
+        const val PART = ".part"
     }
 }

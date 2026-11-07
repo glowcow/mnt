@@ -232,15 +232,15 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     fun conflicts(clip: Clip): Int {
         // An archive takes a spare name instead.
         if (clip.zip != null) return 0
-        val here = names()
-        return clip.paths.count { Paths.parent(it) != path && Paths.name(it) in here }
+        val here = taken()
+        return clip.paths.count { Paths.parent(it) != path && Paths.name(it).lowercase() in here }
     }
 
     /** False when another transfer is running. */
     fun paste(conflict: Conflict): Boolean {
         val clip = clip.value ?: return true
-        val taken = names()
-        val started = clip.zip?.let { c.transfers.zip(clip.paths, Paths.child(path, Paths.free(it) { name -> name in taken })) }
+        val taken = taken()
+        val started = clip.zip?.let { c.transfers.zip(clip.paths, Paths.child(path, Paths.free(it) { name -> name.lowercase() in taken })) }
             ?: c.transfers.copy(clip.paths, path, clip.move, conflict)
         if (!started) return false
         dropClip()
@@ -256,6 +256,9 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     /** Why this folder of a place on the network could not be read, in that place's own words. */
     fun reason(): String? = remote?.takeIf { far }?.let { c.remotes.error(it) }
 
+    /** Whether the server turned away for showing a certificate other than the one trusted. */
+    fun certificateChanged(): Boolean = remote?.takeIf { far }?.let { c.remotes.changed(it) } != null
+
     /** Reads the archive through, however long that takes. */
     fun agree() {
         remote?.let { c.archives.store(it)?.agree() }
@@ -270,10 +273,10 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
 
     /** Unpacks the ticked archives here, each into a new folder named after it; false when another transfer is running. */
     fun unpack(): Boolean {
-        val taken = names().toMutableSet()
+        val taken = taken().toMutableSet()
         val archives = selected().filter { !it.directory && Archives.opens(it.name) }.map { node ->
             val stem = Archives.stem(node.name)
-            val name = Paths.free(stem) { it in taken }.also { taken += it }
+            val name = Paths.free(stem) { it.lowercase() in taken }.also { taken += it.lowercase() }
             Unpacking(Archives.root(node.path), stem, Paths.child(path, name))
         }
         if (!c.transfers.unpack(archives)) return false
@@ -340,6 +343,9 @@ class FolderViewModel(val path: String, private val c: AppContainer) : ViewModel
     }
 
     fun names(): Set<String> = read.value.orEmpty().mapTo(HashSet()) { it.name }
+
+    // The names here in lower case: the phone's storage and a card take names that differ in case alone for one.
+    private fun taken(): Set<String> = read.value.orEmpty().mapTo(HashSet()) { it.name.lowercase() }
 
     fun createFolder(name: String, onDone: (Boolean) -> Unit) = viewModelScope.launch {
         onDone(c.files.mkdir(Paths.child(path, name)))

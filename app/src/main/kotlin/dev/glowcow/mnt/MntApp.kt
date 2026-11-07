@@ -48,7 +48,7 @@ class AppContainer(context: Context) {
     val mtp = MtpDevices(context)
     val remotes = Remotes(connections, mtp)
     val archives = Archives({ files }, { spare(context) }, File(context.cacheDir, "archives"))
-    val files: FileStore = Stores(LocalStore(MediaIndex(context)::added)) { id -> if (Archives.owns(id)) archives.store(id) else remotes.store(id) }
+    val files: FileStore = Stores(LocalStore(MediaIndex(context)::added, removable = { volumes.of(it)?.primary == false })) { id -> if (Archives.owns(id)) archives.store(id) else remotes.store(id) }
     val roots = Roots(volumes, remotes)
     val search = Search(files)
     val trash = Trash(files, { volumes.list.map { it.path } })
@@ -99,10 +99,11 @@ class MntApp : Application() {
         TrashScheduler.apply(this)
         container.playback.restore()
         // What was copied out of archives for other apps is theirs only while they show it.
-        // So are the pictures fetched from servers to be shown or made small: a page that was left keeps none.
+        // So are the pictures and documents fetched from servers to be shown or made small: a page that was left keeps none.
         thread(name = "opened-clear") {
             File(cacheDir, FolderViewModel.OPENED).deleteRecursively()
             File(cacheDir, "photo").deleteRecursively()
+            File(cacheDir, "view").deleteRecursively()
             File(cacheDir, "thumbs-fetch").deleteRecursively()
         }
         thread(name = "vlc-fonts", priority = Thread.MIN_PRIORITY) { runCatching { VlcFonts.warm(this) } }

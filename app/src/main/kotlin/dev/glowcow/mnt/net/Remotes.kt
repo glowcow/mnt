@@ -36,7 +36,18 @@ class Remotes(private val connections: Connections, private val mtp: MtpDevices)
             if (made == connection) return store
             drop(store)
         }
-        return connection.store().also { stores[id] = connection to it }
+        return connection.store { pin -> pin(id, pin) }.also { stores[id] = connection to it }
+    }
+
+    /** Why the place [id] last turned away: the fingerprint of a certificate other than the one trusted; null otherwise. */
+    fun changed(id: String): String? = (store(id) as? RemoteStore)?.changed
+
+    // The certificate trusted the first time is kept with the place; the store that learnt it stays.
+    @Synchronized
+    private fun pin(id: String, pin: String) {
+        val pinned = connections.find(id)?.copy(pin = pin) ?: return
+        connections.save(pinned)
+        stores[id]?.let { (_, store) -> stores[id] = pinned to store }
     }
 
     /** What the place [id] goes by; null when there is no such place. */
