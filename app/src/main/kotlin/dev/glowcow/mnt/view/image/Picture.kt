@@ -29,20 +29,40 @@ class Picture(
     /** A RAW photo: shown as the camera's own preview, or [developed] from its data. */
     val raw: Boolean = false,
     val developed: Boolean = false,
+    /** Some pixel lets the ground through: a format that keeps alpha says nothing of whether one does. */
+    val alpha: Boolean = seeThrough(bitmap),
 ) : Closeable {
     /** The size it stands at, upright. */
     val uprightWidth: Int get() = if (orientation.swaps) height else width
     val uprightHeight: Int get() = if (orientation.swaps) width else height
 
-    val alpha: Boolean get() = bitmap.hasAlpha()
-
     /** The same picture lifted by [gain]. */
-    fun withGain(gain: Gain): Picture = Picture(bitmap, sample, width, height, orientation, gain, animation, regions, hdr, raw, developed)
+    fun withGain(gain: Gain): Picture = Picture(bitmap, sample, width, height, orientation, gain, animation, regions, hdr, raw, developed, alpha)
 
     override fun close() {
         regions?.close()
     }
 }
+
+/** Whether a pixel of [bitmap] is less than opaque; one that is not is marked so, which also draws it faster. Blocking. */
+fun seeThrough(bitmap: Bitmap): Boolean {
+    if (!bitmap.hasAlpha()) return false
+    if (bitmap.config == Bitmap.Config.HARDWARE) return true
+    val w = bitmap.width
+    val rows = (SCAN_PIXELS / w.coerceAtLeast(1)).coerceAtLeast(1)
+    val pixels = IntArray(w * rows)
+    var y = 0
+    while (y < bitmap.height) {
+        val n = minOf(rows, bitmap.height - y)
+        bitmap.getPixels(pixels, 0, w, 0, y, w, n)
+        for (i in 0 until w * n) if (pixels[i] ushr 24 != 0xFF) return true
+        y += n
+    }
+    bitmap.setHasAlpha(false)
+    return false
+}
+
+private const val SCAN_PIXELS = 1 shl 16
 
 /** What lifts an SDR picture to HDR, as Ultra HDR and ISO 21496-1 store it: per colour, how much a pixel may be brightened. */
 class Gain(

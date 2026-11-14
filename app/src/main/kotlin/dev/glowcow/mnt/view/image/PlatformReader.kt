@@ -42,8 +42,17 @@ object PlatformReader {
         }
         if (drawable !is AnimatedImageDrawable) return null
         val still = createBitmap(1, 1)
-        return Picture(still, 1, size.first, size.second, animation = drawable)
+        return Picture(still, 1, size.first, size.second, animation = drawable, alpha = firstFrameSeeThrough(file, size))
     }
+
+    // Whether the first frame, decoded small, lets the ground through; the frames after it are taken to be alike.
+    private fun firstFrameSeeThrough(file: File, size: Pair<Int, Int>): Boolean = runCatching {
+        val frame = ImageDecoder.decodeBitmap(ImageDecoder.createSource(file)) { decoder, _, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            decoder.setTargetSampleSize(sampleFor(maxOf(size.first, size.second).toFloat() / FRAME_SIDE))
+        }
+        seeThrough(frame).also { frame.recycle() }
+    }.getOrDefault(true)
 
     private fun regions(file: File, screen: Int): Picture? {
         val decoder = try {
@@ -110,6 +119,8 @@ object PlatformReader {
 
     private val MAY_MOVE = setOf("gif", "webp", "png", "apng", "avif", "heic", "heif")
     private val HEIF = setOf("heic", "heif", "hif")
+
+    private const val FRAME_SIDE = 512
 
     // A gain map is decoded no larger than this: it is smooth, and the base carries the detail.
     private const val GAIN_SIDE = 2048
